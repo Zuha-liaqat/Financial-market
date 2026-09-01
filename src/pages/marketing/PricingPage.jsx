@@ -83,9 +83,6 @@ export default function PricingPage() {
     <MarketingPage active="pricing">
       <section className="page-banner">
         <div className="wrap" style={{ textAlign: 'center' }}>
-          <div className="crumbs reveal" style={{ justifyContent: 'center', display: 'flex' }}>
-            <Link to="/">Home</Link> / Subscriptions
-          </div>
           <div className="eyebrow reveal" style={{ marginLeft: 'auto', marginRight: 'auto' }}>
             <span className="dot" /> SUBSCRIPTIONS
           </div>

@@ -1,4 +1,3 @@
-import { Link } from 'react-router-dom'
 import MarketingPage from './MarketingPage'
 import { FeatureCards, CtaBannerSection } from './pieces'
 import { ICONS } from './icons'
@@ -21,9 +20,6 @@ export default function AboutPage() {
     <MarketingPage active="about">
       <section className="page-banner">
         <div className="wrap">
-          <div className="crumbs reveal">
-            <Link to="/">Home</Link> / About Us
-          </div>
           <div className="eyebrow reveal">
             <span className="dot" /> OUR STORY
           </div>

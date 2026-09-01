@@ -5,19 +5,6 @@ import { MockCard } from './pieces'
 import { MODULES, moduleIcon } from './navData'
 import { ICONS } from './icons'
 
-const TICKER_TERMS = [
-  'COMPOUND INTEREST',
-  'DIVIDEND YIELD',
-  'P/E RATIO',
-  'DOLLAR-COST AVERAGING',
-  'MARKET CAPITALIZATION',
-  'RISK TOLERANCE',
-  'ASSET ALLOCATION',
-  'BULL MARKET',
-  'BEAR MARKET',
-  'LIQUIDITY',
-]
-
 const STEPS = [
   {
     tag: 'Plan',
@@ -114,62 +101,7 @@ function Counter({ target, suffix = '', decimals = 0 }) {
   )
 }
 
-function Bar({ target, color }) {
-  const [width, setWidth] = useState('0%')
-  const ref = useRef(null)
-
-  useEffect(() => {
-    const el = ref.current
-    if (!el) return undefined
-    const io = new IntersectionObserver(
-      (entries) => {
-        entries.forEach((entry) => {
-          if (entry.isIntersecting) {
-            setWidth(target)
-            io.disconnect()
-          }
-        })
-      },
-      { threshold: 0.4 },
-    )
-    io.observe(el)
-    return () => io.disconnect()
-  }, [target])
-
-  return (
-    <div ref={ref} style={{ flex: 1, height: 6, borderRadius: 6, background: '#EDEFF3', overflow: 'hidden' }}>
-      <div style={{ width, height: '100%', background: color, transition: 'width 1.2s ease' }} />
-    </div>
-  )
-}
-
 export default function HomePage() {
-  const linePathRef = useRef(null)
-  const areaPathRef = useRef(null)
-
-  useEffect(() => {
-    const line = linePathRef.current
-    if (!line) return
-    const len = line.getTotalLength()
-    line.style.strokeDasharray = String(len)
-    line.style.strokeDashoffset = String(len)
-    line.style.transition = 'stroke-dashoffset 1.8s cubic-bezier(.2,.7,.2,1)'
-    requestAnimationFrame(() => {
-      setTimeout(() => {
-        line.style.strokeDashoffset = '0'
-      }, 200)
-    })
-    if (areaPathRef.current) {
-      areaPathRef.current.style.opacity = '0'
-      areaPathRef.current.style.transition = 'opacity 1.2s ease'
-      setTimeout(() => {
-        if (areaPathRef.current) areaPathRef.current.style.opacity = '1'
-      }, 900)
-    }
-  }, [])
-
-  const tickerItems = [...TICKER_TERMS, ...TICKER_TERMS]
-
   return (
     <MarketingPage active="home">
       {/* Hero */}
@@ -187,7 +119,7 @@ export default function HomePage() {
               schedule — LinkedIn, Instagram and X, from one dashboard.
             </p>
             <div className="hero-ctas reveal reveal-d3">
-              <Link to="/login" className="btn btn-primary">
+              <Link to="/pricing" className="btn btn-primary">
                 Start Free Trial →
               </Link>
               <Link to="/about" className="btn btn-ghost">
@@ -215,72 +147,15 @@ export default function HomePage() {
 
           <div className="reveal reveal-d2" style={{ position: 'relative' }}>
             <MockCard title="Dashboard — Overview">
-              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 10, marginBottom: 16 }}>
-                <div style={{ background: 'var(--bg)', borderRadius: 10, padding: 14 }}>
-                  <div className="mono" style={{ fontSize: 22, fontWeight: 700, color: 'var(--navy)' }}>12</div>
-                  <div style={{ fontSize: 11, color: 'var(--muted)' }}>Drafted this week</div>
-                </div>
-                <div style={{ background: 'var(--bg)', borderRadius: 10, padding: 14 }}>
-                  <div className="mono" style={{ fontSize: 22, fontWeight: 700, color: 'var(--orange-deep)' }}>4</div>
-                  <div style={{ fontSize: 11, color: 'var(--muted)' }}>Awaiting review</div>
-                </div>
-              </div>
-              <svg viewBox="0 0 460 150" width="100%" height="130" fill="none">
-                <defs>
-                  <linearGradient id="fm-area-fill" x1="0" y1="0" x2="0" y2="1">
-                    <stop offset="0%" stopColor="#00A6F4" stopOpacity="0.35" />
-                    <stop offset="100%" stopColor="#00A6F4" stopOpacity="0" />
-                  </linearGradient>
-                </defs>
-                <path
-                  ref={areaPathRef}
-                  d="M0,120 L60,108 L120,114 L180,80 L240,90 L300,55 L360,66 L460,20 L460,150 L0,150 Z"
-                  fill="url(#fm-area-fill)"
-                />
-                <path
-                  ref={linePathRef}
-                  d="M0,120 L60,108 L120,114 L180,80 L240,90 L300,55 L360,66 L460,20"
-                  stroke="#045C8C"
-                  strokeWidth="2.6"
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                />
-                <circle cx="460" cy="20" r="5" fill="#FF9F1C" />
-              </svg>
-              <div style={{ display: 'flex', gap: 16, marginTop: 6 }}>
-                <Bar target="70%" color="var(--linkedin)" />
-                <Bar target="45%" color="var(--ig-2)" />
-                <Bar target="55%" color="var(--xblack)" />
-              </div>
+              <img
+                src="/product-screenshots/dashboard.png"
+                alt="Dashboard — Overview"
+                style={{ borderRadius: 10, border: '1px solid var(--line)', width: '100%' }}
+              />
             </MockCard>
-            <div className="floaty f1">
-              <div className="fi" style={{ background: '#FFEBCC' }}>📈</div>
-              <div className="ft">
-                <strong>Dividend Yield</strong>
-                <span>Today&apos;s lesson · 6.2k views</span>
-              </div>
-            </div>
-            <div className="floaty f2">
-              <div className="fi" style={{ background: '#DCEEFB' }}>✅</div>
-              <div className="ft">
-                <strong>3 posts approved</strong>
-                <span>BVB Weekly Recap</span>
-              </div>
-            </div>
           </div>
         </div>
       </section>
-
-      <div className="ticker-band">
-        <div className="ticker-track">
-          {tickerItems.map((t, i) => (
-            <div className="ticker-item" key={`${t}-${i}`}>
-              {t}
-              <span className="arrow">→</span>
-            </div>
-          ))}
-        </div>
-      </div>
 
       {/* Logo marquee */}
       <section style={{ paddingTop: 36, paddingBottom: 36 }}>
@@ -347,7 +222,6 @@ export default function HomePage() {
           <div className="proc-row">
             {STEPS.map((s, i) => (
               <div className={`proc-card reveal reveal-d${i + 1}`} key={s.title} style={{ '--step-accent': s.accent }}>
-                <div className="pnum">{String(i + 1).padStart(2, '0')}</div>
                 <div className="pbadge">
                   <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#fff" strokeWidth="1.8">
                     {s.icon}
@@ -375,7 +249,9 @@ export default function HomePage() {
           <div className="cards-grid cols-4">
             {MODULES.map((m) => (
               <Link to={`/product/${m.slug}`} className="lcard reveal" key={m.slug}>
-                <div className="licon">{moduleIcon(m.icon)}</div>
+                <div className="licon" style={{ background: `color-mix(in srgb, ${m.color} 14%, white)` }}>
+                  {moduleIcon(m.icon, m.color)}
+                </div>
                 <h3 style={{ fontSize: 16 }}>{m.title}</h3>
                 <p>{m.desc}</p>
               </Link>

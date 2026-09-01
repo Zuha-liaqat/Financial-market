@@ -250,22 +250,15 @@
 .fm-home .cards-grid.cols-4 { grid-template-columns: repeat(4, 1fr); }
 .fm-home .lcard {
   background: var(--card); border: 1px solid var(--line); border-radius: var(--radius); padding: 22px 20px;
-  transition: transform 0.3s cubic-bezier(0.2, 0.7, 0.2, 1), box-shadow 0.3s ease, border-color 0.3s ease;
+  box-shadow: var(--shadow-sm);
+  transition: transform 0.3s cubic-bezier(0.2, 0.7, 0.2, 1), border-color 0.3s ease;
   position: relative; overflow: hidden; display: block;
 }
-.fm-home .lcard::before {
-  content: ''; position: absolute; inset: 0;
-  background: linear-gradient(120deg, transparent 40%, rgba(0, 166, 244, 0.06) 50%, transparent 60%);
-  transform: translateX(-120%); transition: transform 0.7s ease;
-}
-.fm-home .lcard:hover::before { transform: translateX(120%); }
-.fm-home .lcard:hover { transform: translateY(-6px) scale(1.015); box-shadow: var(--shadow-md); border-color: transparent; }
+.fm-home .lcard:hover { transform: translateY(-6px) scale(1.015); border-color: transparent; }
 .fm-home .lcard .licon {
   width: 40px; height: 40px; border-radius: 10px; background: #EAF3FB; display: flex; align-items: center;
-  justify-content: center; margin-bottom: 14px; transition: background 0.35s ease, transform 0.35s ease;
+  justify-content: center; margin-bottom: 14px;
 }
-.fm-home .lcard:hover .licon { background: var(--orange); transform: rotate(-8deg) scale(1.08); }
-.fm-home .lcard:hover .licon svg { stroke: #241300 !important; }
 .fm-home .lcard h3 { font-family: var(--font-sans); font-size: 17px; font-weight: 700; margin: 0 0 7px; }
 .fm-home .lcard p { font-size: 13.5px; color: var(--muted); line-height: 1.55; margin: 0; }
 .fm-home .lcard .num { font-family: var(--font-sans); font-size: 11px; color: var(--muted-2); margin-bottom: 8px; display: block; }
@@ -297,19 +290,11 @@
   z-index: 1; overflow: hidden;
   transition: transform 0.3s ease, box-shadow 0.3s ease, border-color 0.3s ease;
 }
-.fm-home .proc-card::before {
-  content: ''; position: absolute; top: 0; left: 0; right: 0; height: 4px; background: var(--step-accent, var(--navy));
-}
 .fm-home .proc-card:hover { transform: translateY(-8px); box-shadow: var(--shadow-lg); border-color: transparent; }
 .fm-home .proc-card .pbadge {
   width: 48px; height: 48px; border-radius: 14px; display: flex; align-items: center; justify-content: center;
   background: var(--step-accent, var(--navy)); color: #fff; margin-bottom: 20px;
-  box-shadow: 0 10px 20px -8px var(--step-accent, var(--navy)); transition: transform 0.3s ease;
-}
-.fm-home .proc-card:hover .pbadge { transform: scale(1.08) rotate(-4deg); }
-.fm-home .proc-card .pnum {
-  position: absolute; top: 28px; right: 26px; font-size: 34px; font-weight: 800; color: var(--bg);
-  -webkit-text-stroke: 1.4px var(--line); line-height: 1;
+  box-shadow: 0 10px 20px -8px var(--step-accent, var(--navy));
 }
 .fm-home .proc-card .ptag {
   font-size: 10.5px; letter-spacing: 0.12em; text-transform: uppercase; font-weight: 700;

@@ -37,7 +37,6 @@ export default function ProductPage() {
   return (
     <MarketingPage active="product">
       <PageBanner
-        crumbLabel={content.crumbLabel}
         eyebrow={content.eyebrow}
         title={content.title}
         lead={content.lead}

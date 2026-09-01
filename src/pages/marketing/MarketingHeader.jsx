@@ -48,7 +48,7 @@ export default function MarketingHeader({ active = 'home' }) {
           <Link to="/login" className="btn btn-ghost">
             Log In
           </Link>
-          <Link to="/login" className="btn btn-primary">
+          <Link to="/pricing" className="btn btn-primary">
             Start Free Trial
           </Link>
         </div>
@@ -76,7 +76,7 @@ export default function MarketingHeader({ active = 'home' }) {
           Contact
         </Link>
         <Link
-          to="/login"
+          to="/pricing"
           className="btn btn-primary"
           style={{ marginTop: 8, justifyContent: 'center' }}
           onClick={() => setMobileOpen(false)}

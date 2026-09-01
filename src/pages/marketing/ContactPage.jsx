@@ -1,5 +1,4 @@
 import { useState } from 'react'
-import { Link } from 'react-router-dom'
 import MarketingPage from './MarketingPage'
 import { CtaBannerSection } from './pieces'
 import { ICONS } from './icons'
@@ -34,9 +33,6 @@ export default function ContactPage() {
     <MarketingPage active="contact">
       <section className="page-banner">
         <div className="wrap">
-          <div className="crumbs reveal">
-            <Link to="/">Home</Link> / Contact
-          </div>
           <div className="eyebrow reveal">
             <span className="dot" /> GET IN TOUCH
           </div>

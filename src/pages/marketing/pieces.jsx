@@ -1,20 +1,17 @@
 import { Link } from 'react-router-dom'
 
-export function PageBanner({ crumbLabel, eyebrow, title, lead, stats, visual }) {
+export function PageBanner({ eyebrow, title, lead, stats, visual }) {
   return (
     <section className="page-banner">
       <div className={`wrap${visual ? ' hero-grid' : ''}`} style={{ alignItems: 'flex-start', paddingBottom: 40 }}>
         <div>
-          <div className="crumbs reveal">
-            <Link to="/">Home</Link> / <Link to="/product/dashboard">Product</Link> / {crumbLabel}
-          </div>
           <div className="eyebrow reveal">
             <span className="dot" /> {eyebrow}
           </div>
           <h1 className="headline reveal reveal-d1">{title}</h1>
           <p className="lead reveal reveal-d2">{lead}</p>
           <div className="hero-ctas reveal reveal-d3">
-            <Link to="/login" className="btn btn-primary">
+            <Link to="/pricing" className="btn btn-primary">
               Start Free Trial →
             </Link>
             <Link to="/contact" className="btn btn-ghost">
@@ -111,7 +108,7 @@ export function StepsSection({ kicker, title, lead, steps }) {
   )
 }
 
-export function CtaBannerSection({ title, lead, ctaLabel = 'Start Free Trial →', to = '/login' }) {
+export function CtaBannerSection({ title, lead, ctaLabel = 'Start Free Trial →', to = '/pricing' }) {
   return (
     <section>
       <div className="wrap">

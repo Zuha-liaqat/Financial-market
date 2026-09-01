@@ -1,0 +1,63 @@
+@import "tailwindcss";
+
+@theme {
+  --font-sans: system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif;
+
+  --color-canvas: #f3f6fa;
+
+  --color-brand-50: #eef2f7;
+  --color-brand-100: #dbe4ee;
+  --color-brand-200: #b3c4d9;
+  --color-brand-300: #86a1bf;
+  --color-brand-400: #5c7ea3;
+  --color-brand-500: #3a5f87;
+  --color-brand-600: #2a4a6c;
+  --color-brand-700: #1c3555;
+  --color-brand-800: #14263f;
+  --color-brand-900: #0e1d35;
+}
+
+html,
+body,
+#root {
+  height: 100%;
+  overflow: hidden;
+}
+
+body {
+  margin: 0;
+  font-family: var(--font-sans);
+}
+
+.bg-brand-500 {
+  background-image: linear-gradient(-54deg, #2977a7 0%, #0e1d35 100%);
+}
+
+.bg-brand-500:hover {
+  filter: brightness(1.1);
+}
+
+@keyframes shimmer-text {
+  0% {
+    background-position: 150% 0;
+  }
+  100% {
+    background-position: -150% 0;
+  }
+}
+
+.animate-shimmer-text {
+  background-image: linear-gradient(
+    90deg,
+    #171717 0%,
+    #171717 40%,
+    var(--color-brand-400) 50%,
+    #171717 60%,
+    #171717 100%
+  );
+  background-size: 250% 100%;
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+  animation: shimmer-text 2.2s linear infinite;
+}

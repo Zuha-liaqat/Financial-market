@@ -1,0 +1,70 @@
+import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom'
+import LoginPage from './pages/LoginPage'
+import DashboardPage from './pages/DashboardPage'
+import CreatePostPage from './pages/CreatePostPage'
+import CreateBlogPage from './pages/CreateBlogPage'
+import ThemesPage from './pages/Theme'
+import LibraryPage from './pages/LibraryPage'
+import ApprovalQueuePage from './pages/ApprovalQueuePage'
+import EditContentPage from './pages/EditContentPage'
+import CalendarPage from './pages/CalendarPage'
+import PlannerPage from './pages/PlannerPage'
+import NotificationsPage from './pages/NotificationsPage'
+import PlaceholderPage from './pages/PlaceholderPage'
+import IntegrationsPage from './pages/IntegrationsPage'
+import CompaniesPage from './pages/superadmin/CompaniesPage'
+import SubscriptionsPage from './pages/superadmin/SubscriptionsPage'
+import DashboardLayout from './layouts/DashboardLayout'
+import RequireSuperAdmin from './components/RequireSuperAdmin'
+import RequireNotSuperAdmin from './components/RequireNotSuperAdmin'
+
+function App() {
+  return (
+    <BrowserRouter>
+      <Routes>
+        <Route path="/" element={<LoginPage />} />
+
+        <Route element={<DashboardLayout />}>
+          <Route
+            path="/dashboard"
+            element={<DashboardPage />}
+          />
+          <Route path="/create-post" element={<CreatePostPage />} />
+          <Route path="/create-blog" element={<CreateBlogPage />} />
+          <Route path="/themes" element={<ThemesPage />} />
+          <Route path="/library" element={<LibraryPage />} />
+          <Route path="/approval-queue" element={<ApprovalQueuePage />} />
+          <Route path="/approval-queue/:id/edit" element={<EditContentPage />} />
+          <Route path="/calendar" element={<CalendarPage />} />
+          <Route path="/planner" element={<PlannerPage />} />
+          <Route path="/notifications" element={<NotificationsPage />} />
+          <Route path="/integrations" element={<IntegrationsPage />} />
+          <Route
+            path="/super-admin/companies"
+            element={
+              <RequireSuperAdmin>
+                <CompaniesPage />
+              </RequireSuperAdmin>
+            }
+          />
+          <Route
+            path="/super-admin/subscriptions"
+            element={
+              <RequireNotSuperAdmin>
+                <SubscriptionsPage />
+              </RequireNotSuperAdmin>
+            }
+          />
+          <Route
+            path="/settings"
+            element={<PlaceholderPage title="Settings" />}
+          />
+        </Route>
+
+        <Route path="*" element={<Navigate to="/" replace />} />
+      </Routes>
+    </BrowserRouter>
+  )
+}
+
+export default App

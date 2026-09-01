@@ -1,4 +1,9 @@
 import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom'
+import HomePage from './pages/marketing/HomePage'
+import AboutPage from './pages/marketing/AboutPage'
+import ContactPage from './pages/marketing/ContactPage'
+import PricingPage from './pages/marketing/PricingPage'
+import ProductPage from './pages/marketing/ProductPage'
 import LoginPage from './pages/LoginPage'
 import DashboardPage from './pages/DashboardPage'
 import CreatePostPage from './pages/CreatePostPage'
@@ -22,7 +27,12 @@ function App() {
   return (
     <BrowserRouter>
       <Routes>
-        <Route path="/" element={<LoginPage />} />
+        <Route path="/" element={<HomePage />} />
+        <Route path="/login" element={<LoginPage />} />
+        <Route path="/about" element={<AboutPage />} />
+        <Route path="/contact" element={<ContactPage />} />
+        <Route path="/pricing" element={<PricingPage />} />
+        <Route path="/product/:slug" element={<ProductPage />} />
 
         <Route element={<DashboardLayout />}>
           <Route

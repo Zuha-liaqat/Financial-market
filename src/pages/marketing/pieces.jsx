@@ -39,18 +39,8 @@ export function PageBanner({ eyebrow, title, lead, stats, visual }) {
   )
 }
 
-export function MockCard({ title, children }) {
-  return (
-    <div className="mock-card">
-      <div className="mock-top">
-        <span className="mock-dot" style={{ background: '#FF5F57' }} />
-        <span className="mock-dot" style={{ background: '#FEBC2E' }} />
-        <span className="mock-dot" style={{ background: '#28C840' }} />
-        <span className="mtitle">{title}</span>
-      </div>
-      {children}
-    </div>
-  )
+export function MockCard({ children }) {
+  return <div className="mock-card">{children}</div>
 }
 
 export function FeatureCards({ kicker, title, lead, cards }) {

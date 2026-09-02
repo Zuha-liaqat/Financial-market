@@ -146,10 +146,10 @@ export default function HomePage() {
           </div>
 
           <div className="reveal reveal-d2" style={{ position: 'relative' }}>
-            <MockCard title="Dashboard — Overview">
+            <MockCard>
               <img
-                src="/product-screenshots/dashboard.png"
-                alt="Dashboard — Overview"
+                src="/product-screenshots/create-post.png"
+                alt="Create Post"
                 style={{ borderRadius: 10, border: '1px solid var(--line)', width: '100%' }}
               />
             </MockCard>

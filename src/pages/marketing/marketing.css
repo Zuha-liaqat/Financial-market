@@ -1,3 +1,4 @@
+@layer components {
 .fm-home {
   --bg: #F3F6FA;
   --card: #FFFFFF;
@@ -199,9 +200,6 @@
   background: #fff; border: 1px solid var(--line); border-radius: 20px; padding: 22px;
   box-shadow: var(--shadow-lg); position: relative; transition: transform 0.25s ease, box-shadow 0.25s ease;
 }
-.fm-home .mock-top { display: flex; align-items: center; gap: 8px; margin-bottom: 18px; }
-.fm-home .mock-dot { width: 9px; height: 9px; border-radius: 50%; }
-.fm-home .mock-top .mtitle { margin-left: 8px; font-size: 12px; font-weight: 600; color: var(--muted-2); }
 .fm-home .floaty {
   position: absolute; background: #fff; border-radius: 14px; padding: 13px 15px; box-shadow: var(--shadow-md);
   display: flex; align-items: center; gap: 10px; animation: fm-float 5s ease-in-out infinite; border: 1px solid var(--line);
@@ -470,4 +468,5 @@
   .fm-home .cards-grid, .fm-home .cards-grid.cols-4 { grid-template-columns: 1fr; }
   .fm-home .stats-row { gap: 24px; }
   .fm-home .foot-grid { grid-template-columns: 1fr; }
+}
 }

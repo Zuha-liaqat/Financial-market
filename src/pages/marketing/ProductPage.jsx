@@ -18,7 +18,7 @@ const VISUAL_TITLES = {
 
 function ScreenshotVisual({ slug }) {
   return (
-    <MockCard title={VISUAL_TITLES[slug]}>
+    <MockCard>
       <img
         src={`/product-screenshots/${slug}.png`}
         alt={VISUAL_TITLES[slug]}

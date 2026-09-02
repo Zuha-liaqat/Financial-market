@@ -1,13 +1,12 @@
 import { useState } from 'react'
 import { useNavigate, Link } from 'react-router-dom'
 import Logo from '../components/Logo'
-import { login, logout } from '../data/auth'
 
-export default function LoginPage() {
+export default function SignupPage() {
   const navigate = useNavigate()
   const [showPassword, setShowPassword] = useState(false)
-  const [remember, setRemember] = useState(false)
-  const [form, setForm] = useState({ email: '', password: '' })
+  const [showConfirmPassword, setShowConfirmPassword] = useState(false)
+  const [form, setForm] = useState({ name: '', email: '', password: '', confirmPassword: '' })
   const [submitting, setSubmitting] = useState(false)
 
   function handleChange(e) {
@@ -18,7 +17,6 @@ export default function LoginPage() {
   function handleSubmit(e) {
     e.preventDefault()
     setSubmitting(true)
-    login(form.email, form.password)
     setTimeout(() => {
       setSubmitting(false)
       navigate('/dashboard')
@@ -36,16 +34,9 @@ export default function LoginPage() {
         />
         <div className="absolute inset-0 bg-[linear-gradient(-54deg,#2977a7_0%,#0e1d35_100%)] opacity-70 mix-blend-multiply" />
         <div className="absolute inset-0 bg-linear-to-t from-black/80 via-black/20 to-black/50" />
-        {/* <div className="relative z-10 flex h-full flex-col justify-end p-12">
-          <h2 className="text-3xl font-bold text-white">Financial Market</h2>
-          <p className="mt-3 max-w-sm text-sm text-white/70">
-            Manage, review, and publish your investing &amp; education
-            content across every channel — from one place.
-          </p>
-        </div> */}
       </div>
 
-      {/* Right: login form */}
+      {/* Right: signup form */}
       <div className="flex w-full items-center justify-center px-6 lg:w-1/2">
         <div className="w-full max-w-sm">
           <div className="mb-8 flex flex-col items-center text-center">
@@ -55,10 +46,10 @@ export default function LoginPage() {
           <form onSubmit={handleSubmit} className="space-y-4">
             <div>
               <label
-                htmlFor="email"
+                htmlFor="name"
                 className="mb-1 block text-xs font-semibold tracking-wide text-neutral-500"
               >
-                EMAIL
+                FULL NAME
               </label>
               <div className="flex items-center gap-2 rounded-lg border border-neutral-200 bg-neutral-50 px-3 py-2.5 transition focus-within:border-black focus-within:bg-white focus-within:ring-2 focus-within:ring-black/10">
                 <svg
@@ -70,6 +61,40 @@ export default function LoginPage() {
                     fillRule="evenodd"
                     clipRule="evenodd"
                     d="M7.5 6a4.5 4.5 0 119 0 4.5 4.5 0 01-9 0zM3.751 20.105a8.25 8.25 0 0116.498 0 .75.75 0 01-.437.695A18.683 18.683 0 0112 22.5c-2.786 0-5.433-.608-7.812-1.7a.75.75 0 01-.437-.695z"
+                  />
+                </svg>
+                <input
+                  id="name"
+                  name="name"
+                  type="text"
+                  autoComplete="name"
+                  placeholder="Alex Morgan"
+                  value={form.name}
+                  onChange={handleChange}
+                  className="w-full bg-transparent text-sm outline-none placeholder:text-neutral-400"
+                />
+              </div>
+            </div>
+
+            <div>
+              <label
+                htmlFor="email"
+                className="mb-1 block text-xs font-semibold tracking-wide text-neutral-500"
+              >
+                EMAIL
+              </label>
+              <div className="flex items-center gap-2 rounded-lg border border-neutral-200 bg-neutral-50 px-3 py-2.5 transition focus-within:border-black focus-within:bg-white focus-within:ring-2 focus-within:ring-black/10">
+                <svg
+                  className="h-4 w-4 shrink-0 text-neutral-400"
+                  fill="none"
+                  viewBox="0 0 24 24"
+                  stroke="currentColor"
+                >
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    strokeWidth={1.75}
+                    d="M2.25 6.75c0-.828.672-1.5 1.5-1.5h16.5c.828 0 1.5.672 1.5 1.5v10.5a1.5 1.5 0 01-1.5 1.5H3.75a1.5 1.5 0 01-1.5-1.5V6.75zm1.5 0l8.25 6 8.25-6"
                   />
                 </svg>
                 <input
@@ -86,17 +111,12 @@ export default function LoginPage() {
             </div>
 
             <div>
-              <div className="mb-1 flex items-center justify-between">
-                <label
-                  htmlFor="password"
-                  className="block text-xs font-semibold tracking-wide text-neutral-500"
-                >
-                  PASSWORD
-                </label>
-                <a href="#" className="text-xs text-neutral-500 hover:text-black">
-                  FORGOT PASSWORD?
-                </a>
-              </div>
+              <label
+                htmlFor="password"
+                className="mb-1 block text-xs font-semibold tracking-wide text-neutral-500"
+              >
+                PASSWORD
+              </label>
               <div className="flex items-center gap-2 rounded-lg border border-neutral-200 bg-neutral-50 px-3 py-2.5 transition focus-within:border-black focus-within:bg-white focus-within:ring-2 focus-within:ring-black/10">
                 <svg
                   className="h-4 w-4 shrink-0 text-neutral-400"
@@ -115,7 +135,7 @@ export default function LoginPage() {
                   id="password"
                   name="password"
                   type={showPassword ? 'text' : 'password'}
-                  autoComplete="current-password"
+                  autoComplete="new-password"
                   placeholder="••••••••"
                   value={form.password}
                   onChange={handleChange}
@@ -156,15 +176,71 @@ export default function LoginPage() {
               </div>
             </div>
 
-            <label className="flex cursor-pointer items-center gap-2 text-sm text-neutral-600">
-              <input
-                type="checkbox"
-                checked={remember}
-                onChange={(e) => setRemember(e.target.checked)}
-                className="h-4 w-4 rounded border-neutral-300 accent-black"
-              />
-              Remember this device
-            </label>
+            <div>
+              <label
+                htmlFor="confirmPassword"
+                className="mb-1 block text-xs font-semibold tracking-wide text-neutral-500"
+              >
+                CONFIRM PASSWORD
+              </label>
+              <div className="flex items-center gap-2 rounded-lg border border-neutral-200 bg-neutral-50 px-3 py-2.5 transition focus-within:border-black focus-within:bg-white focus-within:ring-2 focus-within:ring-black/10">
+                <svg
+                  className="h-4 w-4 shrink-0 text-neutral-400"
+                  fill="none"
+                  viewBox="0 0 24 24"
+                  stroke="currentColor"
+                >
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    strokeWidth={1.75}
+                    d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 10-8 0v4h8z"
+                  />
+                </svg>
+                <input
+                  id="confirmPassword"
+                  name="confirmPassword"
+                  type={showConfirmPassword ? 'text' : 'password'}
+                  autoComplete="new-password"
+                  placeholder="••••••••"
+                  value={form.confirmPassword}
+                  onChange={handleChange}
+                  className="w-full bg-transparent text-sm outline-none placeholder:text-neutral-400"
+                />
+                <button
+                  type="button"
+                  onClick={() => setShowConfirmPassword((v) => !v)}
+                  aria-label={showConfirmPassword ? 'Show password' : 'Hide password'}
+                  className="shrink-0 text-neutral-400 hover:text-black"
+                >
+                  {showConfirmPassword ? (
+                    <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                      <path
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                        strokeWidth={1.75}
+                        d="M2.036 12.322a1.012 1.012 0 010-.639C3.423 7.51 7.36 4.5 12 4.5c4.638 0 8.573 3.007 9.963 7.178.07.207.07.431 0 .639C20.577 16.49 16.64 19.5 12 19.5c-4.638 0-8.573-3.007-9.963-7.178z"
+                      />
+                      <path
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                        strokeWidth={1.75}
+                        d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"
+                      />
+                    </svg>
+                  ) : (
+                    <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                      <path
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                        strokeWidth={1.75}
+                        d="M3.98 8.223A10.477 10.477 0 001.934 12C3.226 16.338 7.244 19.5 12 19.5c.993 0 1.953-.138 2.863-.395M6.228 6.228A10.45 10.45 0 0112 4.5c4.756 0 8.774 3.162 10.065 7.498a10.523 10.523 0 01-4.293 5.774M6.228 6.228L3 3m3.228 3.228l3.65 3.65m7.894 7.894L21 21m-3.228-3.228l-3.65-3.65m0 0a3 3 0 10-4.243-4.243m4.242 4.242L9.88 9.88"
+                      />
+                    </svg>
+                  )}
+                </button>
+              </div>
+            </div>
 
             <button
               type="submit"
@@ -177,7 +253,7 @@ export default function LoginPage() {
                   <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v4a4 4 0 00-4 4H4z" />
                 </svg>
               )}
-              {submitting ? 'SIGNING IN…' : 'SIGN IN'}
+              {submitting ? 'CREATING ACCOUNT…' : 'CREATE ACCOUNT'}
             </button>
           </form>
 
@@ -191,10 +267,7 @@ export default function LoginPage() {
 
           <button
             type="button"
-            onClick={() => {
-              logout()
-              navigate('/dashboard')
-            }}
+            onClick={() => navigate('/dashboard')}
             className="flex w-full items-center justify-center gap-2 rounded-lg border border-neutral-200 py-2.5 text-sm font-medium text-neutral-700 shadow-sm transition hover:border-neutral-300 hover:bg-neutral-50 hover:shadow"
           >
             <svg className="h-4 w-4" viewBox="0 0 24 24">
@@ -215,13 +288,13 @@ export default function LoginPage() {
                 d="M12 4.75c1.77 0 3.35.61 4.6 1.8l3.44-3.44C17.94 1.19 15.24 0 12 0 7.31 0 3.26 2.69 1.3 6.58l4.01 3.09C6.25 6.85 8.89 4.75 12 4.75z"
               />
             </svg>
-            Sign in with Google
+            Sign up with Google
           </button>
 
           <p className="mt-6 text-center text-sm text-neutral-500">
-            Don't have an account?{' '}
-            <Link to="/signup" className="font-medium text-black hover:underline">
-              Sign up
+            Already have an account?{' '}
+            <Link to="/login" className="font-medium text-black hover:underline">
+              Sign in
             </Link>
           </p>
         </div>

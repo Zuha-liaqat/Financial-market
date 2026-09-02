@@ -5,6 +5,7 @@ import ContactPage from './pages/marketing/ContactPage'
 import PricingPage from './pages/marketing/PricingPage'
 import ProductPage from './pages/marketing/ProductPage'
 import LoginPage from './pages/LoginPage'
+import SignupPage from './pages/SignupPage'
 import DashboardPage from './pages/DashboardPage'
 import CreatePostPage from './pages/CreatePostPage'
 import CreateBlogPage from './pages/CreateBlogPage'
@@ -15,7 +16,7 @@ import EditContentPage from './pages/EditContentPage'
 import CalendarPage from './pages/CalendarPage'
 import PlannerPage from './pages/PlannerPage'
 import NotificationsPage from './pages/NotificationsPage'
-import PlaceholderPage from './pages/PlaceholderPage'
+import SettingsPage from './pages/SettingsPage'
 import IntegrationsPage from './pages/IntegrationsPage'
 import CompaniesPage from './pages/superadmin/CompaniesPage'
 import SubscriptionsPage from './pages/superadmin/SubscriptionsPage'
@@ -29,6 +30,7 @@ function App() {
       <Routes>
         <Route path="/" element={<HomePage />} />
         <Route path="/login" element={<LoginPage />} />
+        <Route path="/signup" element={<SignupPage />} />
         <Route path="/about" element={<AboutPage />} />
         <Route path="/contact" element={<ContactPage />} />
         <Route path="/pricing" element={<PricingPage />} />
@@ -65,10 +67,7 @@ function App() {
               </RequireNotSuperAdmin>
             }
           />
-          <Route
-            path="/settings"
-            element={<PlaceholderPage title="Settings" />}
-          />
+          <Route path="/settings" element={<SettingsPage />} />
         </Route>
 
         <Route path="*" element={<Navigate to="/" replace />} />

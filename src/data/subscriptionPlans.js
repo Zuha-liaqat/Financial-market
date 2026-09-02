@@ -78,3 +78,13 @@ export const subscriptionPlans = [
 export function getPlanByName(name) {
   return subscriptionPlans.find((p) => p.name === name)
 }
+
+const ACTIVE_PLAN_KEY = 'active_subscription_plan_id'
+
+export function getActivePlanId() {
+  return localStorage.getItem(ACTIVE_PLAN_KEY)
+}
+
+export function setActivePlanId(id) {
+  localStorage.setItem(ACTIVE_PLAN_KEY, id)
+}

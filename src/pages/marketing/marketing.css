@@ -148,6 +148,8 @@
   line-height: 1.16; margin-bottom: 14px;
 }
 .fm-home .sec-head p { color: var(--muted); font-size: 16px; line-height: 1.65; margin: 0; }
+.fm-home h2.sec-title.faq-title { font-size: clamp(24px, 2.6vw, 30px); }
+.fm-home .kicker.faq-kicker { font-size: 18px; letter-spacing: 0.1em; }
 
 /* hero / page banner */
 .fm-home .hero, .fm-home .page-banner { padding: 44px 0 20px; position: relative; overflow: hidden; }

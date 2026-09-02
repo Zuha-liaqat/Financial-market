@@ -112,11 +112,11 @@ export default function HomePage() {
               <span className="dot" /> TERM OF THE DAY — DIVIDEND YIELD
             </div>
             <h1 className="headline reveal reveal-d1">
-              The content studio for financial educators who publish <em>daily</em>.
+              <em>Never</em> Miss A Post Again
             </h1>
             <p className="lead reveal reveal-d2">
-              Plan a lesson, draft it for every platform, route it through review, and watch it go out on
-              schedule — LinkedIn, Instagram and X, from one dashboard.
+              From idea to published post in minutes: let AI draft it, approve it in a click — and watch it
+              publish itself across LinkedIn, Instagram and X, right on schedule.
             </p>
             <div className="hero-ctas reveal reveal-d3">
               <Link to="/pricing" className="btn btn-primary">

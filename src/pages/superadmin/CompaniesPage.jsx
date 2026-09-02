@@ -1,7 +1,17 @@
 import { useEffect, useMemo, useRef, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import ConfirmDialog from '../../components/ConfirmDialog'
-import { deleteCompany, getAllCompanies } from '../../data/companies'
+import CreateCompanyModal from '../../components/CreateCompanyModal'
+import {
+  addCompanies,
+  addCompany,
+  avatarColors,
+  deleteCompany,
+  generateCompanyId,
+  getAllCompanies,
+  nextAvatarColor,
+} from '../../data/companies'
+import { apiCreateUser, apiListUsers } from '../../lib/api'
 
 const statusStyles = {
   Active: 'bg-emerald-50 text-emerald-600 ring-1 ring-emerald-200',
@@ -13,13 +23,6 @@ const statusDotColor = {
   Active: 'bg-emerald-500',
   Trial: 'bg-amber-500',
   Suspended: 'bg-red-500',
-}
-
-const planStyles = {
-  Free: 'bg-neutral-100 text-neutral-600',
-  Pro: 'bg-brand-100 text-brand-700',
-  Plus: 'bg-violet-100 text-violet-700',
-  'Top Tier': 'bg-fuchsia-100 text-fuchsia-700',
 }
 
 function formatDate(isoString) {
@@ -127,12 +130,54 @@ export default function CompaniesPage() {
   const [statusFilter, setStatusFilter] = useState('all')
   const [deleteTarget, setDeleteTarget] = useState(null)
   const [deleting, setDeleting] = useState(false)
+  const [showCreateModal, setShowCreateModal] = useState(false)
 
   const loadCompanies = () => setCompanies(getAllCompanies())
 
   useEffect(() => {
     loadCompanies()
+    syncCompaniesFromApi()
   }, [])
+
+  async function syncCompaniesFromApi() {
+    try {
+      const users = await apiListUsers()
+      const existing = getAllCompanies()
+      const existingApiIds = new Set(existing.map((c) => c.apiUserId).filter(Boolean))
+      const existingEmails = new Set(existing.map((c) => c.email).filter(Boolean))
+
+      const usersToAdd = (users || []).filter(
+        (u) => !u.is_superuser && u.role !== 'superadmin' && !existingApiIds.has(u.id) && !existingEmails.has(u.email),
+      )
+      if (!usersToAdd.length) return
+
+      let idNum = existing.reduce((max, c) => {
+        const n = parseInt(String(c.id).replace('CMP-', ''), 10)
+        return Number.isNaN(n) ? max : Math.max(max, n)
+      }, 1000)
+
+      const newCompanies = usersToAdd.map((u, idx) => {
+        idNum += 1
+        return {
+          id: `CMP-${idNum}`,
+          name: u.full_name || u.email,
+          plan: 'Free',
+          status: u.is_active ? 'Active' : 'Suspended',
+          role: u.role || 'user',
+          joinedDate: u.created_at || new Date().toISOString(),
+          avatarColor: avatarColors[(existing.length + idx) % avatarColors.length],
+          billingHistory: [],
+          email: u.email,
+          apiUserId: u.id,
+        }
+      })
+
+      addCompanies(newCompanies)
+      loadCompanies()
+    } catch (err) {
+      console.error('Failed to sync companies from API', err)
+    }
+  }
 
   function confirmDelete() {
     setDeleting(true)
@@ -140,6 +185,32 @@ export default function CompaniesPage() {
     loadCompanies()
     setDeleteTarget(null)
     setDeleting(false)
+  }
+
+  async function handleCreateCompany({ name, email, password, isActive }) {
+    const apiUser = await apiCreateUser({
+      email,
+      full_name: name,
+      role: 'user',
+      is_active: isActive,
+      password,
+    })
+
+    addCompany({
+      id: generateCompanyId(),
+      name,
+      plan: 'Free',
+      status: isActive ? 'Active' : 'Suspended',
+      role: apiUser?.role || 'user',
+      joinedDate: apiUser?.created_at || new Date().toISOString(),
+      avatarColor: nextAvatarColor(),
+      billingHistory: [],
+      email,
+      apiUserId: apiUser?.id,
+    })
+
+    loadCompanies()
+    setShowCreateModal(false)
   }
 
   const filtered = useMemo(() => {
@@ -209,7 +280,8 @@ export default function CompaniesPage() {
         />
       </div>
 
-      <div className="flex flex-wrap items-center gap-3">
+      <div className="flex flex-wrap items-center justify-between gap-3">
+        <div className="flex flex-wrap items-center gap-3">
         <div className="relative w-56">
           <svg
             className="pointer-events-none absolute left-2.5 top-1/2 h-3.5 w-3.5 -translate-y-1/2 text-neutral-400"
@@ -250,6 +322,18 @@ export default function CompaniesPage() {
             )
           })}
         </div>
+        </div>
+
+        <button
+          type="button"
+          onClick={() => setShowCreateModal(true)}
+          className="flex shrink-0 items-center gap-2 rounded-lg bg-brand-500 px-4 py-2 text-sm font-semibold text-white shadow-sm transition hover:bg-brand-600 hover:shadow-md"
+        >
+          <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4.5v15m7.5-7.5h-15" />
+          </svg>
+          Create Company
+        </button>
       </div>
 
       <div className="rounded-lg border border-neutral-200 bg-white shadow-sm">
@@ -257,10 +341,10 @@ export default function CompaniesPage() {
           <table className="w-full min-w-[720px] table-fixed text-left text-sm">
             <thead>
               <tr className="border-b border-neutral-200 bg-neutral-50 text-[10px] font-semibold tracking-widest text-neutral-400">
-                <th className="w-[34%] rounded-tl-lg px-4 py-3.5">COMPANY</th>
-                <th className="w-[15%] px-3 py-3.5">PLAN</th>
-                <th className="w-[15%] px-3 py-3.5">STATUS</th>
-                <th className="w-[12%] px-3 py-3.5">USERS</th>
+                <th className="w-[28%] rounded-tl-lg px-4 py-3.5">COMPANY</th>
+                <th className="w-[22%] px-3 py-3.5">EMAIL</th>
+                <th className="w-[14%] px-3 py-3.5">STATUS</th>
+                <th className="w-[12%] px-3 py-3.5">ROLE</th>
                 <th className="w-[18%] px-3 py-3.5">JOINED</th>
                 <th className="w-16 rounded-tr-lg px-3 py-3.5 text-right">ACTIONS</th>
               </tr>
@@ -280,15 +364,10 @@ export default function CompaniesPage() {
                       </div>
                       <div className="min-w-0">
                         <p className="truncate font-medium text-black">{company.name}</p>
-                        <p className="truncate text-xs text-neutral-400">{company.id}</p>
                       </div>
                     </div>
                   </td>
-                  <td className="px-3 py-3.5">
-                    <span className={`rounded-full px-2.5 py-1 text-xs font-semibold ${planStyles[company.plan]}`}>
-                      {company.plan}
-                    </span>
-                  </td>
+                  <td className="truncate px-3 py-3.5 text-neutral-500">{company.email || '—'}</td>
                   <td className="px-3 py-3.5">
                     <span
                       className={`inline-flex items-center gap-1.5 rounded-full px-2.5 py-1 text-[10px] font-semibold tracking-wide ${statusStyles[company.status]}`}
@@ -297,7 +376,7 @@ export default function CompaniesPage() {
                       {company.status}
                     </span>
                   </td>
-                  <td className="px-3 py-3.5 text-neutral-600">{company.usersCount}</td>
+                  <td className="px-3 py-3.5 capitalize text-neutral-600">{company.role || 'user'}</td>
                   <td className="px-3 py-3.5 whitespace-nowrap text-neutral-500">{formatDate(company.joinedDate)}</td>
                   <td className="px-3 py-3.5 text-right">
                     <ActionsMenu
@@ -324,6 +403,13 @@ export default function CompaniesPage() {
           confirming={deleting}
           onCancel={() => setDeleteTarget(null)}
           onConfirm={confirmDelete}
+        />
+      )}
+
+      {showCreateModal && (
+        <CreateCompanyModal
+          onClose={() => setShowCreateModal(false)}
+          onCreate={handleCreateCompany}
         />
       )}
     </div>

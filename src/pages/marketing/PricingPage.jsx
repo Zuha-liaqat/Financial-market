@@ -193,10 +193,10 @@ export default function PricingPage() {
       <section>
         <div className="wrap">
           <div className="sec-head reveal">
-            <span className="kicker">
-              <span className="dot" /> FAQ
+            <span className="kicker faq-kicker">
+              <span className="dot " /> FAQ
             </span>
-            <h2 className="sec-title">Questions, answered</h2>
+            <h2 className="sec-title faq-title">Questions, answered</h2>
           </div>
           <div className="faq-list reveal">
             {FAQS.map((f, i) => {

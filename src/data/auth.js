@@ -14,6 +14,10 @@ export function isSuperAdmin() {
   return localStorage.getItem(STORAGE_KEY) === 'true'
 }
 
+export function setSuperAdminStatus(isAdmin) {
+  localStorage.setItem(STORAGE_KEY, isAdmin ? 'true' : 'false')
+}
+
 export function logout() {
   localStorage.removeItem(STORAGE_KEY)
 }

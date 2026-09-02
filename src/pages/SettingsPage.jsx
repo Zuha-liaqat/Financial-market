@@ -1,4 +1,5 @@
-import { useRef, useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
+import { apiGetCurrentUser } from '../lib/api'
 
 function EyeButton({ show, onClick }) {
   return (
@@ -37,27 +38,19 @@ function EyeButton({ show, onClick }) {
   )
 }
 
-function PasswordField({ id, label, value, onChange, show, onToggleShow, autoComplete }) {
+function PasswordField({ id, label, required, placeholder, value, onChange, show, onToggleShow, autoComplete }) {
   return (
     <div>
       <label htmlFor={id} className="mb-1 block text-xs font-semibold tracking-wide text-neutral-500">
-        {label}
+        {label} {required && <span className="text-brand-500">*</span>}
       </label>
       <div className="flex items-center gap-2 rounded-lg border border-neutral-200 bg-neutral-50 px-3 py-2.5 transition focus-within:border-brand-500 focus-within:bg-white focus-within:ring-2 focus-within:ring-brand-500/20">
-        <svg className="h-4 w-4 shrink-0 text-neutral-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-          <path
-            strokeLinecap="round"
-            strokeLinejoin="round"
-            strokeWidth={1.75}
-            d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 10-8 0v4h8z"
-          />
-        </svg>
         <input
           id={id}
           name={id}
           type={show ? 'text' : 'password'}
           autoComplete={autoComplete}
-          placeholder="••••••••"
+          placeholder={placeholder}
           value={value}
           onChange={onChange}
           className="w-full bg-transparent text-sm outline-none placeholder:text-neutral-400"
@@ -71,10 +64,25 @@ function PasswordField({ id, label, value, onChange, show, onToggleShow, autoCom
 export default function SettingsPage() {
   const fileInputRef = useRef(null)
   const [avatarUrl, setAvatarUrl] = useState(null)
-  const [name, setName] = useState('Alex Martinez')
-  const [email, setEmail] = useState('alex@demo.com')
+  const [firstName, setFirstName] = useState('')
+  const [lastName, setLastName] = useState('')
+  const [email, setEmail] = useState('')
+  const [initialProfile, setInitialProfile] = useState({ firstName: '', lastName: '', email: '' })
   const [savingProfile, setSavingProfile] = useState(false)
   const [profileSaved, setProfileSaved] = useState(false)
+
+  useEffect(() => {
+    apiGetCurrentUser()
+      .then((me) => {
+        const [fn, ...rest] = (me.full_name || '').trim().split(/\s+/)
+        const ln = rest.join(' ')
+        setFirstName(fn || '')
+        setLastName(ln)
+        setEmail(me.email || '')
+        setInitialProfile({ firstName: fn || '', lastName: ln, email: me.email || '' })
+      })
+      .catch(() => {})
+  }, [])
 
   const [currentPassword, setCurrentPassword] = useState('')
   const [newPassword, setNewPassword] = useState('')
@@ -86,7 +94,8 @@ export default function SettingsPage() {
   const [passwordSaved, setPasswordSaved] = useState(false)
   const [passwordError, setPasswordError] = useState('')
 
-  const initials = name
+  const fullName = `${firstName} ${lastName}`.trim()
+  const initials = fullName
     .split(' ')
     .filter(Boolean)
     .map((part) => part[0])
@@ -110,6 +119,13 @@ export default function SettingsPage() {
       setSavingProfile(false)
       setProfileSaved(true)
     }, 600)
+  }
+
+  function handleProfileReset() {
+    setFirstName(initialProfile.firstName)
+    setLastName(initialProfile.lastName)
+    setEmail(initialProfile.email)
+    setProfileSaved(false)
   }
 
   function handlePasswordSubmit(e) {
@@ -136,28 +152,28 @@ export default function SettingsPage() {
     }, 600)
   }
 
+  function handlePasswordReset() {
+    setCurrentPassword('')
+    setNewPassword('')
+    setConfirmPassword('')
+    setPasswordError('')
+    setPasswordSaved(false)
+  }
+
   return (
     <div className="mx-auto max-w-2xl space-y-6">
-      {/* Profile */}
-      <form
-        onSubmit={handleProfileSubmit}
-        className="rounded-lg border border-neutral-200 bg-white p-4 shadow-sm sm:p-6"
-      >
-        <h2 className="text-sm font-semibold text-black">Profile</h2>
-        <p className="mt-1 text-xs text-neutral-400">
-          Update your photo and personal details.
-        </p>
-
-        <div className="mt-5 flex items-center gap-4">
-          <div className="relative h-16 w-16 shrink-0">
+      {/* Profile summary */}
+      <div className="rounded-lg border border-neutral-200 bg-white p-4 shadow-sm sm:p-6">
+        <div className="flex flex-wrap items-center gap-4">
+          <div className="relative h-20 w-20 shrink-0">
             {avatarUrl ? (
               <img
                 src={avatarUrl}
                 alt="Profile"
-                className="h-16 w-16 rounded-full object-cover ring-2 ring-white shadow-sm"
+                className="h-20 w-20 rounded-full object-cover ring-2 ring-white shadow-sm"
               />
             ) : (
-              <div className="flex h-16 w-16 items-center justify-center rounded-full bg-gradient-to-br from-brand-400 to-brand-600 text-lg font-semibold text-white ring-2 ring-white shadow-sm">
+              <div className="flex h-20 w-20 items-center justify-center rounded-full bg-linear-to-br from-brand-400 to-brand-600 text-xl font-semibold text-white ring-2 ring-white shadow-sm">
                 {initials || 'A'}
               </div>
             )}
@@ -165,26 +181,26 @@ export default function SettingsPage() {
               type="button"
               onClick={() => fileInputRef.current?.click()}
               aria-label="Change profile photo"
-              className="absolute -bottom-1 -right-1 flex h-7 w-7 items-center justify-center rounded-full bg-linear-to-br from-sky-400 via-blue-500 to-violet-600 p-0.5 shadow-md ring-2 ring-white transition hover:shadow-lg hover:brightness-110"
+              className="absolute -bottom-0.5 -right-0.5 flex h-7 w-7 items-center justify-center rounded-full bg-linear-to-br from-sky-400 via-blue-500 to-violet-600 p-0.5 shadow-md ring-2 ring-white transition hover:shadow-lg hover:brightness-110"
             >
               <span className="flex h-full w-full items-center justify-center rounded-full bg-white">
-              <svg className="h-3.5 w-3.5" fill="none" viewBox="0 0 24 24">
-                <defs>
-                  <linearGradient id="camera-icon-gradient" x1="1" y1="4" x2="23" y2="21" gradientUnits="userSpaceOnUse">
-                    <stop offset="0%" stopColor="#38bdf8" />
-                    <stop offset="50%" stopColor="#3b82f6" />
-                    <stop offset="100%" stopColor="#7c3aed" />
-                  </linearGradient>
-                </defs>
-                <path
-                  stroke="url(#camera-icon-gradient)"
-                  strokeWidth={2}
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  d="M23 19a2 2 0 01-2 2H3a2 2 0 01-2-2V8a2 2 0 012-2h4l2-3h6l2 3h4a2 2 0 012 2v11z"
-                />
-                <circle cx="12" cy="13" r="4" stroke="url(#camera-icon-gradient)" strokeWidth={2} />
-              </svg>
+                <svg className="h-3.5 w-3.5" fill="none" viewBox="0 0 24 24">
+                  <defs>
+                    <linearGradient id="camera-icon-gradient" x1="1" y1="4" x2="23" y2="21" gradientUnits="userSpaceOnUse">
+                      <stop offset="0%" stopColor="#38bdf8" />
+                      <stop offset="50%" stopColor="#3b82f6" />
+                      <stop offset="100%" stopColor="#7c3aed" />
+                    </linearGradient>
+                  </defs>
+                  <path
+                    stroke="url(#camera-icon-gradient)"
+                    strokeWidth={2}
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    d="M23 19a2 2 0 01-2 2H3a2 2 0 01-2-2V8a2 2 0 012-2h4l2-3h6l2 3h4a2 2 0 012 2v11z"
+                  />
+                  <circle cx="12" cy="13" r="4" stroke="url(#camera-icon-gradient)" strokeWidth={2} />
+                </svg>
               </span>
             </button>
             <input
@@ -195,43 +211,65 @@ export default function SettingsPage() {
               className="hidden"
             />
           </div>
-          <div>
-            <button
-              type="button"
-              onClick={() => fileInputRef.current?.click()}
-              className="rounded-md px-3 py-1.5 text-xs font-semibold text-brand-600 ring-1 ring-brand-200 transition hover:bg-brand-50"
-            >
-              Change Photo
-            </button>
-            <p className="mt-1.5 text-[11px] text-neutral-400">JPG, PNG or GIF. Max 2MB.</p>
+
+          <div className="min-w-0">
+            <h2 className="truncate text-lg font-semibold text-black sm:text-xl">{fullName || 'Your Name'}</h2>
+            <p className="mt-0.5 flex items-center gap-1.5 text-sm text-neutral-500">
+              <svg className="h-4 w-4 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  strokeWidth={1.75}
+                  d="M21.75 6.75v10.5a2.25 2.25 0 01-2.25 2.25h-15a2.25 2.25 0 01-2.25-2.25V6.75m19.5 0A2.25 2.25 0 0019.5 4.5h-15a2.25 2.25 0 00-2.25 2.25m19.5 0v.243a2.25 2.25 0 01-1.07 1.916l-7.5 4.615a2.25 2.25 0 01-2.36 0L3.32 8.91a2.25 2.25 0 01-1.07-1.916V6.75"
+                />
+              </svg>
+              {email}
+            </p>
           </div>
+        </div>
+      </div>
+
+      {/* Personal Information */}
+      <form
+        onSubmit={handleProfileSubmit}
+        className="rounded-lg border border-neutral-200 bg-white p-4 shadow-sm sm:p-6"
+      >
+        <div className="flex items-center gap-2">
+          <svg className="h-5 w-5 text-brand-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path
+              strokeLinecap="round"
+              strokeLinejoin="round"
+              strokeWidth={1.75}
+              d="M17.982 18.725A7.488 7.488 0 0012 15.75a7.488 7.488 0 00-5.982 2.975m11.963 0a9 9 0 10-11.963 0m11.963 0A8.966 8.966 0 0112 21a8.966 8.966 0 01-5.982-2.275M15 9.75a3 3 0 11-6 0 3 3 0 016 0z"
+            />
+          </svg>
+          <h3 className="text-xs font-semibold tracking-widest text-neutral-500">PERSONAL INFORMATION</h3>
         </div>
 
         <div className="mt-5 grid grid-cols-1 gap-4 sm:grid-cols-2">
           <div>
-            <label htmlFor="name" className="mb-1 block text-xs font-semibold tracking-wide text-neutral-500">
-              FULL NAME
+            <label htmlFor="firstName" className="mb-1 block text-xs font-semibold tracking-wide text-neutral-500">
+              FIRST NAME <span className="text-brand-500">*</span>
             </label>
             <input
-              id="name"
-              value={name}
+              id="firstName"
+              value={firstName}
               onChange={(e) => {
-                setName(e.target.value)
+                setFirstName(e.target.value)
                 setProfileSaved(false)
               }}
               className="w-full rounded-lg border border-neutral-200 bg-neutral-50 px-3 py-2.5 text-sm outline-none placeholder:text-neutral-400 focus:border-brand-500 focus:bg-white focus:ring-2 focus:ring-brand-500/20"
             />
           </div>
           <div>
-            <label htmlFor="email" className="mb-1 block text-xs font-semibold tracking-wide text-neutral-500">
-              EMAIL
+            <label htmlFor="lastName" className="mb-1 block text-xs font-semibold tracking-wide text-neutral-500">
+              LAST NAME <span className="text-brand-500">*</span>
             </label>
             <input
-              id="email"
-              type="email"
-              value={email}
+              id="lastName"
+              value={lastName}
               onChange={(e) => {
-                setEmail(e.target.value)
+                setLastName(e.target.value)
                 setProfileSaved(false)
               }}
               className="w-full rounded-lg border border-neutral-200 bg-neutral-50 px-3 py-2.5 text-sm outline-none placeholder:text-neutral-400 focus:border-brand-500 focus:bg-white focus:ring-2 focus:ring-brand-500/20"
@@ -239,7 +277,38 @@ export default function SettingsPage() {
           </div>
         </div>
 
-        <div className="mt-5 flex items-center gap-3">
+        <div className="mt-4">
+          <label htmlFor="email" className="mb-1 block text-xs font-semibold tracking-wide text-neutral-500">
+            EMAIL
+          </label>
+          <input
+            id="email"
+            type="email"
+            value={email}
+            disabled
+            className="w-full cursor-not-allowed rounded-lg border border-neutral-200 bg-neutral-100 px-3 py-2.5 text-sm text-neutral-500 outline-none"
+          />
+          <p className="mt-1.5 text-[11px] text-neutral-400">
+            Contact an administrator to change your email address.
+          </p>
+        </div>
+
+        <div className="mt-6 flex items-center justify-end gap-4 border-t border-neutral-100 pt-4">
+          {profileSaved && (
+            <span className="flex items-center gap-1 text-xs font-medium text-emerald-600">
+              <svg className="h-3.5 w-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4.5 12.75l6 6 9-13.5" />
+              </svg>
+              Profile updated
+            </span>
+          )}
+          <button
+            type="button"
+            onClick={handleProfileReset}
+            className="text-sm font-medium text-neutral-500 transition hover:text-black"
+          >
+            Reset
+          </button>
           <button
             type="submit"
             disabled={savingProfile}
@@ -253,40 +322,46 @@ export default function SettingsPage() {
             )}
             {savingProfile ? 'SAVING…' : 'SAVE CHANGES'}
           </button>
-          {profileSaved && (
-            <span className="flex items-center gap-1 text-xs font-medium text-emerald-600">
-              <svg className="h-3.5 w-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4.5 12.75l6 6 9-13.5" />
-              </svg>
-              Profile updated
-            </span>
-          )}
         </div>
       </form>
 
-      {/* Update Password */}
+      {/* Reset Password */}
       <form
         onSubmit={handlePasswordSubmit}
         className="rounded-lg border border-neutral-200 bg-white p-4 shadow-sm sm:p-6"
       >
-        <h2 className="text-sm font-semibold text-black">Update Password</h2>
-        <p className="mt-1 text-xs text-neutral-400">
-          Choose a strong password you don't use elsewhere.
-        </p>
+        <div className="flex items-center gap-2">
+          <svg className="h-5 w-5 text-brand-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path
+              strokeLinecap="round"
+              strokeLinejoin="round"
+              strokeWidth={1.75}
+              d="M15.75 5.25a3 3 0 013 3m3 0a6 6 0 01-7.029 5.912c-.563-.097-1.159.026-1.563.43L10.5 17.25H8.25v2.25H6v2.25H2.25v-2.818c0-.597.237-1.17.659-1.591l6.499-6.499c.404-.404.527-1 .43-1.563A6 6 0 1121.75 8.25z"
+            />
+          </svg>
+          <h3 className="text-xs font-semibold tracking-widest text-neutral-500">RESET PASSWORD</h3>
+        </div>
 
-        <div className="mt-5 space-y-4">
+        <div className="mt-5">
           <PasswordField
             id="currentPassword"
-            label="CURRENT PASSWORD"
+            label="OLD PASSWORD"
+            required
+            placeholder="Enter old password"
             value={currentPassword}
             onChange={(e) => setCurrentPassword(e.target.value)}
             show={showCurrent}
             onToggleShow={() => setShowCurrent((v) => !v)}
             autoComplete="current-password"
           />
+        </div>
+
+        <div className="mt-4 grid grid-cols-1 gap-4 sm:grid-cols-2">
           <PasswordField
             id="newPassword"
             label="NEW PASSWORD"
+            required
+            placeholder="Minimum 8 characters"
             value={newPassword}
             onChange={(e) => setNewPassword(e.target.value)}
             show={showNew}
@@ -295,7 +370,9 @@ export default function SettingsPage() {
           />
           <PasswordField
             id="confirmNewPassword"
-            label="CONFIRM NEW PASSWORD"
+            label="CONFIRM PASSWORD"
+            required
+            placeholder="Confirm password"
             value={confirmPassword}
             onChange={(e) => setConfirmPassword(e.target.value)}
             show={showConfirm}
@@ -308,7 +385,22 @@ export default function SettingsPage() {
           <p className="mt-3 text-xs font-medium text-red-600">{passwordError}</p>
         )}
 
-        <div className="mt-5 flex items-center gap-3">
+        <div className="mt-6 flex items-center justify-end gap-4 border-t border-neutral-100 pt-4">
+          {passwordSaved && (
+            <span className="flex items-center gap-1 text-xs font-medium text-emerald-600">
+              <svg className="h-3.5 w-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4.5 12.75l6 6 9-13.5" />
+              </svg>
+              Password updated
+            </span>
+          )}
+          <button
+            type="button"
+            onClick={handlePasswordReset}
+            className="text-sm font-medium text-neutral-500 transition hover:text-black"
+          >
+            Reset
+          </button>
           <button
             type="submit"
             disabled={savingPassword}
@@ -322,14 +414,6 @@ export default function SettingsPage() {
             )}
             {savingPassword ? 'UPDATING…' : 'UPDATE PASSWORD'}
           </button>
-          {passwordSaved && (
-            <span className="flex items-center gap-1 text-xs font-medium text-emerald-600">
-              <svg className="h-3.5 w-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4.5 12.75l6 6 9-13.5" />
-              </svg>
-              Password updated
-            </span>
-          )}
         </div>
       </form>
     </div>

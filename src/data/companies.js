@@ -1,5 +1,5 @@
 const STORAGE_KEY = 'app_companies'
-const SEED_VERSION = 3
+const SEED_VERSION = 4
 
 const avatarColors = [
   'bg-gradient-to-br from-sky-400 to-brand-600',
@@ -9,68 +9,7 @@ const avatarColors = [
   'bg-gradient-to-br from-rose-400 to-pink-600',
 ]
 
-const defaultCompanies = [
-  {
-    id: 'CMP-1001',
-    name: 'Aurora Media Group',
-    plan: 'Top Tier',
-    status: 'Active',
-    usersCount: 24,
-    joinedDate: '2025-02-14',
-    avatarColor: avatarColors[0],
-    billingHistory: [
-      { id: 'INV-3001', date: '2026-08-01', amount: 299, status: 'Paid' },
-      { id: 'INV-2988', date: '2026-07-01', amount: 299, status: 'Paid' },
-      { id: 'INV-2971', date: '2026-06-01', amount: 299, status: 'Paid' },
-    ],
-  },
-  {
-    id: 'CMP-1002',
-    name: 'BVB Financial Market',
-    plan: 'Pro',
-    status: 'Active',
-    usersCount: 9,
-    joinedDate: '2025-05-02',
-    avatarColor: avatarColors[1],
-    billingHistory: [
-      { id: 'INV-3050', date: '2026-08-05', amount: 49, status: 'Paid' },
-      { id: 'INV-3012', date: '2026-07-05', amount: 49, status: 'Paid' },
-    ],
-  },
-  {
-    id: 'CMP-1003',
-    name: 'Northwind Robotics',
-    plan: 'Pro',
-    status: 'Trial',
-    usersCount: 3,
-    joinedDate: '2026-07-20',
-    avatarColor: avatarColors[2],
-    billingHistory: [],
-  },
-  {
-    id: 'CMP-1004',
-    name: 'Investment Academy',
-    plan: 'Free',
-    status: 'Active',
-    usersCount: 2,
-    joinedDate: '2026-01-11',
-    avatarColor: avatarColors[3],
-    billingHistory: [],
-  },
-  {
-    id: 'CMP-1005',
-    name: 'Crypto Market Update',
-    plan: 'Top Tier',
-    status: 'Suspended',
-    usersCount: 15,
-    joinedDate: '2024-11-30',
-    avatarColor: avatarColors[4],
-    billingHistory: [
-      { id: 'INV-2890', date: '2026-05-01', amount: 299, status: 'Failed' },
-      { id: 'INV-2855', date: '2026-04-01', amount: 299, status: 'Paid' },
-    ],
-  },
-]
+const defaultCompanies = []
 
 function load() {
   try {
@@ -109,3 +48,34 @@ export function deleteCompany(id) {
   const companies = load()
   save(companies.filter((c) => c.id !== id))
 }
+
+export function addCompany(company) {
+  const companies = load()
+  const next = [company, ...companies]
+  save(next)
+  return company
+}
+
+export function addCompanies(newCompanies) {
+  if (!newCompanies.length) return load()
+  const companies = load()
+  const next = [...newCompanies, ...companies]
+  save(next)
+  return next
+}
+
+export function generateCompanyId() {
+  const companies = load()
+  const nums = companies
+    .map((c) => parseInt(String(c.id).replace('CMP-', ''), 10))
+    .filter((n) => !Number.isNaN(n))
+  const max = nums.length ? Math.max(...nums) : 1000
+  return `CMP-${max + 1}`
+}
+
+export function nextAvatarColor() {
+  const companies = load()
+  return avatarColors[companies.length % avatarColors.length]
+}
+
+export { avatarColors }

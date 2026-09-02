@@ -1,6 +1,40 @@
-import { useState } from 'react'
-import { Feather, Rocket, Crown, Gem, Check } from 'lucide-react'
-import { subscriptionPlans } from '../../data/subscriptionPlans'
+import { useEffect, useState } from 'react'
+import { useSearchParams } from 'react-router-dom'
+import { Feather, Rocket, Crown, Gem, Check, Loader2, CheckCircle2, XCircle } from 'lucide-react'
+import { subscriptionPlans, getActivePlanId, setActivePlanId } from '../../data/subscriptionPlans'
+import { apiCreateCheckoutSession } from '../../lib/api'
+
+function StatusModal({ status, planName, onClose }) {
+  const success = status === 'success'
+  return (
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4">
+      <div className="w-full max-w-sm rounded-xl bg-white p-6 text-center shadow-2xl">
+        {success ? (
+          <CheckCircle2 className="mx-auto h-12 w-12 text-emerald-500" strokeWidth={1.5} />
+        ) : (
+          <XCircle className="mx-auto h-12 w-12 text-red-500" strokeWidth={1.5} />
+        )}
+        <h3 className="mt-3 text-base font-semibold text-black">
+          {success ? 'Payment successful' : 'Payment failed'}
+        </h3>
+        <p className="mt-2 text-sm text-neutral-500">
+          {success
+            ? `Your ${planName} plan is now active.`
+            : `Your payment for the ${planName} plan didn't go through. Your plan has not changed.`}
+        </p>
+        <button
+          type="button"
+          onClick={onClose}
+          className={`mt-5 w-full rounded-lg py-2.5 text-sm font-semibold text-white transition ${
+            success ? 'bg-emerald-500 hover:bg-emerald-600' : 'bg-neutral-800 hover:bg-neutral-900'
+          }`}
+        >
+          Got it
+        </button>
+      </div>
+    </div>
+  )
+}
 
 const planTheme = {
   Free: {
@@ -42,8 +76,63 @@ const planTheme = {
 }
 
 export default function SubscriptionsPage() {
+  const [searchParams, setSearchParams] = useSearchParams()
   const [cycle, setCycle] = useState('monthly')
+  const [loadingPlanId, setLoadingPlanId] = useState(null)
+  const [checkoutError, setCheckoutError] = useState('')
+  const [activePlanId, setActivePlanIdState] = useState(() => getActivePlanId())
+  const [statusModal, setStatusModal] = useState(null)
   const isYearly = cycle === 'yearly'
+
+  useEffect(() => {
+    const checkout = searchParams.get('checkout')
+    const planId = searchParams.get('plan')
+    if (!checkout || !planId) return
+
+    const plan = subscriptionPlans.find((p) => p.id === planId)
+    const planName = plan?.name || 'selected'
+
+    if (checkout === 'success') {
+      setActivePlanId(planId)
+      setActivePlanIdState(planId)
+      setStatusModal({ status: 'success', planName })
+    } else if (checkout === 'cancelled') {
+      setStatusModal({ status: 'fail', planName })
+    }
+
+    setSearchParams({}, { replace: true })
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [])
+
+  async function handleGetStarted(plan) {
+    if (plan.id === activePlanId) return
+
+    const amount = isYearly ? plan.yearlyPrice : plan.price
+
+    if (amount <= 0) {
+      setActivePlanId(plan.id)
+      setActivePlanIdState(plan.id)
+      setStatusModal({ status: 'success', planName: plan.name })
+      return
+    }
+
+    setCheckoutError('')
+    setLoadingPlanId(plan.id)
+    try {
+      const basePath = `${window.location.origin}/super-admin/subscriptions`
+      const checkoutUrl = await apiCreateCheckoutSession({
+        amount,
+        currency: 'usd',
+        product_name: `${plan.name} Plan (${isYearly ? 'Yearly' : 'Monthly'})`,
+        success_url: `${basePath}?checkout=success&plan=${plan.id}`,
+        cancel_url: `${basePath}?checkout=cancelled&plan=${plan.id}`,
+      })
+      window.location.href = checkoutUrl
+    } catch (err) {
+      setCheckoutError(err.message || 'Failed to start checkout')
+      setLoadingPlanId(null)
+    }
+  }
 
   return (
     <div className="relative mx-auto max-w-6xl">
@@ -54,6 +143,9 @@ export default function SubscriptionsPage() {
         <p className="mx-auto mt-2 max-w-lg text-sm text-neutral-500">
           Simple, transparent pricing that scales with your business. Cancel anytime.
         </p>
+        {checkoutError && (
+          <p className="mx-auto mt-3 max-w-lg text-sm font-medium text-red-600">{checkoutError}</p>
+        )}
       </div>
 
       <div className="mt-7 flex justify-center">
@@ -82,25 +174,34 @@ export default function SubscriptionsPage() {
         </div>
       </div>
 
-      <div className="mt-10 grid grid-cols-1 gap-5 sm:grid-cols-2 lg:grid-cols-4 lg:items-start">
+      <div className="mt-10 grid grid-cols-1 gap-5 sm:grid-cols-2 lg:grid-cols-4">
         {subscriptionPlans.map((plan) => {
           const theme = planTheme[plan.name]
           const Icon = theme.icon
           const yearlyMonthlyEquivalent = plan.yearlyPrice === 0 ? 0 : Math.round(plan.yearlyPrice / 12)
           const displayPrice = isYearly ? yearlyMonthlyEquivalent : plan.price
-          const popular = plan.name === 'Plus'
+          const isActive = plan.id === activePlanId
 
           return (
             <div
               key={plan.id}
-              className={`group relative flex flex-col rounded-2xl border bg-white p-5 shadow-sm transition duration-300 hover:-translate-y-1 hover:shadow-xl ${theme.card} ${theme.glow}`}
+              className={`group relative flex flex-col rounded-2xl border bg-white p-5 shadow-sm transition duration-300 hover:-translate-y-1 hover:shadow-xl ${
+                isActive ? 'border-emerald-400 ring-2 ring-emerald-500/20' : theme.card
+              } ${theme.glow}`}
             >
-              {theme.badge && (
-                <span
-                  className={`absolute -top-3 left-1/2 -translate-x-1/2 whitespace-nowrap rounded-full px-3 py-1 text-[10px] font-bold tracking-wide shadow-sm ${theme.badge.className}`}
-                >
-                  {theme.badge.label}
+              {isActive ? (
+                <span className="absolute -top-3 left-1/2 flex -translate-x-1/2 items-center gap-1 whitespace-nowrap rounded-full bg-emerald-500 px-3 py-1 text-[10px] font-bold tracking-wide text-white shadow-sm">
+                  <CheckCircle2 className="h-3 w-3" strokeWidth={2.5} />
+                  ACTIVE PLAN
                 </span>
+              ) : (
+                theme.badge && (
+                  <span
+                    className={`absolute -top-3 left-1/2 -translate-x-1/2 whitespace-nowrap rounded-full px-3 py-1 text-[10px] font-bold tracking-wide shadow-sm ${theme.badge.className}`}
+                  >
+                    {theme.badge.label}
+                  </span>
+                )
               )}
 
               <div
@@ -138,14 +239,30 @@ export default function SubscriptionsPage() {
 
               <button
                 type="button"
-                className={`mt-6 flex items-center justify-center rounded-lg py-2.5 text-sm font-semibold transition active:scale-95 ${theme.button}`}
+                onClick={() => handleGetStarted(plan)}
+                disabled={loadingPlanId === plan.id || isActive}
+                className={`mt-6 flex items-center justify-center gap-2 rounded-lg py-2.5 text-sm font-semibold transition active:scale-95 disabled:cursor-not-allowed disabled:active:scale-100 ${
+                  isActive
+                    ? 'border border-emerald-300 bg-emerald-50 text-emerald-600'
+                    : `disabled:opacity-60 ${theme.button}`
+                }`}
               >
-                {popular ? 'Get Started' : 'Get Started'}
+                {loadingPlanId === plan.id && <Loader2 className="h-4 w-4 animate-spin" />}
+                {isActive && <CheckCircle2 className="h-4 w-4" />}
+                {isActive ? 'Current Plan' : loadingPlanId === plan.id ? 'Redirecting…' : 'Get Started'}
               </button>
             </div>
           )
         })}
       </div>
+
+      {statusModal && (
+        <StatusModal
+          status={statusModal.status}
+          planName={statusModal.planName}
+          onClose={() => setStatusModal(null)}
+        />
+      )}
     </div>
   )
 }

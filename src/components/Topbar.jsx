@@ -1,6 +1,18 @@
 import { useState, useEffect } from 'react'
 import { Link, useLocation } from 'react-router-dom'
 import { getUnreadCount } from '../data/notifications'
+import { apiGetCurrentUser } from '../lib/api'
+
+function getInitials(name) {
+  return (
+    name
+      .trim()
+      .split(/\s+/)
+      .slice(0, 2)
+      .map((w) => w[0]?.toUpperCase() ?? '')
+      .join('') || '?'
+  )
+}
 
 const pageTitles = [
   { match: '/dashboard', label: 'Dashboard' },
@@ -34,6 +46,7 @@ function getPageTitle(pathname) {
 export default function Topbar({ onMenuClick = () => {} }) {
   const location = useLocation()
   const [unread, setUnread] = useState(() => getUnreadCount())
+  const [user, setUser] = useState(null)
 
   useEffect(() => {
     function check() {
@@ -43,6 +56,16 @@ export default function Topbar({ onMenuClick = () => {} }) {
     const id = setInterval(check, 2000)
     return () => clearInterval(id)
   }, [])
+
+  useEffect(() => {
+    apiGetCurrentUser()
+      .then(setUser)
+      .catch(() => {})
+  }, [])
+
+  const displayName = user?.full_name || 'Guest'
+  const displayRole = user ? (user.is_superuser ? 'Super Admin' : 'Admin') : ''
+
   return (
     <header className="flex items-center justify-between gap-2 border-b border-neutral-200 bg-white px-3 py-3 sm:px-6">
       <button
@@ -95,11 +118,11 @@ export default function Topbar({ onMenuClick = () => {} }) {
         </button> */}
         <div className="ml-2 flex items-center gap-2">
           <div className="flex h-8 w-8 items-center justify-center rounded-full bg-gradient-to-br from-brand-400 to-brand-600 text-xs font-semibold text-white ring-2 ring-white shadow-sm">
-            AM
+            {getInitials(displayName)}
           </div>
           <div className="hidden text-left leading-tight sm:block">
-            <p className="text-sm font-medium text-black">Alex Martinez</p>
-            <p className="text-xs text-neutral-400">Admin</p>
+            <p className="text-sm font-medium text-black">{displayName}</p>
+            <p className="text-xs text-neutral-400">{displayRole}</p>
           </div>
         </div>
       </div>

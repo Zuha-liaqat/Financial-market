@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useRef, useState } from 'react'
+import { createPortal } from 'react-dom'
 import ConfirmDialog from '../../components/ConfirmDialog'
 import CreateCompanyModal from '../../components/CreateCompanyModal'
 import {
@@ -10,7 +11,7 @@ import {
   getAllCompanies,
   nextAvatarColor,
 } from '../../data/companies'
-import { apiCreateUser, apiListUsers } from '../../lib/api'
+import { apiCreateUser, apiDeleteUser, apiListUsers } from '../../lib/api'
 
 const statusStyles = {
   Active: 'bg-emerald-50 text-emerald-600 ring-1 ring-emerald-200',
@@ -55,20 +56,49 @@ function StatTile({ icon, iconBg, label, value }) {
 
 function ActionsMenu({ onDelete }) {
   const [open, setOpen] = useState(false)
-  const ref = useRef(null)
+  const [coords, setCoords] = useState({ top: 0, left: 0 })
+  const triggerRef = useRef(null)
+  const menuRef = useRef(null)
+
+  function updatePosition() {
+    if (!triggerRef.current) return
+    const rect = triggerRef.current.getBoundingClientRect()
+    setCoords({ top: rect.bottom + 4, left: rect.right - 144 })
+  }
+
+  function toggleOpen() {
+    if (!open) updatePosition()
+    setOpen((v) => !v)
+  }
 
   useEffect(() => {
     function handleOutside(e) {
-      if (ref.current && !ref.current.contains(e.target)) setOpen(false)
+      if (
+        triggerRef.current && !triggerRef.current.contains(e.target) &&
+        menuRef.current && !menuRef.current.contains(e.target)
+      ) {
+        setOpen(false)
+      }
     }
     document.addEventListener('mousedown', handleOutside)
     return () => document.removeEventListener('mousedown', handleOutside)
   }, [])
 
+  useEffect(() => {
+    if (!open) return
+    window.addEventListener('scroll', updatePosition, true)
+    window.addEventListener('resize', updatePosition)
+    return () => {
+      window.removeEventListener('scroll', updatePosition, true)
+      window.removeEventListener('resize', updatePosition)
+    }
+  }, [open])
+
   return (
-    <div ref={ref} className="relative inline-block text-left">
+    <div className="relative inline-block text-left">
       <button
-        onClick={() => setOpen((v) => !v)}
+        ref={triggerRef}
+        onClick={toggleOpen}
         aria-label="Actions"
         className={`inline-flex h-8 w-8 items-center justify-center rounded-md border transition ${
           open ? 'border-brand-300 bg-brand-50 text-brand-600' : 'border-neutral-200 text-neutral-500 hover:border-brand-300 hover:bg-brand-50 hover:text-brand-600'
@@ -80,27 +110,33 @@ function ActionsMenu({ onDelete }) {
           <circle cx="12" cy="19" r="1.75" />
         </svg>
       </button>
-      {open && (
-        <div className="absolute right-0 z-20 mt-1 w-36 overflow-hidden rounded-lg border border-neutral-200 bg-white py-1 shadow-lg">
-          <button
-            onClick={() => {
-              setOpen(false)
-              onDelete()
-            }}
-            className="flex w-full items-center gap-2 px-3 py-2 text-left text-sm text-red-600 hover:bg-red-50"
+      {open &&
+        createPortal(
+          <div
+            ref={menuRef}
+            style={{ position: 'fixed', top: coords.top, left: coords.left }}
+            className="z-50 w-36 overflow-hidden rounded-lg border border-neutral-200 bg-white py-1 shadow-lg"
           >
-            <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-              <path
-                strokeLinecap="round"
-                strokeLinejoin="round"
-                strokeWidth={1.75}
-                d="M14.74 9l-.346 9m-4.788 0L9.26 9M19.228 5.79c1.121.113 2.235.256 3.34.428m-3.34-.428L18.16 19.673a2.25 2.25 0 01-2.244 2.077H8.084a2.25 2.25 0 01-2.244-2.077L4.772 5.79m14.456 0a48.108 48.108 0 00-3.478-.397m-12 .562c1.105-.172 2.219-.315 3.34-.428m0 0a48.108 48.108 0 013.478-.397m7.5 0v-.916c0-1.18-.91-2.164-2.09-2.201a51.964 51.964 0 00-3.32 0c-1.18.037-2.09 1.022-2.09 2.201v.916m7.5 0a48.667 48.667 0 00-7.5 0"
-              />
-            </svg>
-            Delete
-          </button>
-        </div>
-      )}
+            <button
+              onClick={() => {
+                setOpen(false)
+                onDelete()
+              }}
+              className="flex w-full items-center gap-2 px-3 py-2 text-left text-sm text-red-600 hover:bg-red-50"
+            >
+              <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  strokeWidth={1.75}
+                  d="M14.74 9l-.346 9m-4.788 0L9.26 9M19.228 5.79c1.121.113 2.235.256 3.34.428m-3.34-.428L18.16 19.673a2.25 2.25 0 01-2.244 2.077H8.084a2.25 2.25 0 01-2.244-2.077L4.772 5.79m14.456 0a48.108 48.108 0 00-3.478-.397m-12 .562c1.105-.172 2.219-.315 3.34-.428m0 0a48.108 48.108 0 013.478-.397m7.5 0v-.916c0-1.18-.91-2.164-2.09-2.201a51.964 51.964 0 00-3.32 0c-1.18.037-2.09 1.022-2.09 2.201v.916m7.5 0a48.667 48.667 0 00-7.5 0"
+                />
+              </svg>
+              Delete
+            </button>
+          </div>,
+          document.body,
+        )}
     </div>
   )
 }
@@ -111,6 +147,7 @@ export default function CompaniesPage() {
   const [statusFilter, setStatusFilter] = useState('all')
   const [deleteTarget, setDeleteTarget] = useState(null)
   const [deleting, setDeleting] = useState(false)
+  const [deleteError, setDeleteError] = useState('')
   const [showCreateModal, setShowCreateModal] = useState(false)
 
   const loadCompanies = () => setCompanies(getAllCompanies())
@@ -160,12 +197,21 @@ export default function CompaniesPage() {
     }
   }
 
-  function confirmDelete() {
+  async function confirmDelete() {
     setDeleting(true)
-    deleteCompany(deleteTarget.id)
-    loadCompanies()
-    setDeleteTarget(null)
-    setDeleting(false)
+    setDeleteError('')
+    try {
+      if (deleteTarget.apiUserId) {
+        await apiDeleteUser(deleteTarget.apiUserId)
+      }
+      deleteCompany(deleteTarget.id)
+      loadCompanies()
+      setDeleteTarget(null)
+    } catch (err) {
+      setDeleteError(err.message || 'Failed to delete user')
+    } finally {
+      setDeleting(false)
+    }
   }
 
   async function handleCreateCompany({ name, email, password, isActive }) {
@@ -379,7 +425,11 @@ export default function CompaniesPage() {
           message={`Delete "${deleteTarget.name}"? This cannot be undone.`}
           confirmLabel="Delete"
           confirming={deleting}
-          onCancel={() => setDeleteTarget(null)}
+          error={deleteError}
+          onCancel={() => {
+            setDeleteTarget(null)
+            setDeleteError('')
+          }}
           onConfirm={confirmDelete}
         />
       )}

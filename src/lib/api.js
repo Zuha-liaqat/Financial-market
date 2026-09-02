@@ -89,6 +89,14 @@ export async function apiCreateUser({ email, full_name, role = 'user', is_active
   return body
 }
 
+export async function apiDeleteUser(userId) {
+  const res = await authorizedRequest(`/api/v1/users/${userId}`, { method: 'DELETE' })
+  if (!res.ok) {
+    const body = await res.json().catch(() => null)
+    throw new Error(extractErrorMessage(body, 'Failed to delete user'))
+  }
+}
+
 export async function apiGetCurrentUser() {
   const res = await authorizedRequest('/api/v1/auth/me')
   const body = await res.json().catch(() => null)

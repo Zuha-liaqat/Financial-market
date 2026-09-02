@@ -1,8 +1,8 @@
 import { useEffect, useState } from 'react'
 import { useSearchParams } from 'react-router-dom'
 import { Feather, Rocket, Crown, Gem, Check, Loader2, CheckCircle2, XCircle } from 'lucide-react'
-import { subscriptionPlans, getActivePlanId, setActivePlanId } from '../data/subscriptionPlans'
-import { apiCreateCheckoutSession } from '../lib/api'
+import { subscriptionPlans, getActivePlanId, setActivePlanId, resolveActivePlanIdFromUser } from '../data/subscriptionPlans'
+import { apiCreateCheckoutSession, apiGetCurrentUser } from '../lib/api'
 
 function StatusModal({ status, planName, onClose }) {
   const success = status === 'success'
@@ -102,6 +102,17 @@ export default function SubscriptionsPage() {
 
     setSearchParams({}, { replace: true })
     // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [])
+
+  useEffect(() => {
+    apiGetCurrentUser()
+      .then((me) => {
+        const resolved = resolveActivePlanIdFromUser(me)
+        if (resolved === undefined) return
+        setActivePlanIdState(resolved)
+        setActivePlanId(resolved || '')
+      })
+      .catch(() => {})
   }, [])
 
   async function handleGetStarted(plan) {

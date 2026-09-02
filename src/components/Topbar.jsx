@@ -30,6 +30,14 @@ const pageTitles = [
   { match: '/settings', label: 'Settings' },
 ]
 
+function formatRole(role) {
+  if (!role) return 'User'
+  return role
+    .split(/[\s_-]+/)
+    .map((w) => w.charAt(0).toUpperCase() + w.slice(1))
+    .join(' ')
+}
+
 function getPageTitle(pathname) {
   if (pathname.startsWith('/approval-queue/') && pathname.endsWith('/edit')) {
     return 'Edit Content'
@@ -61,7 +69,7 @@ export default function Topbar({ onMenuClick = () => {} }) {
   }, [])
 
   const displayName = user?.full_name || 'Guest'
-  const displayRole = user ? (user.is_superuser ? 'Super Admin' : 'Admin') : ''
+  const displayRole = user ? (user.is_superuser ? 'Super Admin' : formatRole(user.role)) : ''
 
   return (
     <header className="flex items-center justify-between gap-2 border-b border-neutral-200 bg-white px-3 py-3 sm:px-6">

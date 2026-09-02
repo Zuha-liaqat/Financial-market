@@ -1,3 +1,5 @@
+import { getCurrentUserEmail } from './auth'
+
 export const subscriptionPlans = [
   {
     id: 'free',
@@ -79,12 +81,19 @@ export function getPlanByName(name) {
   return subscriptionPlans.find((p) => p.name === name)
 }
 
-const ACTIVE_PLAN_KEY = 'active_subscription_plan_id'
+const ACTIVE_PLAN_KEY_PREFIX = 'active_subscription_plan_id'
+
+function getActivePlanKey() {
+  const email = getCurrentUserEmail()
+  return email ? `${ACTIVE_PLAN_KEY_PREFIX}:${email}` : null
+}
 
 export function getActivePlanId() {
-  return localStorage.getItem(ACTIVE_PLAN_KEY)
+  const key = getActivePlanKey()
+  return key ? localStorage.getItem(key) : null
 }
 
 export function setActivePlanId(id) {
-  localStorage.setItem(ACTIVE_PLAN_KEY, id)
+  const key = getActivePlanKey()
+  if (key) localStorage.setItem(key, id)
 }

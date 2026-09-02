@@ -1,8 +1,8 @@
 import { useEffect, useState } from 'react'
 import { useSearchParams } from 'react-router-dom'
 import { Feather, Rocket, Crown, Gem, Check, Loader2, CheckCircle2, XCircle } from 'lucide-react'
-import { subscriptionPlans, getActivePlanId, setActivePlanId } from '../../data/subscriptionPlans'
-import { apiCreateCheckoutSession } from '../../lib/api'
+import { subscriptionPlans, getActivePlanId, setActivePlanId } from '../data/subscriptionPlans'
+import { apiCreateCheckoutSession } from '../lib/api'
 
 function StatusModal({ status, planName, onClose }) {
   const success = status === 'success'

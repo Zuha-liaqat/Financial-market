@@ -34,9 +34,6 @@ function getPageTitle(pathname) {
   if (pathname.startsWith('/approval-queue/') && pathname.endsWith('/edit')) {
     return 'Edit Content'
   }
-  if (/^\/super-admin\/companies\/.+/.test(pathname)) {
-    return 'Company Billing'
-  }
   const found = pageTitles.find(
     (p) => pathname === p.match || pathname.startsWith(`${p.match}/`),
   )

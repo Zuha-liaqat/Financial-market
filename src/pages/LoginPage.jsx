@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react'
 import { useNavigate, Link } from 'react-router-dom'
 import Logo from '../components/Logo'
-import { logout, setSuperAdminStatus } from '../data/auth'
+import { logout, setCurrentUserEmail, setSuperAdminStatus } from '../data/auth'
 import { apiGetCurrentUser, apiLogin } from '../lib/api'
 
 function ErrorToast({ message, onClose }) {
@@ -64,6 +64,7 @@ export default function LoginPage() {
       await apiLogin(form.email.trim(), form.password)
       const me = await apiGetCurrentUser()
       setSuperAdminStatus(Boolean(me?.is_superuser))
+      setCurrentUserEmail(me?.email || form.email)
       navigate('/dashboard')
     } catch (err) {
       setError(err.message || 'Invalid email or password.')

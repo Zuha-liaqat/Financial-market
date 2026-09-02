@@ -1,5 +1,4 @@
 import { useEffect, useMemo, useRef, useState } from 'react'
-import { useNavigate } from 'react-router-dom'
 import ConfirmDialog from '../../components/ConfirmDialog'
 import CreateCompanyModal from '../../components/CreateCompanyModal'
 import {
@@ -54,7 +53,7 @@ function StatTile({ icon, iconBg, label, value }) {
   )
 }
 
-function ActionsMenu({ onEdit, onDelete }) {
+function ActionsMenu({ onDelete }) {
   const [open, setOpen] = useState(false)
   const ref = useRef(null)
 
@@ -86,23 +85,6 @@ function ActionsMenu({ onEdit, onDelete }) {
           <button
             onClick={() => {
               setOpen(false)
-              onEdit()
-            }}
-            className="flex w-full items-center gap-2 px-3 py-2 text-left text-sm text-neutral-700 hover:bg-neutral-50"
-          >
-            <svg className="h-4 w-4 text-neutral-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-              <path
-                strokeLinecap="round"
-                strokeLinejoin="round"
-                strokeWidth={1.75}
-                d="M16.862 4.487l1.687-1.688a1.875 1.875 0 112.652 2.652L10.582 16.07a4.5 4.5 0 01-1.897 1.13L6 18l.8-2.685a4.5 4.5 0 011.13-1.897l8.932-8.931zm0 0L19.5 7.125M18 14v4.75A2.25 2.25 0 0115.75 21H5.25A2.25 2.25 0 013 18.75V8.25A2.25 2.25 0 015.25 6H10"
-              />
-            </svg>
-            Edit
-          </button>
-          <button
-            onClick={() => {
-              setOpen(false)
               onDelete()
             }}
             className="flex w-full items-center gap-2 px-3 py-2 text-left text-sm text-red-600 hover:bg-red-50"
@@ -124,7 +106,6 @@ function ActionsMenu({ onEdit, onDelete }) {
 }
 
 export default function CompaniesPage() {
-  const navigate = useNavigate()
   const [companies, setCompanies] = useState([])
   const [search, setSearch] = useState('')
   const [statusFilter, setStatusFilter] = useState('all')
@@ -379,10 +360,7 @@ export default function CompaniesPage() {
                   <td className="px-3 py-3.5 capitalize text-neutral-600">{company.role || 'user'}</td>
                   <td className="px-3 py-3.5 whitespace-nowrap text-neutral-500">{formatDate(company.joinedDate)}</td>
                   <td className="px-3 py-3.5 text-right">
-                    <ActionsMenu
-                      onEdit={() => navigate(`/super-admin/companies/${company.id}`)}
-                      onDelete={() => setDeleteTarget(company)}
-                    />
+                    <ActionsMenu onDelete={() => setDeleteTarget(company)} />
                   </td>
                 </tr>
               ))}

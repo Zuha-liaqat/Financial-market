@@ -1,23 +1,25 @@
 import { useState } from 'react'
+import { ArrowRight } from 'lucide-react'
 import MarketingPage from './MarketingPage'
 import { CtaBannerSection } from './pieces'
 import { ICONS } from './icons'
+import { trackEvent } from '../../lib/analytics'
 
 const CONTACTS = [
   {
     icon: ICONS.bell,
     title: 'Support',
-    desc: 'support@financialmarket.example — for existing customers and technical questions.',
+    desc: 'support@financialmarket.example, for existing customers and technical questions.',
   },
   {
     icon: ICONS.grid,
     title: 'Sales & Demos',
-    desc: 'sales@financialmarket.example — book a walkthrough of the full platform.',
+    desc: 'sales@financialmarket.example, book a walkthrough of the full platform.',
   },
   {
     icon: ICONS.folder,
     title: 'Press & Partnerships',
-    desc: 'hello@financialmarket.example — media inquiries and collaborations.',
+    desc: 'hello@financialmarket.example, media inquiries and collaborations.',
   },
 ]
 
@@ -26,6 +28,7 @@ export default function ContactPage() {
 
   function handleSubmit(e) {
     e.preventDefault()
+    trackEvent('form_submit', { form_name: 'contact' })
     setSent(true)
   }
 
@@ -40,7 +43,7 @@ export default function ContactPage() {
             Let&apos;s talk about your content.
           </h1>
           <p className="lead reveal reveal-d2" style={{ maxWidth: 520 }}>
-            Questions about plans, a demo request, or feedback on a lesson — send it over and our team will
+            Questions about plans, a demo request, or feedback on a lesson, send it over and our team will
             reply within one business day.
           </p>
         </div>
@@ -89,12 +92,13 @@ export default function ContactPage() {
                   style={{ width: '100%', padding: '11px 14px', border: '1px solid var(--line)', borderRadius: 10, fontFamily: 'inherit', fontSize: 14, resize: 'vertical' }}
                 />
               </div>
-              <button type="submit" className="btn btn-primary" style={{ justifyContent: 'center' }}>
-                Send Message →
+              <button type="submit" className="btn btn-primary btn-arrow" style={{ justifyContent: 'center' }}>
+                Send Message
+                <ArrowRight className="btn-arrow-icon" size={17} strokeWidth={2.5} />
               </button>
               {sent && (
                 <div style={{ fontSize: 13, color: 'var(--blue-dark)', textAlign: 'center' }}>
-                  Thanks — we&apos;ll be in touch within one business day.
+                  Thanks, we&apos;ll be in touch within one business day.
                 </div>
               )}
             </form>
@@ -118,7 +122,7 @@ export default function ContactPage() {
       <CtaBannerSection
         title="Prefer to explore first?"
         lead="Walk through the dashboard and every module before you talk to us."
-        ctaLabel="Explore the Platform →"
+        ctaLabel="Explore the Platform"
         to="/product/dashboard"
       />
     </MarketingPage>

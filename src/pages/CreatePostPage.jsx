@@ -275,7 +275,7 @@ export default function CreatePostPage() {
   }
 
   return (
-    <div className="mx-auto max-w-5xl space-y-3">
+    <div className="space-y-3">
       {generateError && (
         <div className="rounded-lg border border-red-200 bg-red-50 px-4 py-2.5 text-sm text-red-600">
           {generateError}

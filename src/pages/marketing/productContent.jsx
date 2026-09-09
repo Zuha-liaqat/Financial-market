@@ -3,13 +3,13 @@ import { ICONS } from './icons'
 export const PRODUCT_CONTENT = {
   dashboard: {
     crumbLabel: 'Dashboard',
-    eyebrow: 'PRODUCT — DASHBOARD',
+    eyebrow: 'PRODUCT: DASHBOARD',
     title: (
       <>
         One command center for <em>every</em> platform.
       </>
     ),
-    lead: "See what's drafted, what's waiting on you, and what's already live — across LinkedIn, Instagram and X — without opening three different apps.",
+    lead: "See what's drafted, what's waiting on you, and what's already live, across LinkedIn, Instagram and X, without opening three different apps.",
     stats: [
       { value: '12', label: 'Drafted this week' },
       { value: '4', label: 'Awaiting review' },
@@ -19,12 +19,12 @@ export const PRODUCT_CONTENT = {
     cardsTitle: 'Everything, at a glance',
     cardsLead: 'The dashboard pulls every workflow below into one screen.',
     cards: [
-      { icon: ICONS.grid, title: 'Live status counts', desc: 'Drafted, scheduled, awaiting review and published — updated the moment anything changes.' },
+      { icon: ICONS.grid, title: 'Live status counts', desc: 'Drafted, scheduled, awaiting review and published, updated the moment anything changes.' },
       { icon: ICONS.star, title: 'Top-performer surfacing', desc: 'The dashboard automatically highlights your best post of the week, with views, reactions and reposts.' },
       { icon: ICONS.calendar, title: 'Coming-up preview', desc: "A rolling look at what's scheduled next, so nothing sneaks past the calendar." },
     ],
     stepsTitle: 'From login to insight in seconds',
-    stepsLead: 'No configuration required — the dashboard is ready the moment your accounts are connected.',
+    stepsLead: 'No configuration required, the dashboard is ready the moment your accounts are connected.',
     steps: [
       { title: 'Connect your platforms', desc: 'Link LinkedIn, Instagram and X once through Integrations.' },
       { title: 'Work as usual', desc: 'Draft, review and schedule posts across the other modules.' },
@@ -36,13 +36,13 @@ export const PRODUCT_CONTENT = {
 
   'themes-brands': {
     crumbLabel: 'Themes / Brands',
-    eyebrow: 'PRODUCT — THEMES / BRANDS',
+    eyebrow: 'PRODUCT: THEMES / BRANDS',
     title: (
       <>
         Keep every post on-brand, <em>automatically</em>.
       </>
     ),
-    lead: 'Store your logo, palette, fonts and voice once. Every draft — no matter who writes it — inherits the same look and tone.',
+    lead: 'Store your logo, palette, fonts and voice once. Every draft, no matter who writes it, inherits the same look and tone.',
     stats: [
       { value: '1', label: 'Setup, once' },
       { value: '100%', label: 'On-brand posts' },
@@ -69,13 +69,13 @@ export const PRODUCT_CONTENT = {
 
   'create-post': {
     crumbLabel: 'Create Post',
-    eyebrow: 'PRODUCT — CREATE POST',
+    eyebrow: 'PRODUCT: CREATE POST',
     title: (
       <>
         Draft once, tailor for <em>every</em> channel.
       </>
     ),
-    lead: 'Write a single idea and adapt the tone, length and hashtags per platform — without opening three separate composers.',
+    lead: 'Write a single idea and adapt the tone, length and hashtags per platform, without opening three separate composers.',
     stats: [
       { value: '3', label: 'Platforms at once' },
       { value: '60s', label: 'Avg. draft time' },
@@ -87,7 +87,7 @@ export const PRODUCT_CONTENT = {
     cards: [
       { icon: ICONS.plus, title: 'Multi-platform composer', desc: 'Write once and preview how the post will look on LinkedIn, Instagram and X before you submit.' },
       { icon: ICONS.palette, title: 'On-brand by default', desc: 'Fonts, colors and tone pull automatically from your saved brand kit.' },
-      { icon: ICONS.shield, title: 'One-click submission', desc: 'Send a finished draft straight into the Approval Queue — no extra steps.' },
+      { icon: ICONS.shield, title: 'One-click submission', desc: 'Send a finished draft straight into the Approval Queue, no extra steps.' },
     ],
     stepsTitle: 'From idea to submitted draft',
     stepsLead: 'Three steps, most of them automatic.',
@@ -102,13 +102,13 @@ export const PRODUCT_CONTENT = {
 
   'create-blog': {
     crumbLabel: 'Create Blog',
-    eyebrow: 'PRODUCT — CREATE BLOG',
+    eyebrow: 'PRODUCT: CREATE BLOG',
     title: (
       <>
         Long-form lessons your audience <em>saves</em>.
       </>
     ),
-    lead: 'Turn a daily term into a full article — with structure, formatting and SEO guidance built into the editor.',
+    lead: 'Turn a daily term into a full article, with structure, formatting and SEO guidance built into the editor.',
     stats: [
       { value: '6 min', label: 'Avg. read time' },
       { value: '1-click', label: 'Publish to site' },
@@ -135,7 +135,7 @@ export const PRODUCT_CONTENT = {
 
   library: {
     crumbLabel: 'Library',
-    eyebrow: 'PRODUCT — LIBRARY',
+    eyebrow: 'PRODUCT: LIBRARY',
     title: (
       <>
         Every asset, caption and clip in <em>one</em> place.
@@ -168,13 +168,13 @@ export const PRODUCT_CONTENT = {
 
   'approval-queue': {
     crumbLabel: 'Approval Queue',
-    eyebrow: 'PRODUCT — APPROVAL QUEUE',
+    eyebrow: 'PRODUCT: APPROVAL QUEUE',
     title: (
       <>
         Nothing goes live without a <em>sign-off</em>.
       </>
     ),
-    lead: 'Every draft — from any writer, on any platform — passes through review before it can be scheduled or published.',
+    lead: 'Every draft, from any writer, on any platform, passes through review before it can be scheduled or published.',
     stats: [
       { value: '4', label: 'Awaiting review' },
       { value: '6h', label: 'Oldest pending' },
@@ -184,9 +184,9 @@ export const PRODUCT_CONTENT = {
     cardsTitle: 'A safety net for every post',
     cardsLead: 'Catch mistakes before your audience does.',
     cards: [
-      { icon: ICONS.shield, title: 'Clear review states', desc: 'Every draft is marked drafted, awaiting review, or approved — never ambiguous.' },
+      { icon: ICONS.shield, title: 'Clear review states', desc: 'Every draft is marked drafted, awaiting review, or approved, never ambiguous.' },
       { icon: ICONS.bell, title: 'Reviewer alerts', desc: 'Reviewers get notified the moment something needs their attention.' },
-      { icon: ICONS.grid, title: 'Full audit trail', desc: 'See who drafted, who approved and when — for every single post.' },
+      { icon: ICONS.grid, title: 'Full audit trail', desc: 'See who drafted, who approved and when, for every single post.' },
     ],
     stepsTitle: 'From draft to approved in three steps',
     stepsLead: 'Built to be fast, not just thorough.',
@@ -201,13 +201,13 @@ export const PRODUCT_CONTENT = {
 
   calendar: {
     crumbLabel: 'Calendar',
-    eyebrow: 'PRODUCT — CALENDAR',
+    eyebrow: 'PRODUCT: CALENDAR',
     title: (
       <>
         See your whole content month at a <em>glance</em>.
       </>
     ),
-    lead: 'Every scheduled post, on every platform, laid out on one calendar — drag to reschedule in seconds.',
+    lead: 'Every scheduled post, on every platform, laid out on one calendar, drag to reschedule in seconds.',
     stats: [
       { value: '3', label: 'Platforms shown' },
       { value: '1', label: 'Drag to reschedule' },
@@ -234,7 +234,7 @@ export const PRODUCT_CONTENT = {
 
   planner: {
     crumbLabel: 'Planner',
-    eyebrow: 'PRODUCT — PLANNER',
+    eyebrow: 'PRODUCT: PLANNER',
     title: (
       <>
         Plan <em>campaigns</em>, not just posts.
@@ -252,7 +252,7 @@ export const PRODUCT_CONTENT = {
     cards: [
       { icon: ICONS.star, title: 'Kanban-style boards', desc: 'Move ideas from idea to in-progress to scheduled with a simple drag.' },
       { icon: ICONS.calendar, title: 'Campaign timelines', desc: 'Lay a themed series of posts across weeks or months at a glance.' },
-      { icon: ICONS.plug, title: 'Team collaboration', desc: 'Everyone sees the same board — no separate spreadsheet needed.' },
+      { icon: ICONS.plug, title: 'Team collaboration', desc: 'Everyone sees the same board, no separate spreadsheet needed.' },
     ],
     stepsTitle: 'From idea to campaign',
     stepsLead: "Built for planning ahead, not just today's post.",
@@ -267,13 +267,13 @@ export const PRODUCT_CONTENT = {
 
   integrations: {
     crumbLabel: 'Integrations',
-    eyebrow: 'PRODUCT — INTEGRATIONS',
+    eyebrow: 'PRODUCT: INTEGRATIONS',
     title: (
       <>
         Connect the tools your team already <em>uses</em>.
       </>
     ),
-    lead: 'Link your social platforms, design tools and workflow apps — Financial Market fits into your stack, not the other way around.',
+    lead: 'Link your social platforms, design tools and workflow apps, Financial Market fits into your stack, not the other way around.',
     stats: [
       { value: '3', label: 'Social platforms' },
       { value: '10+', label: 'Connected apps' },
@@ -281,7 +281,7 @@ export const PRODUCT_CONTENT = {
     ],
     cardsKicker: 'INTEGRATIONS',
     cardsTitle: 'Fits the stack you already have',
-    cardsLead: 'No migration, no re-training — just connect and go.',
+    cardsLead: 'No migration, no re-training, just connect and go.',
     cards: [
       { icon: ICONS.plug, title: 'One-click platform connect', desc: 'Authorize LinkedIn, Instagram and X in a couple of clicks each.' },
       { icon: ICONS.bell, title: 'Workflow notifications', desc: 'Pipe approval and publish alerts straight into Slack or email.' },
@@ -291,7 +291,7 @@ export const PRODUCT_CONTENT = {
     stepsLead: 'Set up your stack in minutes, not days.',
     steps: [
       { title: 'Pick a service', desc: 'Choose from social, design or workflow integrations.' },
-      { title: 'Authorize access', desc: 'A secure, standard OAuth connection — no passwords shared.' },
+      { title: 'Authorize access', desc: 'A secure, standard OAuth connection, no passwords shared.' },
       { title: 'Start using it', desc: 'The integration is immediately available across every module.' },
     ],
     ctaTitle: 'Bring your existing tools along.',
@@ -300,13 +300,13 @@ export const PRODUCT_CONTENT = {
 
   notifications: {
     crumbLabel: 'Notifications',
-    eyebrow: 'PRODUCT — NOTIFICATIONS',
+    eyebrow: 'PRODUCT: NOTIFICATIONS',
     title: (
       <>
         The right nudge, right when it <em>matters</em>.
       </>
     ),
-    lead: 'No inbox overload — just the alerts that keep drafts moving: approvals, deadlines and publish confirmations.',
+    lead: 'No inbox overload, just the alerts that keep drafts moving: approvals, deadlines and publish confirmations.',
     stats: [
       { value: '3', label: 'Unread today' },
       { value: '0', label: 'Missed reviews' },
@@ -316,7 +316,7 @@ export const PRODUCT_CONTENT = {
     cardsTitle: 'Only the alerts that matter',
     cardsLead: 'Tuned to keep your team moving, not distracted.',
     cards: [
-      { icon: ICONS.bell, title: 'Smart filtering', desc: 'Approval requests, deadlines and publish confirmations — nothing else.' },
+      { icon: ICONS.bell, title: 'Smart filtering', desc: 'Approval requests, deadlines and publish confirmations, nothing else.' },
       { icon: ICONS.shield, title: 'Reviewer escalation', desc: 'A pending draft nearing its deadline gets flagged to reviewers automatically.' },
       { icon: ICONS.plug, title: 'Cross-channel delivery', desc: 'Get notified in-app, by email, or in your connected Slack workspace.' },
     ],
@@ -324,7 +324,7 @@ export const PRODUCT_CONTENT = {
     stepsLead: 'Notifications come to you.',
     steps: [
       { title: 'Something needs attention', desc: 'A draft is submitted, approved, or nearing a deadline.' },
-      { title: "You're notified instantly", desc: 'In-app, email or Slack — your choice.' },
+      { title: "You're notified instantly", desc: 'In-app, email or Slack, your choice.' },
       { title: 'Act in one click', desc: 'Jump straight to the item from the notification.' },
     ],
     ctaTitle: 'Never miss a pending approval again.',

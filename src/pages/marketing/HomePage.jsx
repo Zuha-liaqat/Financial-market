@@ -1,15 +1,16 @@
 import { useEffect, useRef, useState } from 'react'
 import { Link } from 'react-router-dom'
+import { ArrowRight, Loader2 } from 'lucide-react'
 import MarketingPage from './MarketingPage'
-import { MockCard } from './pieces'
 import { MODULES, moduleIcon } from './navData'
 import { ICONS } from './icons'
+import { trackEvent } from '../../lib/analytics'
 
 const STEPS = [
   {
     tag: 'Plan',
     title: 'See the whole month before you write a word',
-    desc: 'Drop every topic into the Planner, group related lessons into campaigns, and spot gaps weeks in advance — no more scrambling for tomorrow’s post.',
+    desc: 'Drop every topic into the Planner, group related lessons into campaigns, and spot gaps weeks in advance, no more scrambling for tomorrow’s post.',
     icon: ICONS.star,
     accent: 'var(--blue)',
   },
@@ -23,7 +24,7 @@ const STEPS = [
   {
     tag: 'Publish',
     title: 'It lands exactly where it belongs',
-    desc: 'Approved content drops straight onto the Calendar and goes live on LinkedIn, Instagram and X — with results flowing back to your Dashboard automatically.',
+    desc: 'Approved content drops straight onto the Calendar and goes live on LinkedIn, Instagram and X, with results flowing back to your Dashboard automatically.',
     icon: ICONS.send,
     accent: 'var(--navy)',
   },
@@ -45,14 +46,14 @@ const TESTIMONIAL_COLUMNS = [
     quotes: [
       { text: '"Planning a whole campaign on one board changed how our small team works."', initials: 'DP', name: 'Diana P.', role: 'Editorial Lead', bg: 'var(--orange-deep)' },
       { text: "\"Drafting for three platforms used to take an hour. Now it's minutes.\"", initials: 'AM', name: 'Andrei M.', role: 'Writer', bg: 'var(--navy)' },
-      { text: '"The calendar view alone is worth it — I can see gaps before they happen."', initials: 'CT', name: 'Cristina T.', role: 'Planner', bg: 'var(--blue-dark)' },
+      { text: '"The calendar view alone is worth it. I can see gaps before they happen."', initials: 'CT', name: 'Cristina T.', role: 'Planner', bg: 'var(--blue-dark)' },
       { text: '"Our engagement on LinkedIn nearly tripled once posting got consistent."', initials: 'VS', name: 'Vlad S.', role: 'Growth Lead', bg: 'var(--orange-deep)' },
     ],
   },
   {
     duration: 38,
     quotes: [
-      { text: '"Notifications are tuned just right — I never feel overwhelmed."', initials: 'IR', name: 'Ioana R.', role: 'Reviewer', bg: 'var(--navy)' },
+      { text: '"Notifications are tuned just right. I never feel overwhelmed."', initials: 'IR', name: 'Ioana R.', role: 'Reviewer', bg: 'var(--navy)' },
       { text: "\"Integrations meant we didn't have to change how our team already works.\"", initials: 'BC', name: 'Bogdan C.', role: 'Ops Lead', bg: 'var(--blue-dark)' },
       { text: '"Library search alone saved us from redoing graphics twice."', initials: 'EF', name: 'Elena F.', role: 'Designer', bg: 'var(--orange-deep)' },
       { text: '"It replaced three separate scheduling tools we were paying for."', initials: 'RN', name: 'Radu N.', role: 'Founder', bg: 'var(--navy)' },
@@ -102,6 +103,9 @@ function Counter({ target, suffix = '', decimals = 0 }) {
 }
 
 export default function HomePage() {
+  const videoRef = useRef(null)
+  const [videoReady, setVideoReady] = useState(false)
+
   return (
     <MarketingPage active="home">
       {/* Hero */}
@@ -109,20 +113,30 @@ export default function HomePage() {
         <div className="wrap hero-grid">
           <div>
             <div className="eyebrow reveal">
-              <span className="dot" /> TERM OF THE DAY — DIVIDEND YIELD
+              <span className="dot" /> TERM OF THE DAY: DIVIDEND YIELD
             </div>
             <h1 className="headline reveal reveal-d1">
               <em>Never</em> Miss A Post Again
             </h1>
             <p className="lead reveal reveal-d2">
-              From idea to published post in minutes: let AI draft it, approve it in a click — and watch it
-              publish itself across LinkedIn, Instagram and X, right on schedule.
+              From idea to published post in minutes: let <strong className="lead-strong">AI</strong> draft it,
+              approve it in a click, and watch it publish itself across LinkedIn, Instagram and X, right on
+              schedule.
             </p>
             <div className="hero-ctas reveal reveal-d3">
-              <Link to="/pricing" className="btn btn-primary">
-                Start Free Trial →
+              <Link
+                to="/pricing"
+                className="btn btn-primary btn-arrow"
+                onClick={() => trackEvent('cta_click', { cta_label: 'Start Free Trial', cta_location: 'home_hero' })}
+              >
+                Start Free Trial
+                <ArrowRight className="btn-arrow-icon" size={17} strokeWidth={2.5} />
               </Link>
-              <Link to="/about" className="btn btn-ghost">
+              <Link
+                to="/about"
+                className="btn btn-ghost"
+                onClick={() => trackEvent('cta_click', { cta_label: 'Our Story', cta_location: 'home_hero' })}
+              >
                 Our Story
               </Link>
             </div>
@@ -145,14 +159,27 @@ export default function HomePage() {
             </div>
           </div>
 
-          <div className="reveal reveal-d2" style={{ position: 'relative' }}>
-            <MockCard>
-              <img
-                src="/product-screenshots/create-post.png"
-                alt="Create Post"
-                style={{ borderRadius: 10, border: '1px solid var(--line)', width: '100%' }}
-              />
-            </MockCard>
+          <div className="reveal reveal-d2 hero-shot-wrap">
+            <video
+              ref={videoRef}
+              className="hero-shot"
+              src="/Financial1.mp4"
+              poster="/product-screenshots/create-post.png"
+              preload="auto"
+              autoPlay
+              loop
+              muted
+              playsInline
+              controls
+              onLoadedData={() => setVideoReady(true)}
+              onPlay={() => setVideoReady(true)}
+            />
+            {!videoReady && (
+              <div className="hero-shot-loading">
+                <Loader2 className="animate-spin" size={15} strokeWidth={2.5} />
+                Loading video…
+              </div>
+            )}
           </div>
         </div>
       </section>
@@ -160,8 +187,24 @@ export default function HomePage() {
       {/* Logo marquee */}
       <section style={{ paddingTop: 36, paddingBottom: 36 }}>
         <div className="wrap" style={{ textAlign: 'center' }}>
-          <div className="mono reveal" style={{ fontSize: 11, letterSpacing: '0.14em', textTransform: 'uppercase', color: 'var(--muted-2)', marginBottom: 20 }}>
+          <div
+            className="mono reveal"
+            style={{
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              gap: 14,
+              fontSize: 11,
+              fontWeight: 700,
+              letterSpacing: '0.14em',
+              textTransform: 'uppercase',
+              color: 'var(--muted-2)',
+              marginBottom: 22,
+            }}
+          >
+            <span style={{ width: 36, height: 1, background: 'var(--line)' }} />
             TRUSTED BY EDUCATORS PUBLISHING ON
+            <span style={{ width: 36, height: 1, background: 'var(--line)' }} />
           </div>
           <div className="logo-marquee-band reveal">
             <div className="logo-marquee-track">
@@ -217,7 +260,7 @@ export default function HomePage() {
               <span className="dot" /> HOW IT WORKS
             </span>
             <h2 className="sec-title">From idea to published post, in three steps</h2>
-            <p>Every lesson moves through the same reliable pipeline — no matter who&apos;s writing it.</p>
+            <p>Every lesson moves through the same reliable pipeline, no matter who&apos;s writing it.</p>
           </div>
           <div className="proc-row">
             {STEPS.map((s, i) => (
@@ -244,7 +287,7 @@ export default function HomePage() {
               <span className="dot" /> THE PLATFORM
             </span>
             <h2 className="sec-title">Every module your content team needs</h2>
-            <p>From the first draft to the published post — explore every part of the studio.</p>
+            <p>From the first draft to the published post, explore every part of the studio.</p>
           </div>
           <div className="cards-grid cols-4">
             {MODULES.map((m) => (
@@ -385,8 +428,13 @@ export default function HomePage() {
               }}
             >
               <input type="email" placeholder="you@company.com" />
-              <Link to="/pricing" className="btn btn-orange">
-                Get Started →
+              <Link
+                to="/pricing"
+                className="btn btn-orange btn-arrow"
+                onClick={() => trackEvent('cta_click', { cta_label: 'Get Started', cta_location: 'home_email_capture' })}
+              >
+                Get Started
+                <ArrowRight className="btn-arrow-icon" size={17} strokeWidth={2.5} />
               </Link>
             </form>
           </div>

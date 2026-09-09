@@ -146,7 +146,7 @@ export default function SubscriptionsPage() {
   }
 
   return (
-    <div className="relative mx-auto max-w-6xl">
+    <div className="relative mx-auto ">
       <div className="text-center">
         <h1 className="text-3xl font-black tracking-tight text-black sm:text-4xl">
           Choose your plan
@@ -190,7 +190,6 @@ export default function SubscriptionsPage() {
           const theme = planTheme[plan.name]
           const Icon = theme.icon
           const yearlyMonthlyEquivalent = plan.yearlyPrice === 0 ? 0 : Math.round(plan.yearlyPrice / 12)
-          const displayPrice = isYearly ? yearlyMonthlyEquivalent : plan.price
           const isActive = plan.id === activePlanId
 
           return (
@@ -226,12 +225,14 @@ export default function SubscriptionsPage() {
               <div className="mt-1">
                 <p className="flex items-baseline gap-1">
                   <span className="text-3xl font-black tracking-tight text-black">
-                    {displayPrice === 0 ? '$0' : `$${displayPrice}`}
+                    {(isYearly ? plan.yearlyPrice : plan.price) === 0 ? '$0' : `$${isYearly ? plan.yearlyPrice : plan.price}`}
                   </span>
-                  <span className="text-xs font-medium text-neutral-400">/month</span>
+                  <span className="text-xs font-medium text-neutral-400">{isYearly ? '/year' : '/month'}</span>
                 </p>
                 {isYearly && plan.price > 0 && (
-                  <p className="mt-1 text-xs text-neutral-400">Billed ${plan.yearlyPrice} annually</p>
+                  <p className="mt-1 text-xs text-neutral-400">
+                    Billed <span className="font-bold text-neutral-600">${yearlyMonthlyEquivalent} monthly</span>
+                  </p>
                 )}
               </div>
 

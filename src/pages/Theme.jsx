@@ -106,7 +106,7 @@ export default function ThemesPage() {
   }
 
   return (
-    <div className="mx-auto max-w-5xl space-y-4">
+    <div className="space-y-4">
      
 
       <SectionCard

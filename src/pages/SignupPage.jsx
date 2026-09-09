@@ -1,6 +1,8 @@
 import { useState } from 'react'
 import { useNavigate, Link } from 'react-router-dom'
 import Logo from '../components/Logo'
+import { setCurrentUserEmail, setSuperAdminStatus } from '../data/auth'
+import { trackEvent } from '../lib/analytics'
 
 export default function SignupPage() {
   const navigate = useNavigate()
@@ -19,6 +21,9 @@ export default function SignupPage() {
     setSubmitting(true)
     setTimeout(() => {
       setSubmitting(false)
+      setSuperAdminStatus(false)
+      setCurrentUserEmail(form.email)
+      trackEvent('sign_up', { method: 'form' })
       navigate('/dashboard')
     }, 500)
   }
@@ -256,40 +261,6 @@ export default function SignupPage() {
               {submitting ? 'CREATING ACCOUNT…' : 'CREATE ACCOUNT'}
             </button>
           </form>
-
-          <div className="my-6 flex items-center gap-3">
-            <div className="h-px flex-1 bg-neutral-200" />
-            <span className="text-[10px] tracking-widest text-neutral-400">
-              OR CONTINUE WITH
-            </span>
-            <div className="h-px flex-1 bg-neutral-200" />
-          </div>
-
-          <button
-            type="button"
-            onClick={() => navigate('/dashboard')}
-            className="flex w-full items-center justify-center gap-2 rounded-lg border border-neutral-200 py-2.5 text-sm font-medium text-neutral-700 shadow-sm transition hover:border-neutral-300 hover:bg-neutral-50 hover:shadow"
-          >
-            <svg className="h-4 w-4" viewBox="0 0 24 24">
-              <path
-                fill="#4285F4"
-                d="M23.49 12.27c0-.79-.07-1.54-.19-2.27H12v4.51h6.47a5.54 5.54 0 01-2.4 3.63v3h3.88c2.27-2.09 3.54-5.17 3.54-8.87z"
-              />
-              <path
-                fill="#34A853"
-                d="M12 24c3.24 0 5.95-1.08 7.93-2.91l-3.88-3c-1.07.72-2.45 1.16-4.05 1.16-3.11 0-5.75-2.1-6.69-4.92H1.3v3.09A11.99 11.99 0 0012 24z"
-              />
-              <path
-                fill="#FBBC05"
-                d="M5.31 14.33A7.2 7.2 0 014.91 12c0-.81.14-1.6.4-2.33V6.58H1.3A11.99 11.99 0 000 12c0 1.94.46 3.77 1.3 5.42l4.01-3.09z"
-              />
-              <path
-                fill="#EA4335"
-                d="M12 4.75c1.77 0 3.35.61 4.6 1.8l3.44-3.44C17.94 1.19 15.24 0 12 0 7.31 0 3.26 2.69 1.3 6.58l4.01 3.09C6.25 6.85 8.89 4.75 12 4.75z"
-              />
-            </svg>
-            Sign up with Google
-          </button>
 
           <p className="mt-6 text-center text-sm text-neutral-500">
             Already have an account?{' '}

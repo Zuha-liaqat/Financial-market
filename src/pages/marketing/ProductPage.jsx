@@ -1,10 +1,10 @@
 import { useParams, Navigate } from 'react-router-dom'
 import MarketingPage from './MarketingPage'
-import { PageBanner, MockCard, FeatureCards, StepsSection, CtaBannerSection } from './pieces'
+import { PageBanner, FeatureCards, StepsSection, CtaBannerSection } from './pieces'
 import { PRODUCT_CONTENT } from './productContent'
 
 const VISUAL_TITLES = {
-  dashboard: 'Dashboard — Overview',
+  dashboard: 'Dashboard Overview',
   'themes-brands': 'Themes / Brands',
   'create-post': 'Create Post',
   'create-blog': 'Create Blog',
@@ -16,15 +16,18 @@ const VISUAL_TITLES = {
   notifications: 'Notifications',
 }
 
+const SHORT_VISUALS = new Set(['integrations', 'notifications', 'planner', 'approval-queue'])
+
 function ScreenshotVisual({ slug }) {
+  const isShort = SHORT_VISUALS.has(slug)
   return (
-    <MockCard>
+    <div style={isShort ? { display: 'flex', alignItems: 'center', justifyContent: 'center', minHeight: 320 } : undefined}>
       <img
         src={`/product-screenshots/${slug}.png`}
         alt={VISUAL_TITLES[slug]}
-        style={{ borderRadius: 10, border: '1px solid var(--line)', width: '100%' }}
+        style={{ display: 'block', width: '100%', background: '#fff', borderRadius: 12 }}
       />
-    </MockCard>
+    </div>
   )
 }
 

@@ -100,7 +100,7 @@ export default function AboutPage() {
       <CtaBannerSection
         title="Want to build a studio like this?"
         lead="See how the platform behind Financial Market can run your brand's content too."
-        ctaLabel="Explore the Platform →"
+        ctaLabel="Explore the Platform"
         to="/product/dashboard"
       />
     </MarketingPage>

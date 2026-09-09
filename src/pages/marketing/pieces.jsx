@@ -1,4 +1,6 @@
 import { Link } from 'react-router-dom'
+import { ArrowRight } from 'lucide-react'
+import { trackEvent } from '../../lib/analytics'
 
 export function PageBanner({ eyebrow, title, lead, stats, visual }) {
   return (
@@ -11,10 +13,19 @@ export function PageBanner({ eyebrow, title, lead, stats, visual }) {
           <h1 className="headline reveal reveal-d1">{title}</h1>
           <p className="lead reveal reveal-d2">{lead}</p>
           <div className="hero-ctas reveal reveal-d3">
-            <Link to="/pricing" className="btn btn-primary">
-              Start Free Trial →
+            <Link
+              to="/pricing"
+              className="btn btn-primary btn-arrow"
+              onClick={() => trackEvent('cta_click', { cta_label: 'Start Free Trial', cta_location: 'product_banner' })}
+            >
+              Start Free Trial
+              <ArrowRight className="btn-arrow-icon" size={17} strokeWidth={2.5} />
             </Link>
-            <Link to="/contact" className="btn btn-ghost">
+            <Link
+              to="/contact"
+              className="btn btn-ghost"
+              onClick={() => trackEvent('cta_click', { cta_label: 'Book a Demo', cta_location: 'product_banner' })}
+            >
               Book a Demo
             </Link>
           </div>
@@ -37,10 +48,6 @@ export function PageBanner({ eyebrow, title, lead, stats, visual }) {
       </div>
     </section>
   )
-}
-
-export function MockCard({ children }) {
-  return <div className="mock-card">{children}</div>
 }
 
 export function FeatureCards({ kicker, title, lead, cards }) {
@@ -98,15 +105,20 @@ export function StepsSection({ kicker, title, lead, steps }) {
   )
 }
 
-export function CtaBannerSection({ title, lead, ctaLabel = 'Start Free Trial →', to = '/pricing' }) {
+export function CtaBannerSection({ title, lead, ctaLabel = 'Start Free Trial', to = '/pricing' }) {
   return (
     <section>
       <div className="wrap">
         <div className="cta-banner reveal">
           <h2>{title}</h2>
           <p>{lead}</p>
-          <Link to={to} className="btn btn-orange">
-            {ctaLabel}
+          <Link
+            to={to}
+            className="btn btn-orange btn-arrow"
+            onClick={() => trackEvent('cta_click', { cta_label: ctaLabel, cta_location: 'cta_banner' })}
+          >
+            {ctaLabel.replace(/\s*→\s*$/, '')}
+            <ArrowRight className="btn-arrow-icon" size={17} strokeWidth={2.5} />
           </Link>
         </div>
       </div>

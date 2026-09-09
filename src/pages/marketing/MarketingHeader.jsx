@@ -2,6 +2,7 @@ import { useState } from 'react'
 import { Link } from 'react-router-dom'
 import MarketingLogo from './MarketingLogo'
 import { MODULES, moduleIcon } from './navData'
+import { trackEvent } from '../../lib/analytics'
 
 export default function MarketingHeader({ active = 'home' }) {
   const [mobileOpen, setMobileOpen] = useState(false)
@@ -24,7 +25,9 @@ export default function MarketingHeader({ active = 'home' }) {
             <div className="dropdown">
               {MODULES.map((m) => (
                 <Link key={m.slug} to={`/product/${m.slug}`}>
-                  <span className="dico">{moduleIcon(m.icon)}</span>
+                  <span className="dico" style={{ background: `color-mix(in srgb, ${m.color} 14%, white)` }}>
+                    {moduleIcon(m.icon, m.color)}
+                  </span>
                   <span>
                     <strong>{m.title}</strong>
                     <span className="sub">{m.desc}</span>
@@ -45,10 +48,18 @@ export default function MarketingHeader({ active = 'home' }) {
         </div>
 
         <div className="navcta">
-          <Link to="/login" className="btn btn-ghost">
+          <Link
+            to="/login"
+            className="btn btn-ghost"
+            onClick={() => trackEvent('cta_click', { cta_label: 'Log In', cta_location: 'nav' })}
+          >
             Log In
           </Link>
-          <Link to="/pricing" className="btn btn-primary">
+          <Link
+            to="/pricing"
+            className="btn btn-primary"
+            onClick={() => trackEvent('cta_click', { cta_label: 'Start Free Trial', cta_location: 'nav' })}
+          >
             Start Free Trial
           </Link>
         </div>
@@ -79,7 +90,10 @@ export default function MarketingHeader({ active = 'home' }) {
           to="/pricing"
           className="btn btn-primary"
           style={{ marginTop: 8, justifyContent: 'center' }}
-          onClick={() => setMobileOpen(false)}
+          onClick={() => {
+            trackEvent('cta_click', { cta_label: 'Start Free Trial', cta_location: 'nav_mobile' })
+            setMobileOpen(false)
+          }}
         >
           Start Free Trial
         </Link>

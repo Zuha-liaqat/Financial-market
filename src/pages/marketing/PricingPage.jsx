@@ -1,16 +1,11 @@
 import { useState } from 'react'
-import { Link } from 'react-router-dom'
-import { Feather, Rocket, Crown, Gem, Check } from 'lucide-react'
+import { useNavigate } from 'react-router-dom'
+import { Feather, Rocket, Crown, Gem, Check, Loader2 } from 'lucide-react'
 import MarketingPage from './MarketingPage'
 import { CtaBannerSection } from './pieces'
 import { subscriptionPlans } from '../../data/subscriptionPlans'
-
-const PLAN_META = {
-  Free: { to: '/login' },
-  Pro: { to: '/login' },
-  Plus: { to: '/login' },
-  'Top Tier': { to: '/login' },
-}
+import { apiCreateCheckoutSession } from '../../lib/api'
+import { trackEvent } from '../../lib/analytics'
 
 const planTheme = {
   Free: {
@@ -54,11 +49,11 @@ const planTheme = {
 const FAQS = [
   {
     q: 'Can I change plans later?',
-    a: 'Yes — upgrade or downgrade anytime, and billing adjusts automatically from your next cycle.',
+    a: 'Yes, upgrade or downgrade anytime, and billing adjusts automatically from your next cycle.',
   },
   {
     q: 'Is there a free trial on paid plans?',
-    a: 'Every paid plan starts with a 14-day free trial — no card required to begin.',
+    a: 'Every paid plan starts with a 14-day free trial, no card required to begin.',
   },
   {
     q: 'What platforms are supported?',
@@ -66,7 +61,7 @@ const FAQS = [
   },
   {
     q: 'Do you offer education discounts?',
-    a: "Yes — reach out on the Contact page and we'll set up a plan that fits.",
+    a: "Yes, reach out on the Contact page and we'll set up a plan that fits.",
   },
   {
     q: 'What happens to my content if I cancel?',
@@ -75,9 +70,44 @@ const FAQS = [
 ]
 
 export default function PricingPage() {
+  const navigate = useNavigate()
   const [openIdx, setOpenIdx] = useState(null)
   const [cycle, setCycle] = useState('monthly')
+  const [loadingPlanId, setLoadingPlanId] = useState(null)
+  const [checkoutError, setCheckoutError] = useState('')
   const isYearly = cycle === 'yearly'
+
+  async function handleGetStarted(plan) {
+    const amount = isYearly ? plan.yearlyPrice : plan.price
+
+    trackEvent('plan_select', {
+      cta_label: 'Get Started',
+      cta_location: 'pricing_plan_card',
+      plan_name: plan.name,
+      billing_cycle: isYearly ? 'yearly' : 'monthly',
+    })
+
+    if (amount <= 0) {
+      navigate('/signup')
+      return
+    }
+
+    setCheckoutError('')
+    setLoadingPlanId(plan.id)
+    try {
+      const checkoutUrl = await apiCreateCheckoutSession({
+        amount,
+        currency: 'usd',
+        product_name: `${plan.name} Plan (${isYearly ? 'Yearly' : 'Monthly'})`,
+        success_url: `${window.location.origin}/signup`,
+        cancel_url: `${window.location.origin}/pricing`,
+      })
+      window.location.href = checkoutUrl
+    } catch (err) {
+      setCheckoutError(err.message || 'Failed to start checkout')
+      setLoadingPlanId(null)
+    }
+  }
 
   return (
     <MarketingPage active="pricing">
@@ -90,8 +120,13 @@ export default function PricingPage() {
             Simple pricing, for every stage of your content studio.
           </h1>
           <p className="lead reveal reveal-d2" style={{ maxWidth: 560, margin: '0 auto' }}>
-            Start free. Upgrade when your team — or your publishing schedule — grows.
+            Start free. Upgrade when your team, or your publishing schedule, grows.
           </p>
+          {checkoutError && (
+            <p className="reveal" style={{ maxWidth: 560, margin: '12px auto 0', fontSize: 13, fontWeight: 600, color: '#dc2626' }}>
+              {checkoutError}
+            </p>
+          )}
         </div>
       </section>
 
@@ -125,11 +160,9 @@ export default function PricingPage() {
 
           <div className="grid grid-cols-1 gap-5 sm:grid-cols-2 lg:grid-cols-4">
             {subscriptionPlans.map((plan, i) => {
-              const meta = PLAN_META[plan.name] || {}
               const theme = planTheme[plan.name]
               const Icon = theme.icon
               const yearlyMonthlyEquivalent = plan.yearlyPrice === 0 ? 0 : Math.round(plan.yearlyPrice / 12)
-              const displayPrice = isYearly ? yearlyMonthlyEquivalent : plan.price
 
               return (
                 <div
@@ -155,12 +188,14 @@ export default function PricingPage() {
                   <div className="mt-1">
                     <p className="flex items-baseline gap-1">
                       <span className="text-3xl font-black tracking-tight text-black">
-                        {displayPrice === 0 ? '$0' : `$${displayPrice}`}
+                        {(isYearly ? plan.yearlyPrice : plan.price) === 0 ? '$0' : `$${isYearly ? plan.yearlyPrice : plan.price}`}
                       </span>
-                      <span className="text-xs font-medium text-neutral-400">/month</span>
+                      <span className="text-xs font-medium text-neutral-400">{isYearly ? '/year' : '/month'}</span>
                     </p>
                     {isYearly && plan.price > 0 && (
-                      <p className="mt-1 text-xs text-neutral-400">Billed ${plan.yearlyPrice} annually</p>
+                      <p className="mt-1 text-xs text-neutral-400">
+                        Billed <span className="font-bold text-neutral-600">${yearlyMonthlyEquivalent} monthly</span>
+                      </p>
                     )}
                   </div>
 
@@ -177,12 +212,15 @@ export default function PricingPage() {
                     ))}
                   </ul>
 
-                  <Link
-                    to={meta.to || '/login'}
-                    className={`mt-6 flex items-center justify-center rounded-lg py-2.5 text-sm font-semibold transition active:scale-95 ${theme.button}`}
+                  <button
+                    type="button"
+                    onClick={() => handleGetStarted(plan)}
+                    disabled={loadingPlanId === plan.id}
+                    className={`mt-6 flex items-center justify-center gap-2 rounded-lg py-2.5 text-sm font-semibold transition active:scale-95 disabled:cursor-not-allowed disabled:opacity-60 disabled:active:scale-100 ${theme.button}`}
                   >
-                    Get Started
-                  </Link>
+                    {loadingPlanId === plan.id && <Loader2 className="h-4 w-4 animate-spin" />}
+                    {loadingPlanId === plan.id ? 'Redirecting…' : 'Get Started'}
+                  </button>
                 </div>
               )
             })}
@@ -220,8 +258,8 @@ export default function PricingPage() {
       <CtaBannerSection
         title="Start publishing with confidence."
         lead="No credit card required for the Free plan."
-        ctaLabel="Get Started Free →"
-        to="/login"
+        ctaLabel="Get Started Free"
+        to="/signup"
       />
     </MarketingPage>
   )

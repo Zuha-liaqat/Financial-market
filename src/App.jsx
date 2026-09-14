@@ -1,4 +1,6 @@
-import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom'
+import { useEffect } from 'react'
+import { BrowserRouter, Routes, Route, Navigate, useLocation } from 'react-router-dom'
+import { trackPageView, initButtonTracking } from './lib/analytics'
 import HomePage from './pages/marketing/HomePage'
 import AboutPage from './pages/marketing/AboutPage'
 import ContactPage from './pages/marketing/ContactPage'
@@ -24,9 +26,24 @@ import DashboardLayout from './layouts/DashboardLayout'
 import RequireSuperAdmin from './components/RequireSuperAdmin'
 import RequireNotSuperAdmin from './components/RequireNotSuperAdmin'
 
+function PageTracker() {
+  const location = useLocation()
+
+  useEffect(() => {
+    trackPageView(location.pathname, location.search)
+  }, [location.pathname, location.search])
+
+  return null
+}
+
 function App() {
+  useEffect(() => {
+    return initButtonTracking()
+  }, [])
+
   return (
     <BrowserRouter>
+      <PageTracker />
       <Routes>
         <Route path="/" element={<HomePage />} />
         <Route path="/login" element={<LoginPage />} />

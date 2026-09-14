@@ -137,7 +137,7 @@ function GenerateView({ period, onBack, onGenerate }) {
   return (
     <div className="space-y-3">
       <div className="flex items-center gap-3">
-        <button onClick={onBack} className="rounded-md p-2 text-neutral-500 transition hover:bg-neutral-100 hover:text-black">
+        <button onClick={onBack} data-track-label="Planner - Back to Home" className="rounded-md p-2 text-neutral-500 transition hover:bg-neutral-100 hover:text-black">
           <svg className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.75} d="M10.5 19.5L3 12m0 0l7.5-7.5M3 12h18" />
           </svg>

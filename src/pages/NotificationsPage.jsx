@@ -1,6 +1,6 @@
 import { useState } from 'react'
 
-function Toggle({ checked, onChange, disabled }) {
+function Toggle({ checked, onChange, disabled, label }) {
   return (
     <button
       type="button"
@@ -8,6 +8,7 @@ function Toggle({ checked, onChange, disabled }) {
       aria-checked={checked}
       disabled={disabled}
       onClick={onChange}
+      data-track-label={label ? `Toggle ${label}` : 'Toggle Notification Trigger'}
       className={`relative h-5 w-9 shrink-0 cursor-pointer rounded-full transition disabled:cursor-not-allowed disabled:opacity-50 ${
         checked ? 'bg-brand-500' : 'bg-neutral-200'
       }`}
@@ -145,7 +146,7 @@ function ChannelCard({ channel }) {
         {triggerLabels.map((label, i) => (
           <div key={label} className="flex items-center justify-between gap-2">
             <span className="text-xs text-neutral-600">{label}</span>
-            <Toggle checked={triggers[i]} onChange={() => toggleTrigger(i)} />
+            <Toggle checked={triggers[i]} onChange={() => toggleTrigger(i)} label={`${channel.name} - ${label}`} />
           </div>
         ))}
       </div>

@@ -71,7 +71,7 @@ const integrations = [
   },
 ]
 
-function Toggle({ checked, onChange, disabled }) {
+function Toggle({ checked, onChange, disabled, label }) {
   return (
     <button
       type="button"
@@ -79,6 +79,7 @@ function Toggle({ checked, onChange, disabled }) {
       aria-checked={checked}
       disabled={disabled}
       onClick={onChange}
+      data-track-label={label ? `Toggle ${label}` : 'Toggle Integration'}
       className={`relative h-5 w-9 shrink-0 cursor-pointer rounded-full transition disabled:cursor-not-allowed disabled:opacity-50 ${
         checked ? 'bg-brand-500' : 'bg-neutral-200'
       }`}
@@ -107,7 +108,7 @@ function IntegrationCard({ integration, enabled, onToggle }) {
           >
             {integration.status}
           </span>
-          <Toggle checked={enabled} onChange={onToggle} />
+          <Toggle checked={enabled} onChange={onToggle} label={integration.name} />
         </div>
       </div>
 

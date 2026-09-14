@@ -178,10 +178,10 @@ export default function CompaniesPage() {
         idNum += 1
         return {
           id: `CMP-${idNum}`,
-          name: u.full_name || u.email,
+          name: u.name || u.email,
           plan: 'Free',
           status: u.is_active ? 'Active' : 'Suspended',
-          role: u.role || 'user',
+          role: u.role || 'company',
           joinedDate: u.created_at || new Date().toISOString(),
           avatarColor: avatarColors[(existing.length + idx) % avatarColors.length],
           billingHistory: [],
@@ -218,7 +218,7 @@ export default function CompaniesPage() {
     const apiUser = await apiCreateUser({
       email,
       full_name: name,
-      role: 'user',
+      role: 'company',
       is_active: isActive,
       password,
     })
@@ -228,7 +228,7 @@ export default function CompaniesPage() {
       name,
       plan: 'Free',
       status: isActive ? 'Active' : 'Suspended',
-      role: apiUser?.role || 'user',
+      role: apiUser?.role || 'company',
       joinedDate: apiUser?.created_at || new Date().toISOString(),
       avatarColor: nextAvatarColor(),
       billingHistory: [],
@@ -403,7 +403,7 @@ export default function CompaniesPage() {
                       {company.status}
                     </span>
                   </td>
-                  <td className="px-3 py-3.5 capitalize text-neutral-600">{company.role || 'user'}</td>
+                  <td className="px-3 py-3.5 capitalize text-neutral-600">{company.role || 'company'}</td>
                   <td className="px-3 py-3.5 whitespace-nowrap text-neutral-500">{formatDate(company.joinedDate)}</td>
                   <td className="px-3 py-3.5 text-right">
                     <ActionsMenu onDelete={() => setDeleteTarget(company)} />

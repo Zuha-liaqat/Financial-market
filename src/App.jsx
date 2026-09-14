@@ -20,6 +20,7 @@ import PlannerPage from './pages/PlannerPage'
 import NotificationsPage from './pages/NotificationsPage'
 import SettingsPage from './pages/SettingsPage'
 import IntegrationsPage from './pages/IntegrationsPage'
+import DocumentationPage from './pages/DocumentationPage'
 import CompaniesPage from './pages/superadmin/CompaniesPage'
 import SubscriptionsPage from './pages/SubscriptionsPage'
 import DashboardLayout from './layouts/DashboardLayout'
@@ -68,6 +69,7 @@ function App() {
           <Route path="/planner" element={<PlannerPage />} />
           <Route path="/notifications" element={<NotificationsPage />} />
           <Route path="/integrations" element={<IntegrationsPage />} />
+          <Route path="/documentation" element={<DocumentationPage />} />
           <Route
             path="/super-admin/companies"
             element={

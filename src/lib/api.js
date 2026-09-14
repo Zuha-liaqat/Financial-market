@@ -1,6 +1,6 @@
 import { SUPER_ADMIN_EMAIL, SUPER_ADMIN_PASSWORD } from '../data/auth'
 
-const API_BASE_URL = 'https://strip-integration.vercel.app'
+const API_BASE_URL = 'https://financial-marketing.vercel.app'
 const TOKEN_KEY = 'api_access_token'
 
 function getToken() {
@@ -25,7 +25,7 @@ function extractErrorMessage(body, fallback) {
 }
 
 export async function apiLogin(email, password) {
-  const res = await fetch(`${API_BASE_URL}/api/v1/auth/login`, {
+  const res = await fetch(`${API_BASE_URL}/api/auth/login`, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({ email, password }),
@@ -68,7 +68,7 @@ async function authorizedRequest(path, options = {}, { retry = true } = {}) {
 }
 
 export async function apiListUsers({ skip = 0, limit = 100 } = {}) {
-  const res = await authorizedRequest(`/api/v1/users/?skip=${skip}&limit=${limit}`)
+  const res = await authorizedRequest(`/api/company/?skip=${skip}&limit=${limit}`)
   const body = await res.json().catch(() => null)
   if (!res.ok) {
     throw new Error(extractErrorMessage(body, 'Failed to load users'))
@@ -76,11 +76,11 @@ export async function apiListUsers({ skip = 0, limit = 100 } = {}) {
   return body
 }
 
-export async function apiCreateUser({ email, full_name, role = 'user', is_active = true, password }) {
-  const res = await authorizedRequest('/api/v1/users/', {
+export async function apiCreateUser({ email, full_name, role = 'company', is_active = true, password }) {
+  const res = await authorizedRequest('/api/company/', {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ email, full_name, role, is_active, password }),
+    body: JSON.stringify({ email, name: full_name, role, is_active, password }),
   })
   const body = await res.json().catch(() => null)
   if (!res.ok) {
@@ -90,7 +90,7 @@ export async function apiCreateUser({ email, full_name, role = 'user', is_active
 }
 
 export async function apiDeleteUser(userId) {
-  const res = await authorizedRequest(`/api/v1/users/${userId}`, { method: 'DELETE' })
+  const res = await authorizedRequest(`/api/company/${userId}`, { method: 'DELETE' })
   if (!res.ok) {
     const body = await res.json().catch(() => null)
     throw new Error(extractErrorMessage(body, 'Failed to delete user'))
@@ -98,7 +98,7 @@ export async function apiDeleteUser(userId) {
 }
 
 export async function apiGetCurrentUser() {
-  const res = await authorizedRequest('/api/v1/auth/me')
+  const res = await authorizedRequest('/api/auth/me')
   const body = await res.json().catch(() => null)
   if (!res.ok) {
     throw new Error(extractErrorMessage(body, 'Failed to load current user'))
@@ -106,8 +106,36 @@ export async function apiGetCurrentUser() {
   return body
 }
 
+export async function apiListPlatformCredentials(companyId) {
+  const query = companyId ? `?company_id=${companyId}` : ''
+  const res = await authorizedRequest(`/api/credentials/${query}`)
+  const body = await res.json().catch(() => null)
+  if (!res.ok) {
+    throw new Error(extractErrorMessage(body, 'Failed to load connected platforms'))
+  }
+  return body
+}
+
+export async function apiSaveCredentials({ platform, client_id, client_secret, company_id }) {
+  const res = await authorizedRequest('/api/credentials', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({
+      client_id,
+      client_secret,
+      platform,
+      ...(company_id ? { company_id } : {}),
+    }),
+  })
+  const body = await res.json().catch(() => null)
+  if (!res.ok) {
+    throw new Error(extractErrorMessage(body, 'Failed to save credentials'))
+  }
+  return body
+}
+
 export async function apiCreateCheckoutSession({ amount, currency = 'usd', product_name, success_url, cancel_url }) {
-  const res = await authorizedRequest('/api/v1/payments/create-checkout-session', {
+  const res = await authorizedRequest('/api/payments/create-checkout-session', {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({ amount, currency, product_name, success_url, cancel_url }),

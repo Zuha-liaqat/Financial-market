@@ -74,7 +74,7 @@ export default function SettingsPage() {
   useEffect(() => {
     apiGetCurrentUser()
       .then((me) => {
-        const [fn, ...rest] = (me.full_name || '').trim().split(/\s+/)
+        const [fn, ...rest] = (me.name || '').trim().split(/\s+/)
         const ln = rest.join(' ')
         setFirstName(fn || '')
         setLastName(ln)

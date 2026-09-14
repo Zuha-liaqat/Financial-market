@@ -16,6 +16,7 @@ const navItems = [
   { to: '/integrations', label: 'Integrations', icon: 'plug', hideForSuperAdmin: true },
   { to: '/notifications', label: 'Notifications', icon: 'bell', hideForSuperAdmin: true },
   { to: '/super-admin/subscriptions', label: 'Subscriptions', icon: 'card', hideForSuperAdmin: true },
+  { to: '/documentation', label: 'Documentation', icon: 'document', hideForSuperAdmin: true },
 ]
 
 const icons = {

@@ -1,4 +1,6 @@
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
+import { apiGetCurrentUser, apiListPlatformCredentials, apiSaveCredentials } from '../lib/api'
+import CredentialsModal from '../components/CredentialsModal'
 
 const statusStyles = {
   ACTIVE: 'bg-emerald-50 text-emerald-600 ring-1 ring-emerald-200',
@@ -19,11 +21,10 @@ const integrations = [
   {
     key: 'linkedin',
     name: 'LinkedIn',
-    status: 'ACTIVE',
-    defaultEnabled: true,
+    status: 'INACTIVE',
     description: 'Publish and sync approved posts directly to your LinkedIn company page.',
-    meta: { type: 'synced', text: 'Last synced: 4m ago' },
-    action: 'Configure',
+    meta: { type: 'none', text: 'Not configured' },
+    action: 'Enable',
     icon: (
       <svg className="h-6 w-6" viewBox="0 0 24 24" fill="#0A66C2">
         <path d="M20.447 20.452h-3.554v-5.569c0-1.328-.027-3.037-1.852-3.037-1.853 0-2.136 1.445-2.136 2.939v5.667H9.351V9h3.414v1.561h.046c.477-.9 1.637-1.85 3.37-1.85 3.601 0 4.267 2.37 4.267 5.455v6.286zM5.337 7.433c-1.144 0-2.063-.926-2.063-2.065 0-1.138.92-2.063 2.063-2.063 1.14 0 2.064.925 2.064 2.063 0 1.139-.925 2.065-2.064 2.065zm1.782 13.019H3.555V9h3.564v11.452zM22.225 0H1.771C.792 0 0 .774 0 1.729v20.542C0 23.227.792 24 1.771 24h20.451C23.2 24 24 23.227 24 22.271V1.729C24 .774 23.2 0 22.222 0h.003z" />
@@ -34,7 +35,6 @@ const integrations = [
     key: 'twitter',
     name: 'X / Twitter',
     status: 'INACTIVE',
-    defaultEnabled: false,
     description: 'Cross-post approved content to your X (Twitter) timeline automatically.',
     meta: { type: 'none', text: 'Not configured' },
     action: 'Enable',
@@ -47,11 +47,10 @@ const integrations = [
   {
     key: 'instagram',
     name: 'Instagram',
-    status: 'ACTIVE',
-    defaultEnabled: true,
+    status: 'INACTIVE',
     description: 'Publish photos, videos, and carousels straight to your Instagram business account.',
-    meta: { type: 'connected', text: 'Connected' },
-    action: 'Configure',
+    meta: { type: 'none', text: 'Not configured' },
+    action: 'Enable',
     icon: (
       <svg className="h-6 w-6" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
         <defs>
@@ -93,7 +92,7 @@ function Toggle({ checked, onChange, disabled, label }) {
   )
 }
 
-function IntegrationCard({ integration, enabled, onToggle }) {
+function IntegrationCard({ integration, enabled, onToggle, onConfigure, statusLoading }) {
   const disconnected = integration.status === 'DISCONNECTED'
 
   return (
@@ -103,12 +102,22 @@ function IntegrationCard({ integration, enabled, onToggle }) {
           {integration.icon}
         </span>
         <div className="flex flex-col items-end gap-2">
-          <span
-            className={`rounded-full px-2.5 py-1 text-[10px] font-semibold tracking-wide ${statusStyles[integration.status]}`}
-          >
-            {integration.status}
-          </span>
-          <Toggle checked={enabled} onChange={onToggle} label={integration.name} />
+          {statusLoading ? (
+            <span className="flex items-center gap-1.5 rounded-full bg-neutral-100 px-2.5 py-1 text-[10px] font-semibold tracking-wide text-neutral-400">
+              <svg className="h-2.5 w-2.5 animate-spin" fill="none" viewBox="0 0 24 24">
+                <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
+                <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v4a4 4 0 00-4 4H4z" />
+              </svg>
+              CHECKING
+            </span>
+          ) : (
+            <span
+              className={`rounded-full px-2.5 py-1 text-[10px] font-semibold tracking-wide ${statusStyles[integration.status]}`}
+            >
+              {integration.status}
+            </span>
+          )}
+          <Toggle checked={enabled} onChange={onToggle} disabled={statusLoading} label={integration.name} />
         </div>
       </div>
 
@@ -116,73 +125,121 @@ function IntegrationCard({ integration, enabled, onToggle }) {
       <p className="mt-1 flex-1 text-xs leading-relaxed text-neutral-500">{integration.description}</p>
 
       <div className="mt-4 flex items-center justify-between border-t border-neutral-100 pt-3 text-xs">
-        <span className={`flex items-center gap-1.5 font-medium ${metaStyles[integration.meta.type]}`}>
-          {integration.meta.type === 'connected' && (
-            <svg className="h-3.5 w-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4.5 12.75l6 6 9-13.5" />
-            </svg>
-          )}
-          {integration.meta.type === 'synced' && (
-            <svg className="h-3.5 w-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-              <path
-                strokeLinecap="round"
-                strokeLinejoin="round"
-                strokeWidth={2}
-                d="M16.023 9.348h4.992v-.001M2.985 19.644v-4.992m0 0h4.992m-4.993 0l3.181 3.183a8.25 8.25 0 0013.803-3.7M4.031 9.865a8.25 8.25 0 0113.803-3.7l3.181 3.182m0-4.991v4.99"
-              />
-            </svg>
-          )}
-          {integration.meta.type === 'processing' && (
-            <svg className="h-3.5 w-3.5 animate-spin" fill="none" viewBox="0 0 24 24">
-              <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
-              <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v4a4 4 0 00-4 4H4z" />
-            </svg>
-          )}
-          {integration.meta.type === 'error' && (
-            <svg className="h-3.5 w-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-              <path
-                strokeLinecap="round"
-                strokeLinejoin="round"
-                strokeWidth={2}
-                d="M12 9v3.75m-9.303 3.376c-.866 1.5.217 3.374 1.948 3.374h14.71c1.73 0 2.813-1.874 1.948-3.374L13.949 3.378c-.866-1.5-3.032-1.5-3.898 0L2.697 16.126zM12 15.75h.007v.008H12v-.008z"
-              />
-            </svg>
-          )}
-          {integration.meta.text}
-        </span>
-        <button
-          type="button"
-          className={`cursor-pointer font-semibold hover:underline ${
-            disconnected ? 'text-red-600' : 'text-brand-600'
-          }`}
-        >
-          {disconnected ? 'Reconnect' : integration.action}
-        </button>
+        {statusLoading ? (
+          <>
+            <span className="h-3 w-24 animate-pulse rounded bg-neutral-100" />
+            <span className="h-3 w-14 animate-pulse rounded bg-neutral-100" />
+          </>
+        ) : (
+          <>
+            <span className={`flex items-center gap-1.5 font-medium ${metaStyles[integration.meta.type]}`}>
+              {integration.meta.type === 'connected' && (
+                <svg className="h-3.5 w-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4.5 12.75l6 6 9-13.5" />
+                </svg>
+              )}
+              {integration.meta.type === 'synced' && (
+                <svg className="h-3.5 w-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    strokeWidth={2}
+                    d="M16.023 9.348h4.992v-.001M2.985 19.644v-4.992m0 0h4.992m-4.993 0l3.181 3.183a8.25 8.25 0 0013.803-3.7M4.031 9.865a8.25 8.25 0 0113.803-3.7l3.181 3.182m0-4.991v4.99"
+                  />
+                </svg>
+              )}
+              {integration.meta.type === 'processing' && (
+                <svg className="h-3.5 w-3.5 animate-spin" fill="none" viewBox="0 0 24 24">
+                  <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
+                  <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v4a4 4 0 00-4 4H4z" />
+                </svg>
+              )}
+              {integration.meta.type === 'error' && (
+                <svg className="h-3.5 w-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    strokeWidth={2}
+                    d="M12 9v3.75m-9.303 3.376c-.866 1.5.217 3.374 1.948 3.374h14.71c1.73 0 2.813-1.874 1.948-3.374L13.949 3.378c-.866-1.5-3.032-1.5-3.898 0L2.697 16.126zM12 15.75h.007v.008H12v-.008z"
+                  />
+                </svg>
+              )}
+              {integration.meta.text}
+            </span>
+            <button
+              type="button"
+              onClick={onConfigure}
+              data-track-label={`Integrations - ${disconnected ? 'Reconnect' : integration.action} ${integration.name}`}
+              className={`cursor-pointer font-semibold hover:underline ${
+                disconnected ? 'text-red-600' : 'text-brand-600'
+              }`}
+            >
+              {disconnected ? 'Reconnect' : integration.action}
+            </button>
+          </>
+        )}
       </div>
     </div>
   )
 }
 
 export default function IntegrationsPage() {
-  const [enabledMap, setEnabledMap] = useState(() =>
-    Object.fromEntries(integrations.map((i) => [i.key, i.defaultEnabled])),
-  )
+  const [connectedMap, setConnectedMap] = useState({})
+  const [configureTarget, setConfigureTarget] = useState(null)
+  const [companyId, setCompanyId] = useState(null)
+  const [statusLoading, setStatusLoading] = useState(true)
 
-  function toggle(key) {
-    setEnabledMap((prev) => ({ ...prev, [key]: !prev[key] }))
+  function loadConnectedStatus() {
+    apiListPlatformCredentials()
+      .then((list) => {
+        const map = Object.fromEntries((list || []).map((p) => [p.platform, p.is_connected]))
+        setConnectedMap(map)
+      })
+      .catch(() => {})
+      .finally(() => setStatusLoading(false))
   }
+
+  useEffect(() => {
+    loadConnectedStatus()
+    apiGetCurrentUser()
+      .then((me) => setCompanyId(me?.id ?? null))
+      .catch(() => {})
+  }, [])
+
+  async function handleSaveCredentials(payload) {
+    const result = await apiSaveCredentials({ ...payload, company_id: companyId ?? undefined })
+    if (result?.authorization_url) {
+      window.location.href = result.authorization_url
+      return
+    }
+    loadConnectedStatus()
+    setConfigureTarget(null)
+  }
+
+  const displayIntegrations = integrations.map((integration) => {
+    const isConnected = connectedMap[integration.key]
+    if (isConnected === undefined) return integration
+    return {
+      ...integration,
+      status: isConnected ? 'ACTIVE' : 'INACTIVE',
+      action: isConnected ? 'Configure' : 'Enable',
+      meta: isConnected
+        ? { type: 'connected', text: 'Connected' }
+        : { type: 'none', text: 'Not configured' },
+    }
+  })
 
   return (
     <div className="space-y-6">
-      
-
       <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-4">
-        {integrations.map((integration) => (
+        {displayIntegrations.map((integration) => (
           <IntegrationCard
             key={integration.key}
             integration={integration}
-            enabled={enabledMap[integration.key]}
-            onToggle={() => toggle(integration.key)}
+            enabled={Boolean(connectedMap[integration.key])}
+            onToggle={() => setConfigureTarget(integration)}
+            onConfigure={() => setConfigureTarget(integration)}
+            statusLoading={statusLoading}
           />
         ))}
 
@@ -199,6 +256,15 @@ export default function IntegrationsPage() {
           <span className="text-xs text-neutral-400">Connect an external API, webhook, or tool</span>
         </button>
       </div>
+
+      {configureTarget && (
+        <CredentialsModal
+          platform={configureTarget.key}
+          platformLabel={configureTarget.name}
+          onClose={() => setConfigureTarget(null)}
+          onSave={handleSaveCredentials}
+        />
+      )}
     </div>
   )
 }

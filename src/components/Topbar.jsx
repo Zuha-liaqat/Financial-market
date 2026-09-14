@@ -27,6 +27,7 @@ const pageTitles = [
   { match: '/notifications', label: 'Notifications' },
   { match: '/super-admin/companies', label: 'Companies' },
   { match: '/super-admin/subscriptions', label: 'Subscriptions' },
+  { match: '/documentation', label: 'Documentation' },
   { match: '/settings', label: 'Settings' },
 ]
 
@@ -68,7 +69,7 @@ export default function Topbar({ onMenuClick = () => {} }) {
       .catch(() => {})
   }, [])
 
-  const displayName = user?.full_name || 'Guest'
+  const displayName = user?.name || 'Guest'
   const displayRole = user ? (user.is_superuser ? 'Super Admin' : formatRole(user.role)) : ''
 
   return (

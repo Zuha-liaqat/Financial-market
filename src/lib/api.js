@@ -42,6 +42,24 @@ export async function apiLogin(email, password) {
   return token
 }
 
+export async function apiSignup({ full_name, email, password, confirm_password }) {
+  const res = await fetch(`${API_BASE_URL}/api/auth/signup`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ full_name, email, password, confirm_password }),
+  })
+  const body = await res.json().catch(() => null)
+  if (!res.ok) {
+    throw new Error(extractErrorMessage(body, 'Signup failed'))
+  }
+  const token = body?.access_token
+  if (!token) {
+    throw new Error('Signup response did not include an access token')
+  }
+  setToken(token)
+  return token
+}
+
 async function ensureAuthToken() {
   const existing = getToken()
   if (existing) return existing

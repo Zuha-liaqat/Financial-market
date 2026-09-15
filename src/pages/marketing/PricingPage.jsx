@@ -116,7 +116,7 @@ export default function PricingPage() {
           <div className="eyebrow reveal" style={{ marginLeft: 'auto', marginRight: 'auto' }}>
             <span className="dot" /> SUBSCRIPTIONS
           </div>
-          <h1 className="headline reveal reveal-d1" style={{ maxWidth: 700, margin: '0 auto 16px' }}>
+          <h1 className="headline reveal reveal-d1" style={{ maxWidth: 820, margin: '0 auto 16px' }}>
             Simple pricing, for every stage of your content studio.
           </h1>
           <p className="lead reveal reveal-d2" style={{ maxWidth: 560, margin: '0 auto' }}>

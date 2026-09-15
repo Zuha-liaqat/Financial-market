@@ -191,7 +191,7 @@ export default function Sidebar({ open = false, onClose = () => { } }) {
           </button>
         </div>
 
-        <nav className="flex-1 space-y-1 px-3">
+        <nav className="min-h-0 flex-1 space-y-1 overflow-y-auto px-3">
           {visibleNavItems.map((item) => (
             <NavLink key={item.to} to={item.to} onClick={onClose}>
               {({ isActive }) => (

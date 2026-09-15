@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState } from 'react'
 import { Link } from 'react-router-dom'
-import { ArrowRight, Loader2 } from 'lucide-react'
+import { ArrowRight } from 'lucide-react'
 import MarketingPage from './MarketingPage'
 import { MODULES, moduleIcon } from './navData'
 import { ICONS } from './icons'
@@ -103,9 +103,6 @@ function Counter({ target, suffix = '', decimals = 0 }) {
 }
 
 export default function HomePage() {
-  const videoRef = useRef(null)
-  const [videoReady, setVideoReady] = useState(false)
-
   return (
     <MarketingPage active="home">
       {/* Hero */}
@@ -161,7 +158,6 @@ export default function HomePage() {
 
           <div className="reveal reveal-d2 hero-shot-wrap">
             <video
-              ref={videoRef}
               className="hero-shot"
               src="/Financial1.mp4"
               poster="/product-screenshots/create-post.png"
@@ -171,15 +167,7 @@ export default function HomePage() {
               muted
               playsInline
               controls
-              onLoadedData={() => setVideoReady(true)}
-              onPlay={() => setVideoReady(true)}
             />
-            {!videoReady && (
-              <div className="hero-shot-loading">
-                <Loader2 className="animate-spin" size={15} strokeWidth={2.5} />
-                Loading video…
-              </div>
-            )}
           </div>
         </div>
       </section>
@@ -208,7 +196,7 @@ export default function HomePage() {
           </div>
           <div className="logo-marquee-band reveal">
             <div className="logo-marquee-track">
-              {[...Array(2)].flatMap((_, dup) => [
+              {[...Array(6)].flatMap((_, dup) => [
                 <div className="logo-chip" key={`li-${dup}`}>
                   <span className="lc-ico">
                     <svg width="14" height="14" viewBox="0 0 24 24" fill="#0A66C2">
@@ -233,18 +221,6 @@ export default function HomePage() {
                     </svg>
                   </span>
                   X / Twitter
-                </div>,
-                <div className="logo-chip" key={`id-${dup}`}>
-                  <span className="lc-ico">📰</span>
-                  Investing Daily
-                </div>,
-                <div className="logo-chip" key={`bvb-${dup}`}>
-                  <span className="lc-ico">📊</span>
-                  BVB Markets
-                </div>,
-                <div className="logo-chip" key={`ia-${dup}`}>
-                  <span className="lc-ico">🎓</span>
-                  Investment Academy
                 </div>,
               ])}
             </div>
@@ -297,6 +273,56 @@ export default function HomePage() {
                 </div>
                 <h3 style={{ fontSize: 16 }}>{m.title}</h3>
                 <p>{m.desc}</p>
+                {m.slug === 'integrations' && (
+                  <div className="platform-icons">
+                    <span title="LinkedIn">
+                      <svg width="14" height="14" viewBox="0 0 24 24" fill="#0A66C2">
+                        <path d="M4.98 3.5C3.88 3.5 3 4.38 3 5.48c0 1.1.88 2 1.98 2h.02C6.1 7.48 7 6.6 7 5.48 7 4.38 6.1 3.5 4.98 3.5zM3.5 8.75h3v11.75h-3zM9.5 8.75h2.9v1.6h.04c.4-.76 1.4-1.6 2.9-1.6 3.1 0 3.66 2 3.66 4.6v6.65h-3v-5.9c0-1.4-.03-3.2-1.95-3.2-1.96 0-2.26 1.53-2.26 3.1v6h-3z" />
+                      </svg>
+                    </span>
+                    <span title="Instagram">
+                      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#E4405F" strokeWidth="1.8">
+                        <rect x="3" y="3" width="18" height="18" rx="5" />
+                        <circle cx="12" cy="12" r="4" />
+                      </svg>
+                    </span>
+                    <span title="X / Twitter">
+                      <svg width="12" height="12" viewBox="0 0 24 24" fill="#111820">
+                        <path d="M18.9 2H22l-7.6 8.7L23.3 22H16.6l-5.2-6.8L5.4 22H2.3l8.1-9.3L1.4 2h6.9l4.7 6.2L18.9 2z" />
+                      </svg>
+                    </span>
+                  </div>
+                )}
+                {m.slug === 'notifications' && (
+                  <div className="platform-icons">
+                    <span title="WhatsApp">
+                      <img src="/whatsapp.jfif" alt="WhatsApp" className="h-full w-full rounded-md object-cover" />
+                    </span>
+                    <span title="Slack">
+                      <svg width="14" height="14" viewBox="0 0 122.8 122.8">
+                        <path
+                          d="M25.8,77.6c0,7.1-5.8,12.9-12.9,12.9S0,84.7,0,77.6s5.8-12.9,12.9-12.9h12.9V77.6z M32.3,77.6 c0-7.1,5.8-12.9,12.9-12.9s12.9,5.8,12.9,12.9v32.3c0,7.1-5.8,12.9-12.9,12.9s-12.9-5.8-12.9-12.9V77.6z"
+                          fill="#E01E5A"
+                        />
+                        <path
+                          d="M45.2,25.8c-7.1,0-12.9-5.8-12.9-12.9S38.1,0,45.2,0s12.9,5.8,12.9,12.9v12.9H45.2z M45.2,32.3 c7.1,0,12.9,5.8,12.9,12.9s-5.8,12.9-12.9,12.9H12.9C5.8,58.1,0,52.3,0,45.2s5.8-12.9,12.9-12.9H45.2z"
+                          fill="#36C5F0"
+                        />
+                        <path
+                          d="M97,45.2c0-7.1,5.8-12.9,12.9-12.9s12.9,5.8,12.9,12.9s-5.8,12.9-12.9,12.9H97V45.2z M90.5,45.2 c0,7.1-5.8,12.9-12.9,12.9s-12.9-5.8-12.9-12.9V12.9C64.7,5.8,70.5,0,77.6,0s12.9,5.8,12.9,12.9V45.2z"
+                          fill="#2EB67D"
+                        />
+                        <path
+                          d="M77.6,97c7.1,0,12.9,5.8,12.9,12.9s-5.8,12.9-12.9,12.9s-12.9-5.8-12.9-12.9V97H77.6z M77.6,90.5 c-7.1,0-12.9-5.8-12.9-12.9s5.8-12.9,12.9-12.9h32.3c7.1,0,12.9,5.8,12.9,12.9s-5.8,12.9-12.9,12.9H77.6z"
+                          fill="#ECB22E"
+                        />
+                      </svg>
+                    </span>
+                    <span title="Microsoft Teams">
+                      <img src="/Teams.png" alt="Microsoft Teams" className="h-full w-full object-contain p-0.5" />
+                    </span>
+                  </div>
+                )}
               </Link>
             ))}
           </div>

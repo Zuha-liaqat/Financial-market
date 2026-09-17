@@ -2,8 +2,8 @@ import { useMemo, useState, useRef, useEffect } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { CalendarDays, ChevronLeft, ChevronRight, Plus, X } from 'lucide-react'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '../components/ui/select'
-import { calendarEvents } from '../data/calendarEvents'
-import { getQueueItemById, getGeneratedPosts } from '../data/posts'
+import { apiGetCalendarPosts } from '../lib/api'
+import { mapApiPost } from '../lib/posts'
 
 const WEEKDAYS = ['MON', 'TUE', 'WED', 'THU', 'FRI', 'SAT', 'SUN']
 
@@ -493,15 +493,21 @@ export default function CalendarPage() {
   const [view, setView] = useState('month')
   const [anchor, setAnchor] = useState(new Date(today.getFullYear(), today.getMonth(), 1))
   const [extraEvents, setExtraEvents] = useState([])
+  const [generatedPosts, setGeneratedPosts] = useState([])
+
+  useEffect(() => {
+    apiGetCalendarPosts()
+      .then((data) => setGeneratedPosts((data || []).map(mapApiPost)))
+      .catch(() => setGeneratedPosts([]))
+  }, [])
 
   const eventsByDate = useMemo(() => {
-    const generatedPosts = getGeneratedPosts()
+    const postEvents = generatedPosts
       .filter((p) => p.scheduleDate)
       .map((p) => {
         const d = new Date(p.scheduleDate + 'T00:00:00')
         const diffMs = d.getTime() - today.getTime()
         const dayOffset = Math.round(diffMs / (1000 * 60 * 60 * 24))
-        const platform = p.platform || p.channels?.[0] || 'LinkedIn'
         return {
           id: p.id,
           relatedId: p.id,
@@ -509,13 +515,13 @@ export default function CalendarPage() {
           type: 'MOTION',
           title: p.title,
           time: p.scheduleTime ? formatTime24(p.scheduleTime) : '09:00 AM',
-          endTime: p.scheduleEndTime ? formatTime24(p.scheduleEndTime) : '09:30 AM',
+          endTime: '09:30 AM',
           thumbClass: p.thumbClass || 'bg-gradient-to-br from-brand-200 to-brand-400',
           description: p.caption,
           hashtags: p.hashtags || [],
           expectedReach: '—',
           reachDelta: '',
-          bestPlatform: platform,
+          bestPlatform: p.platform || 'LinkedIn',
           matchScore: p.score || 85,
           sentimentLabel: 'OPTIMISTIC',
           audienceLabel: 'Scheduled',
@@ -524,11 +530,11 @@ export default function CalendarPage() {
           bannerColor: pickEventColor(p.id),
         }
       })
-    return [...calendarEvents, ...extraEvents, ...generatedPosts].map((ev) => ({
+    return [...extraEvents, ...postEvents].map((ev) => ({
       ...ev,
       date: addDays(today, ev.dayOffset ?? 0),
     }))
-  }, [today, extraEvents])
+  }, [today, extraEvents, generatedPosts])
 
   const todaysEvent = eventsByDate.find((ev) => isSameDay(ev.date, today))
   const [selected, setSelected] = useState(todaysEvent ?? null)
@@ -538,13 +544,13 @@ export default function CalendarPage() {
     if (!selected) return null
     if (selected.images && selected.images.length > 0) return selected
     if (selected.relatedId) {
-      const linkedPost = getQueueItemById(selected.relatedId)
+      const linkedPost = generatedPosts.find((p) => p.id === selected.relatedId)
       if (linkedPost?.images?.length > 0) {
         return { ...selected, images: linkedPost.images }
       }
     }
     return selected
-  }, [selected])
+  }, [selected, generatedPosts])
 
   const grid = useMemo(() => {
     const first = new Date(anchor.getFullYear(), anchor.getMonth(), 1)

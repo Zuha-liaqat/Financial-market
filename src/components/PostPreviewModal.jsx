@@ -1,5 +1,6 @@
 import { useState } from 'react'
 import { Wifi as WifiIcon } from 'lucide-react'
+import { apiPublishPost } from '../lib/api'
 
 function getInitials(title) {
   const letters = title
@@ -344,7 +345,7 @@ function InstagramMobile({ item, initials }) {
       <div className="flex items-center gap-2 px-3 pt-1">
         <StoryAvatar initials={initials} />
         <div className="flex items-center gap-1">
-          <span className="text-xs font-semibold text-black">demo</span>
+          <span className="text-xs font-semibold text-black">financialmarket</span>
           <VerifiedBadge className="h-3.5 w-3.5" />
           <span className="text-[10px] text-neutral-400">• Sponsored</span>
         </div>
@@ -365,7 +366,7 @@ function InstagramMobile({ item, initials }) {
       <p className="px-3 pt-1.5 text-[11px] font-semibold text-black">1,284 likes</p>
       <p className="px-3 pt-0.5 text-[11px] leading-snug text-neutral-800">
         <TruncatedCaption
-          prefix={<span className="font-semibold text-black">demo </span>}
+          prefix={<span className="font-semibold text-black">financialmarket </span>}
           text={item.caption}
           hashtags={item.hashtags.join(' ')}
           hashtagClass="text-[#0a55a0]"
@@ -403,7 +404,7 @@ function InstagramWeb({ item, initials }) {
             <div className="flex items-center gap-2 border-b border-neutral-100 px-3 py-2.5">
               <StoryAvatar initials={initials} />
               <div className="flex items-center gap-1">
-                <span className="text-xs font-semibold text-black">demo</span>
+                <span className="text-xs font-semibold text-black">financialmarket</span>
                 <VerifiedBadge className="h-3.5 w-3.5" />
               </div>
               <DotsIcon className="ml-auto h-5 w-5 text-neutral-700" />
@@ -411,7 +412,7 @@ function InstagramWeb({ item, initials }) {
             <div className="flex-1 space-y-2 px-3 py-2.5">
               <p className="text-xs leading-relaxed text-neutral-800">
                 <TruncatedCaption
-                  prefix={<span className="font-semibold text-black">demo </span>}
+                  prefix={<span className="font-semibold text-black">financialmarket </span>}
                   text={item.caption}
                   hashtags={item.hashtags.join(' ')}
                   hashtagClass="text-[#0a55a0]"
@@ -461,7 +462,7 @@ function LinkedInMobile({ item, initials }) {
           </div>
           <div className="min-w-0">
             <div className="flex items-center gap-1">
-              <span className="text-xs font-semibold text-black">Demo</span>
+              <span className="text-xs font-semibold text-black">Financial Market</span>
               <VerifiedBadge className="h-3.5 w-3.5" />
             </div>
             <p className="truncate text-[10px] text-neutral-500">12,481 followers</p>
@@ -526,7 +527,7 @@ function LinkedInWeb({ item, initials }) {
               </div>
               <div className="min-w-0">
                 <div className="flex items-center gap-1">
-                  <span className="text-sm font-semibold text-black">Demo</span>
+                  <span className="text-sm font-semibold text-black">Financial Market</span>
                   <VerifiedBadge className="h-4 w-4" />
                 </div>
                 <p className="text-[11px] text-neutral-500">12,481 followers • 2h • Edited</p>
@@ -578,7 +579,7 @@ function LinkedInWeb({ item, initials }) {
 
         <div className="hidden w-52 shrink-0 space-y-4 md:block">
           <div className="rounded-md border border-neutral-200 bg-white p-3 shadow-sm">
-            <p className="text-[11px] font-semibold text-neutral-500">Demo</p>
+            <p className="text-[11px] font-semibold text-neutral-500">Financial Market</p>
             <div className="mt-2 h-8 rounded bg-neutral-200" />
             <div className="mt-2 h-2 w-3/4 rounded bg-neutral-200" />
             <div className="mt-3 h-6 rounded bg-[#0A66C2] opacity-90" />
@@ -611,9 +612,9 @@ function TwitterMobile({ item, initials }) {
         </div>
         <div className="min-w-0 flex-1">
           <div className="flex flex-wrap items-center gap-x-1">
-            <span className="text-xs font-bold text-black">Demo</span>
+            <span className="text-xs font-bold text-black">Financial Market</span>
             <VerifiedBadge className="h-3.5 w-3.5" />
-            <span className="text-xs text-neutral-500">@demo · 2h</span>
+            <span className="text-xs text-neutral-500">@financialmarket · 2h</span>
           </div>
           <p className="mt-1 whitespace-pre-line text-[12px] leading-snug text-neutral-800">
             <TruncatedCaption
@@ -665,9 +666,9 @@ function TwitterWeb({ item, initials }) {
           </div>
           <div className="min-w-0 flex-1">
             <div className="flex flex-wrap items-center gap-x-1">
-              <span className="text-[13px] font-bold text-black">Demo</span>
+              <span className="text-[13px] font-bold text-black">Financial Market</span>
               <VerifiedBadge className="h-4 w-4" />
-              <span className="text-[13px] text-neutral-500">@demo · 2h</span>
+              <span className="text-[13px] text-neutral-500">@financialmarket · 2h</span>
             </div>
             <p className="mt-1 whitespace-pre-line text-[14px] leading-relaxed text-neutral-800">
               <TruncatedCaption
@@ -765,12 +766,29 @@ const platforms = [
   },
 ]
 
-export default function PostPreviewModal({ item, onClose }) {
+export default function PostPreviewModal({ item, onClose, onPublished }) {
   const defaultTab = platforms.some((p) => p.key === item.platform) ? item.platform : 'LinkedIn'
   const [tab, setTab] = useState(defaultTab)
   const [device, setDevice] = useState('mobile')
+  const [publishing, setPublishing] = useState(false)
+  const [publishError, setPublishError] = useState(null)
+  const [posted, setPosted] = useState(item.isPosted)
   const initials = getInitials(item.title)
   const active = platforms.find((p) => p.key === tab)
+
+  async function handlePublish() {
+    setPublishing(true)
+    setPublishError(null)
+    try {
+      const result = await apiPublishPost(item.id)
+      setPosted(true)
+      onPublished?.(item.id, result)
+    } catch (err) {
+      setPublishError(err.message)
+    } finally {
+      setPublishing(false)
+    }
+  }
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4">
@@ -856,6 +874,30 @@ export default function PostPreviewModal({ item, onClose }) {
             <active.Web item={item} initials={initials} />
           </BrowserFrame>
         )}
+
+        {publishError && (
+          <p className="mt-3 rounded-lg border border-red-200 bg-red-50 px-3 py-2 text-xs text-red-600">
+            {publishError}
+          </p>
+        )}
+
+        <div className="mt-4 flex items-center justify-between gap-4 border-t border-neutral-200 pt-4">
+          <p className="text-xs text-neutral-500">
+            Skip review and publish this post to the target platform(s) right away.
+          </p>
+          <button
+            onClick={handlePublish}
+            disabled={publishing || posted}
+            className="flex shrink-0 items-center gap-1.5 rounded-md bg-sky-500 px-4 py-2.5 text-sm font-semibold text-white shadow-sm transition hover:bg-sky-600 disabled:cursor-not-allowed disabled:opacity-60"
+          >
+            {!publishing && !posted && (
+              <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M4.5 12.75l6 6 9-13.5" />
+              </svg>
+            )}
+            {posted ? 'Published' : publishing ? 'Publishing…' : 'Post Now'}
+          </button>
+        </div>
       </div>
     </div>
   )

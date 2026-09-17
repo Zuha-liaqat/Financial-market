@@ -1,6 +1,8 @@
 import { useState, useRef, useEffect } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { addNotification } from '../data/notifications'
+import { apiGeneratePost } from '../lib/api'
+import { SuccessToast } from '../components/Toast'
 
 
 const toneOptions = ['Professional', 'Casual', 'Enthusiastic', 'Informative', 'Humorous']
@@ -154,6 +156,7 @@ export default function CreatePostPage() {
   const [newTag, setNewTag] = useState('')
   const [isGenerating, setIsGenerating] = useState(false)
   const [generateError, setGenerateError] = useState(null)
+  const [generateSuccess, setGenerateSuccess] = useState(null)
   const [showToneDropdown, setShowToneDropdown] = useState(false)
   const [showLanguageDropdown, setShowLanguageDropdown] = useState(false)
   const [showUrlDialog, setShowUrlDialog] = useState(false)
@@ -244,19 +247,21 @@ export default function CreatePostPage() {
     setGenerateError(null)
 
     try {
-      const result = await generatePost({
+      const result = await apiGeneratePost({
         prompt,
-        type: selectedPlatforms.map((p) => p.toLowerCase()).join(','),
-        language,
+        platforms: selectedPlatforms.map((p) => p.toLowerCase()).join(','),
         tone,
-        date: scheduleDate || undefined,
-        startTime: scheduleTime,
-        files: uploadedFiles.map((f) => f.file),
+        language,
+        hashtags: tags.join(','),
+        date: scheduleDate,
+        start_time: scheduleTime,
+        images: uploadedFiles.map((f) => f.file),
       })
 
-      const generated = typeof result === 'object' && result !== null ? result : {}
-      const title = generated.headline || generated.title || prompt.slice(0, 50) + (prompt.length > 50 ? '...' : '')
+      const firstPost = Array.isArray(result?.posts) ? result.posts[0] : null
+      const title = firstPost?.headline || firstPost?.title || prompt.slice(0, 50) + (prompt.length > 50 ? '...' : '')
       const platformLabel = selectedPlatforms.join(' + ')
+      const count = result?.count ?? 1
 
       addNotification({
         type: 'creation',
@@ -266,10 +271,12 @@ export default function CreatePostPage() {
         author: 'Relay AI',
       })
 
+      setIsGenerating(false)
+      setGenerateSuccess(count > 1 ? `${count} posts generated successfully!` : 'Post generated successfully!')
+      await new Promise((resolve) => setTimeout(resolve, 900))
       navigate('/approval-queue')
     } catch (err) {
       setGenerateError(err.message)
-    } finally {
       setIsGenerating(false)
     }
   }
@@ -280,6 +287,10 @@ export default function CreatePostPage() {
         <div className="rounded-lg border border-red-200 bg-red-50 px-4 py-2.5 text-sm text-red-600">
           {generateError}
         </div>
+      )}
+
+      {generateSuccess && (
+        <SuccessToast message={generateSuccess} onClose={() => setGenerateSuccess(null)} />
       )}
 
       <div className="flex flex-col gap-3">
@@ -489,6 +500,12 @@ export default function CreatePostPage() {
                 <input
                   value={newTag}
                   onChange={(e) => setNewTag(e.target.value)}
+                  onBlur={() => {
+                    if (newTag.trim()) {
+                      addTag(newTag)
+                      setNewTag('')
+                    }
+                  }}
                   placeholder="+ Tag"
                   className="w-20 rounded-full border border-dashed border-brand-300 bg-white px-3 py-1 text-xs outline-none focus:border-brand-500"
                 />

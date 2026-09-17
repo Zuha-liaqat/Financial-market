@@ -1,7 +1,9 @@
 import { useEffect, useState } from 'react'
-import { useNavigate, Link } from 'react-router-dom'
+import { useNavigate, useSearchParams, Link } from 'react-router-dom'
 import Logo from '../components/Logo'
-import { apiSignup } from '../lib/api'
+import { apiCreateCheckoutSession, apiSignup } from '../lib/api'
+import { setActivePlanId, subscriptionPlans } from '../data/subscriptionPlans'
+import { setCurrentUserEmail, setSuperAdminStatus } from '../data/auth'
 import { trackEvent } from '../lib/analytics'
 
 function ErrorToast({ message, onClose }) {
@@ -39,6 +41,9 @@ function ErrorToast({ message, onClose }) {
 
 export default function SignupPage() {
   const navigate = useNavigate()
+  const [searchParams] = useSearchParams()
+  const planId = searchParams.get('plan')
+  const billingCycle = searchParams.get('cycle') === 'yearly' ? 'yearly' : 'monthly'
   const [showPassword, setShowPassword] = useState(false)
   const [showConfirmPassword, setShowConfirmPassword] = useState(false)
   const [form, setForm] = useState({ name: '', email: '', password: '', confirmPassword: '' })
@@ -71,8 +76,33 @@ export default function SignupPage() {
         password: form.password,
         confirm_password: form.confirmPassword,
       })
+      setSuperAdminStatus(false)
+      setCurrentUserEmail(form.email.trim())
       trackEvent('sign_up', { method: 'form' })
-      navigate('/login')
+
+      const selectedPlan = planId ? subscriptionPlans.find((p) => p.id === planId) : null
+      const amount = selectedPlan ? (billingCycle === 'yearly' ? selectedPlan.yearlyPrice : selectedPlan.price) : 0
+
+      if (selectedPlan && amount > 0) {
+        try {
+          const checkoutUrl = await apiCreateCheckoutSession({
+            amount,
+            currency: 'usd',
+            product_name: `${selectedPlan.name} Plan (${billingCycle === 'yearly' ? 'Yearly' : 'Monthly'})`,
+            success_url: `${window.location.origin}/dashboard?signup_plan=success&plan=${selectedPlan.id}`,
+            cancel_url: `${window.location.origin}/dashboard?signup_plan=cancelled&plan=${selectedPlan.id}`,
+          })
+          window.location.href = checkoutUrl
+          return
+        } catch {
+          // Couldn't start checkout — fall back to the Free plan.
+          setActivePlanId('free')
+          navigate('/dashboard')
+          return
+        }
+      }
+
+      navigate(selectedPlan ? '/dashboard' : '/login')
     } catch (err) {
       setError(err.message || 'Failed to create account.')
     } finally {

@@ -1,10 +1,9 @@
 import { useState } from 'react'
 import { useNavigate } from 'react-router-dom'
-import { Feather, Rocket, Crown, Gem, Check, Loader2 } from 'lucide-react'
+import { Feather, Rocket, Crown, Gem, Check } from 'lucide-react'
 import MarketingPage from './MarketingPage'
 import { CtaBannerSection } from './pieces'
 import { subscriptionPlans } from '../../data/subscriptionPlans'
-import { apiCreateCheckoutSession } from '../../lib/api'
 import { trackEvent } from '../../lib/analytics'
 
 const planTheme = {
@@ -73,13 +72,9 @@ export default function PricingPage() {
   const navigate = useNavigate()
   const [openIdx, setOpenIdx] = useState(null)
   const [cycle, setCycle] = useState('monthly')
-  const [loadingPlanId, setLoadingPlanId] = useState(null)
-  const [checkoutError, setCheckoutError] = useState('')
   const isYearly = cycle === 'yearly'
 
-  async function handleGetStarted(plan) {
-    const amount = isYearly ? plan.yearlyPrice : plan.price
-
+  function handleGetStarted(plan) {
     trackEvent('plan_select', {
       cta_label: 'Get Started',
       cta_location: 'pricing_plan_card',
@@ -87,26 +82,7 @@ export default function PricingPage() {
       billing_cycle: isYearly ? 'yearly' : 'monthly',
     })
 
-    if (amount <= 0) {
-      navigate('/signup')
-      return
-    }
-
-    setCheckoutError('')
-    setLoadingPlanId(plan.id)
-    try {
-      const checkoutUrl = await apiCreateCheckoutSession({
-        amount,
-        currency: 'usd',
-        product_name: `${plan.name} Plan (${isYearly ? 'Yearly' : 'Monthly'})`,
-        success_url: `${window.location.origin}/signup`,
-        cancel_url: `${window.location.origin}/pricing`,
-      })
-      window.location.href = checkoutUrl
-    } catch (err) {
-      setCheckoutError(err.message || 'Failed to start checkout')
-      setLoadingPlanId(null)
-    }
+    navigate(`/signup?plan=${plan.id}&cycle=${isYearly ? 'yearly' : 'monthly'}`)
   }
 
   return (
@@ -122,11 +98,6 @@ export default function PricingPage() {
           <p className="lead reveal reveal-d2" style={{ maxWidth: 560, margin: '0 auto' }}>
             Start free. Upgrade when your team, or your publishing schedule, grows.
           </p>
-          {checkoutError && (
-            <p className="reveal" style={{ maxWidth: 560, margin: '12px auto 0', fontSize: 13, fontWeight: 600, color: '#dc2626' }}>
-              {checkoutError}
-            </p>
-          )}
         </div>
       </section>
 
@@ -215,11 +186,9 @@ export default function PricingPage() {
                   <button
                     type="button"
                     onClick={() => handleGetStarted(plan)}
-                    disabled={loadingPlanId === plan.id}
-                    className={`mt-6 flex items-center justify-center gap-2 rounded-lg py-2.5 text-sm font-semibold transition active:scale-95 disabled:cursor-not-allowed disabled:opacity-60 disabled:active:scale-100 ${theme.button}`}
+                    className={`mt-6 flex items-center justify-center gap-2 rounded-lg py-2.5 text-sm font-semibold transition active:scale-95 ${theme.button}`}
                   >
-                    {loadingPlanId === plan.id && <Loader2 className="h-4 w-4 animate-spin" />}
-                    {loadingPlanId === plan.id ? 'Redirecting…' : 'Get Started'}
+                    Get Started
                   </button>
                 </div>
               )

@@ -90,7 +90,8 @@ function getActivePlanKey() {
 
 export function getActivePlanId() {
   const key = getActivePlanKey()
-  return key ? localStorage.getItem(key) : null
+  const stored = key ? localStorage.getItem(key) : null
+  return stored || 'free'
 }
 
 export function setActivePlanId(id) {

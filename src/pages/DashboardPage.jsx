@@ -1,5 +1,7 @@
-import { useNavigate } from 'react-router-dom'
+import { useEffect } from 'react'
+import { useNavigate, useSearchParams } from 'react-router-dom'
 import { calendarEvents } from '../data/calendarEvents'
+import { setActivePlanId } from '../data/subscriptionPlans'
 
 const statCards = [
   {
@@ -160,10 +162,21 @@ const eventPlatforms = {
 
 export default function DashboardPage() {
   const navigate = useNavigate()
+  const [searchParams, setSearchParams] = useSearchParams()
   const upcomingEvents = calendarEvents
     .filter((e) => e.dayOffset >= 0)
     .sort((a, b) => a.dayOffset - b.dayOffset)
     .slice(0, 3)
+
+  useEffect(() => {
+    const signupPlanStatus = searchParams.get('signup_plan')
+    if (!signupPlanStatus) return
+
+    const planId = searchParams.get('plan')
+    setActivePlanId(signupPlanStatus === 'success' && planId ? planId : 'free')
+    setSearchParams({}, { replace: true })
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [])
 
   return (
     <div className="space-y-4">

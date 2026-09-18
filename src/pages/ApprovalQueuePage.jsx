@@ -3,8 +3,19 @@ import { useNavigate, useSearchParams } from 'react-router-dom'
 import { addNotification } from '../data/notifications'
 import PostPreviewModal from '../components/PostPreviewModal'
 import ConfirmDialog from '../components/ConfirmDialog'
-import { apiApprovePosts, apiDeletePost, apiListPosts } from '../lib/api'
-import { mapApiPost } from '../lib/posts'
+import { apiApprovalQueueDecision, apiDeleteBlog, apiDeletePost, apiGetApprovalQueue } from '../lib/api'
+import { mapApprovalQueueItem } from '../lib/posts'
+
+function MonogramIcon({ letter, bg }) {
+  return (
+    <span
+      className="flex h-6 w-6 shrink-0 items-center justify-center rounded-full text-[11px] font-bold text-white"
+      style={{ backgroundColor: bg }}
+    >
+      {letter}
+    </span>
+  )
+}
 
 const platformIcons = {
   Twitter: (
@@ -62,6 +73,18 @@ const platformIcons = {
       <path d="M22 12c0-5.523-4.477-10-10-10S2 6.477 2 12c0 4.991 3.657 9.128 8.438 9.878v-6.987h-2.54V12h2.54V9.797c0-2.506 1.492-3.89 3.777-3.89 1.094 0 2.238.195 2.238.195v2.46h-1.26c-1.243 0-1.63.771-1.63 1.562V12h2.773l-.443 2.89h-2.33v6.988C18.343 21.128 22 16.991 22 12z" />
     </svg>
   ),
+  Website: (
+    <svg className="h-6 w-6 text-brand-500" viewBox="0 0 24 24" fill="none" stroke="currentColor" xmlns="http://www.w3.org/2000/svg">
+      <circle cx="12" cy="12" r="9" strokeWidth="1.75" />
+      <path strokeLinecap="round" strokeWidth="1.75" d="M3 12h18M12 3c2.485 2.4 3.75 5.55 3.75 9s-1.265 6.6-3.75 9c-2.485-2.4-3.75-5.55-3.75-9S9.515 5.4 12 3z" />
+    </svg>
+  ),
+  Medium: <MonogramIcon letter="M" bg="#000000" />,
+  WordPress: <MonogramIcon letter="W" bg="#21759B" />,
+  Blogger: <MonogramIcon letter="B" bg="#F57D00" />,
+  Substack: <MonogramIcon letter="S" bg="#FF6719" />,
+  Ghost: <MonogramIcon letter="G" bg="#15171A" />,
+  Wix: <MonogramIcon letter="Wx" bg="#0C6EFC" />,
 }
 
 const statusStyles = {
@@ -239,6 +262,9 @@ function ListView({ items, onPreview, onEdit, onDelete, onApprove, selectedIds, 
                       </div>
                       <div>
                         <p className="font-medium text-black">{item.title}</p>
+                        <span className="text-[10px] font-semibold tracking-wide text-neutral-400">
+                          {item.contentType === 'blog' ? 'BLOG' : 'POST'}
+                        </span>
                       </div>
                     </div>
                   </td>
@@ -317,6 +343,9 @@ function GridView({ items, onPreview, onEdit, onApprove, onDelete, deletingId })
                 <div className="flex items-center gap-2">
                   {platformIcons[item.platform]}
                   <span className="text-sm font-semibold text-black">{item.platform} Draft</span>
+                  <span className="rounded-sm bg-neutral-200 px-1.5 py-0.5 text-[10px] font-semibold tracking-wide text-neutral-500">
+                    {item.contentType === 'blog' ? 'BLOG' : 'POST'}
+                  </span>
                 </div>
                 <div className="flex items-center gap-2">
                   <span className="text-xs text-neutral-400">{getMeta(item)}</span>
@@ -397,8 +426,9 @@ function GridView({ items, onPreview, onEdit, onApprove, onDelete, deletingId })
                 </button>
                 <button
                   onClick={() => onApprove(item.id)}
-                  className={`flex min-w-[104px] flex-1 cursor-pointer items-center justify-center gap-1.5 py-2.5 text-xs font-medium whitespace-nowrap transition ${
-                    approved ? 'bg-emerald-600 text-white' : 'bg-brand-500 text-white hover:bg-brand-600'
+                  disabled={approved}
+                  className={`flex min-w-[104px] flex-1 items-center justify-center gap-1.5 py-2.5 text-xs font-medium whitespace-nowrap transition ${
+                    approved ? 'cursor-default bg-emerald-600 text-white' : 'cursor-pointer bg-brand-500 text-white hover:bg-brand-600'
                   }`}
                 >
                   <svg className="h-4 w-4 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -460,12 +490,18 @@ export default function ApprovalQueuePage() {
   const [deletingId, setDeletingId] = useState(null)
   const [deleteTarget, setDeleteTarget] = useState(null)
   const [deleteError, setDeleteError] = useState(null)
+  const [counts, setCounts] = useState({ total: 0, readyForReview: 0, flagged: 0 })
 
   const loadItems = useCallback(async () => {
     setStatus('loading')
     try {
-      const data = await apiListPosts()
-      setItems((data || []).map(mapApiPost))
+      const data = await apiGetApprovalQueue()
+      setItems((data?.items || []).map(mapApprovalQueueItem))
+      setCounts({
+        total: data?.total ?? 0,
+        readyForReview: data?.ready_for_review ?? 0,
+        flagged: data?.flagged ?? 0,
+      })
       setStatus('ready')
     } catch {
       setStatus('error')
@@ -481,7 +517,9 @@ export default function ApprovalQueuePage() {
   }
 
   function handleEdit(id) {
-    navigate(`/approval-queue/${id}/edit?view=${view}`)
+    const target = items.find((item) => item.id === id)
+    const path = target?.contentType === 'blog' ? 'edit-blog' : 'edit'
+    navigate(`/approval-queue/${id}/${path}?view=${view}`)
   }
 
   function handleDelete(id) {
@@ -495,13 +533,23 @@ export default function ApprovalQueuePage() {
     setDeletingId(id)
     setDeleteError(null)
     try {
-      await apiDeletePost(id)
+      if (deleteTarget.contentType === 'blog') {
+        await apiDeleteBlog(id)
+      } else {
+        await apiDeletePost(id)
+      }
       setItems((prev) => prev.filter((item) => item.id !== id))
       setSelectedIds((prev) => {
         const next = new Set(prev)
         next.delete(id)
         return next
       })
+      setCounts((prev) => ({
+        ...prev,
+        total: Math.max(0, prev.total - 1),
+        readyForReview: deleteTarget.status === 'FLAGGED' ? prev.readyForReview : Math.max(0, prev.readyForReview - 1),
+        flagged: deleteTarget.status === 'FLAGGED' ? Math.max(0, prev.flagged - 1) : prev.flagged,
+      }))
       setDeleteTarget(null)
     } catch (err) {
       setDeleteError(err.message)
@@ -532,18 +580,19 @@ export default function ApprovalQueuePage() {
   async function handleBatchApprove() {
     const ids = Array.from(selectedIds)
     if (ids.length === 0) return
+    const post_ids = ids.filter((id) => items.find((i) => i.id === id)?.contentType !== 'blog')
+    const blog_ids = ids.filter((id) => items.find((i) => i.id === id)?.contentType === 'blog')
     try {
-      await apiApprovePosts({ post_ids: ids, is_approved: true })
+      await apiApprovalQueueDecision({ post_ids, blog_ids, is_approved: true })
       addNotification({
         type: 'approval',
-        title: `${ids.length} post${ids.length > 1 ? 's' : ''} approved`,
-        description: `${ids.length} post${ids.length > 1 ? 's have' : ' has'} been approved and queued for publishing.`,
+        title: `${ids.length} item${ids.length > 1 ? 's' : ''} approved`,
+        description: `${ids.length} item${ids.length > 1 ? 's have' : ' has'} been approved and queued for publishing.`,
         platform: 'Multi-platform',
         author: 'Alex Martinez',
       })
-      setItems((prev) =>
-        prev.map((item) => (selectedIds.has(item.id) ? { ...item, status: 'PRODUCTION', isApproved: true } : item)),
-      )
+      setItems((prev) => prev.filter((item) => !ids.includes(item.id)))
+      setCounts((prev) => ({ ...prev, total: Math.max(0, prev.total - ids.length), readyForReview: Math.max(0, prev.readyForReview - ids.length) }))
       setSelectedIds(new Set())
     } catch (err) {
       window.alert(err.message)
@@ -551,19 +600,25 @@ export default function ApprovalQueuePage() {
   }
 
   async function handleApprove(id) {
+    const target = items.find((i) => i.id === id)
+    const isBlog = target?.contentType === 'blog'
     try {
-      await apiApprovePosts({ post_ids: [id], is_approved: true })
-      const target = items.find((i) => i.id === id)
+      await apiApprovalQueueDecision({
+        post_ids: isBlog ? [] : [id],
+        blog_ids: isBlog ? [id] : [],
+        is_approved: true,
+      })
       if (target) {
         addNotification({
           type: 'approval',
           title: `"${target.title}" approved`,
-          description: `Your ${target.platform} post has been approved and moved to production.`,
+          description: `Your ${target.platform} ${isBlog ? 'blog post' : 'post'} has been approved and moved to production.`,
           platform: target.platform,
           author: 'Alex Martinez',
         })
       }
-      setItems((prev) => prev.map((i) => (i.id === id ? { ...i, status: 'PRODUCTION', isApproved: true } : i)))
+      setItems((prev) => prev.filter((i) => i.id !== id))
+      setCounts((prev) => ({ ...prev, total: Math.max(0, prev.total - 1), readyForReview: Math.max(0, prev.readyForReview - 1) }))
     } catch (err) {
       window.alert(err.message)
     }
@@ -576,11 +631,7 @@ export default function ApprovalQueuePage() {
           <div className="flex items-center gap-2">
             <span className="flex items-center gap-1.5 rounded-sm bg-emerald-50 px-2.5 py-1 text-xs font-medium text-emerald-600 ring-1 ring-emerald-200">
               <span className="h-1.5 w-1.5 rounded-full bg-emerald-500" />
-              {items.filter((i) => i.status !== 'FLAGGED').length} Ready for Review
-            </span>
-            <span className="flex items-center gap-1.5 rounded-sm bg-amber-50 px-2.5 py-1 text-xs font-medium text-amber-600 ring-1 ring-amber-200">
-              <span className="h-1.5 w-1.5 rounded-full bg-amber-500" />
-              {items.filter((i) => i.status === 'FLAGGED').length} Flagged
+              {counts.readyForReview} Ready for Review
             </span>
           </div>
         </div>
@@ -631,24 +682,74 @@ export default function ApprovalQueuePage() {
 
       {status === 'error' && (
         <div className="rounded-lg border border-dashed border-red-300 bg-red-50 p-6 text-center text-sm text-red-600">
-          Couldn't load posts. Please try again later.
+          Couldn't load the approval queue. Please try again later.
         </div>
       )}
 
       {status === 'loading' && (
-        <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-4">
-          {Array.from({ length: 4 }).map((_, i) => (
-            <div
-              key={i}
-              className="h-64 animate-pulse rounded-lg border border-neutral-200 bg-neutral-100"
-            />
-          ))}
-        </div>
+        view === 'list' ? (
+          <div className="overflow-hidden rounded-lg border border-neutral-200 bg-white shadow-sm">
+            <div className="overflow-x-auto">
+              <table className="w-full min-w-[720px] text-left text-sm">
+                <thead>
+                  <tr className="border-b border-neutral-200 bg-neutral-50 text-[10px] font-semibold tracking-widest text-neutral-400">
+                    <th className="w-10 px-4 py-3.5" />
+                    <th className="px-3 py-3.5">POST PREVIEW</th>
+                    <th className="px-3 py-3.5">PLATFORM</th>
+                    <th className="px-3 py-3.5">AI SAFETY SCORE</th>
+                    <th className="px-3 py-3.5">LANGUAGE</th>
+                    <th className="px-3 py-3.5">TIMESTAMP</th>
+                    <th className="px-3 py-3.5 text-right">ACTIONS</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {Array.from({ length: 5 }).map((_, i) => (
+                    <tr key={i} className="border-b border-neutral-100 last:border-0">
+                      <td className="px-4 py-3.5">
+                        <div className="h-4 w-4 animate-pulse rounded bg-neutral-200" />
+                      </td>
+                      <td className="px-3 py-3.5">
+                        <div className="flex items-center gap-3">
+                          <div className="h-10 w-10 shrink-0 animate-pulse rounded-md bg-neutral-200" />
+                          <div className="h-3.5 w-40 animate-pulse rounded bg-neutral-200" />
+                        </div>
+                      </td>
+                      <td className="px-3 py-3.5">
+                        <div className="h-3.5 w-20 animate-pulse rounded bg-neutral-200" />
+                      </td>
+                      <td className="px-3 py-3.5">
+                        <div className="h-1.5 w-16 animate-pulse rounded-full bg-neutral-200" />
+                      </td>
+                      <td className="px-3 py-3.5">
+                        <div className="h-3.5 w-10 animate-pulse rounded bg-neutral-200" />
+                      </td>
+                      <td className="px-3 py-3.5">
+                        <div className="h-3.5 w-14 animate-pulse rounded bg-neutral-200" />
+                      </td>
+                      <td className="px-3 py-3.5">
+                        <div className="ml-auto h-8 w-28 animate-pulse rounded-md bg-neutral-200" />
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          </div>
+        ) : (
+          <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-4">
+            {Array.from({ length: 4 }).map((_, i) => (
+              <div
+                key={i}
+                className="h-64 animate-pulse rounded-lg border border-neutral-200 bg-neutral-100"
+              />
+            ))}
+          </div>
+        )
       )}
 
       {status === 'ready' && items.length === 0 && (
         <div className="rounded-lg border border-dashed border-neutral-300 p-10 text-center text-sm text-neutral-400">
-          No posts yet. Generate one to see it here.
+          No posts or blogs waiting for review.
         </div>
       )}
 
@@ -696,8 +797,8 @@ export default function ApprovalQueuePage() {
 
       {deleteTarget && (
         <ConfirmDialog
-          title="Delete post"
-          message={`Delete "${deleteTarget.title ?? 'this post'}"? This cannot be undone.`}
+          title={deleteTarget.contentType === 'blog' ? 'Delete blog' : 'Delete post'}
+          message={`Delete "${deleteTarget.title ?? 'this item'}"? This cannot be undone.`}
           confirmLabel="Delete"
           confirming={deletingId === deleteTarget.id}
           error={deleteError}

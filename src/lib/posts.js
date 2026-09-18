@@ -3,6 +3,13 @@ const PLATFORM_DISPLAY = {
   instagram: 'Instagram',
   facebook: 'Facebook',
   x: 'Twitter',
+  website: 'Website',
+  medium: 'Medium',
+  wordpress: 'WordPress',
+  blogger: 'Blogger',
+  substack: 'Substack',
+  ghost: 'Ghost',
+  wix: 'Wix',
 }
 
 export function platformDisplay(platform) {
@@ -34,6 +41,55 @@ export function formatPostTimestamp(iso) {
   if (date.toDateString() === yesterday.toDateString()) return 'Yesterday'
 
   return date.toLocaleDateString('en-US', { month: 'short', day: 'numeric' })
+}
+
+export function mapApprovalQueueItem(item) {
+  const platform = platformDisplay(item.platform)
+  const images = item.image_url ? [{ name: item.title || item.id, dataUri: item.image_url }] : []
+
+  return {
+    id: item.id,
+    contentType: item.content_type,
+    title: item.title || 'Untitled',
+    platform,
+    thumbClass: 'bg-gradient-to-br from-neutral-400 to-neutral-600',
+    thumbLabel: platform?.slice(0, 4).toUpperCase() || '',
+    score: item.ai_safety_score ?? 0,
+    status: item.is_flagged ? 'FLAGGED' : 'STAGING',
+    timestamp: formatPostTimestamp(item.created_at),
+    caption: item.preview || '',
+    hashtags: [],
+    images,
+    channels: platform ? [platform] : [],
+    language: item.language || '',
+    scheduleDate: item.date || '',
+    scheduleTime: item.start_time || '',
+    isApproved: false,
+    isPosted: false,
+  }
+}
+
+export function mapCalendarItem(item) {
+  const platform = platformDisplay(item.platform)
+  const images = item.image_url ? [{ name: item.title || item.id, dataUri: item.image_url }] : []
+
+  return {
+    id: item.id,
+    contentType: item.content_type,
+    title: item.title || 'Untitled',
+    platform,
+    thumbClass: 'bg-gradient-to-br from-neutral-400 to-neutral-600',
+    score: item.ai_safety_score ?? 0,
+    caption: item.preview || '',
+    hashtags: [],
+    images,
+    language: item.language || '',
+    scheduleDate: item.date || '',
+    scheduleTime: item.start_time || '',
+    isPosted: Boolean(item.is_posted),
+    postedAt: item.posted_at || null,
+    postError: item.post_error || null,
+  }
 }
 
 export function mapApiPost(post) {

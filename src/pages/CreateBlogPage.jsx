@@ -1,14 +1,7 @@
 import { useState, useRef, useEffect } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { addNotification } from '../data/notifications'
-import { saveGeneratedBlog } from '../data/blogs'
-
-const thumbClasses = [
-  'bg-gradient-to-br from-violet-200 to-fuchsia-400',
-  'bg-gradient-to-br from-sky-200 to-slate-400',
-  'bg-gradient-to-br from-emerald-200 to-teal-400',
-  'bg-gradient-to-br from-amber-200 to-orange-400',
-]
+import { apiGenerateBlog } from '../lib/api'
 
 const toneOptions = ['Professional', 'Casual', 'Enthusiastic', 'Informative', 'Humorous']
 const languageOptions = ['EN-US', 'EN-GB', 'ES', 'FR', 'DE', 'JA']
@@ -43,8 +36,7 @@ const platformIcons = {
   Medium: <MonogramIcon letter="M" bg="#000000" />,
   WordPress: <MonogramIcon letter="W" bg="#21759B" />,
   Blogger: <MonogramIcon letter="B" bg="#F57D00" />,
-  Substack: <MonogramIcon letter="S" bg="#FF6719" />,
-  Ghost: <MonogramIcon letter="G" bg="#15171A" />,
+  Wix: <MonogramIcon letter="Wx" bg="#0C6EFC" />,
 }
 
 const sectionIcons = {
@@ -167,15 +159,11 @@ export default function CreateBlogPage() {
     const validFiles = files.filter((f) => f.type.startsWith('image/') && f.size <= 5 * 1024 * 1024)
     if (validFiles.length === 0) return
 
-    const newFiles = validFiles.map((file) => ({
-      id: Date.now() + Math.random(),
-      name: file.name,
-      size: file.size,
-      file,
-      preview: URL.createObjectURL(file),
-    }))
-
-    setUploadedFiles((prev) => [...prev, ...newFiles])
+    const file = validFiles[0]
+    setUploadedFiles((prev) => {
+      prev.forEach((f) => URL.revokeObjectURL(f.preview))
+      return [{ id: Date.now() + Math.random(), name: file.name, size: file.size, file, preview: URL.createObjectURL(file) }]
+    })
   }
 
   function removeFile(id) {
@@ -209,41 +197,21 @@ export default function CreateBlogPage() {
     setGenerateError(null)
 
     try {
-      const images = await Promise.all(
-        uploadedFiles.map(
-          (f) =>
-            new Promise((resolve, reject) => {
-              const reader = new FileReader()
-              reader.onload = () => resolve({ name: f.name, dataUri: reader.result })
-              reader.onerror = () => reject(reader.error)
-              reader.readAsDataURL(f.file)
-            }),
-        ),
-      )
-
-      await new Promise((resolve) => setTimeout(resolve, 700))
-
-      const title = prompt.length > 50 ? `${prompt.slice(0, 50)}...` : prompt
-      const platformLabel = selectedPlatforms.join(' + ')
-      const score = Math.floor(60 + Math.random() * 40)
-
-      saveGeneratedBlog({
-        id: `BLG-${Date.now()}`,
-        title,
-        platform: platformLabel,
-        thumbClass: thumbClasses[Math.floor(Math.random() * thumbClasses.length)],
-        score,
-        status: score < 60 ? 'FLAGGED' : 'STAGING',
-        timestamp: 'Just now',
-        language,
+      const result = await apiGenerateBlog({
+        prompt,
+        platforms: selectedPlatforms.map((p) => p.toLowerCase()).join(','),
         tone,
-        caption: prompt,
-        hashtags: tags,
-        channels: selectedPlatforms,
-        images,
-        scheduleDate,
-        scheduleTime,
+        language,
+        hashtags: tags.join(','),
+        reference_url: referenceUrl || undefined,
+        date: scheduleDate,
+        start_time: scheduleTime,
+        image: uploadedFiles[0]?.file,
       })
+
+      const firstBlog = Array.isArray(result?.blogs) ? result.blogs[0] : null
+      const title = firstBlog?.title || (prompt.length > 50 ? `${prompt.slice(0, 50)}...` : prompt)
+      const platformLabel = selectedPlatforms.join(' + ')
 
       addNotification({
         type: 'creation',
@@ -253,7 +221,7 @@ export default function CreateBlogPage() {
         author: 'Relay AI',
       })
 
-      navigate('/dashboard')
+      navigate('/approval-queue')
     } catch (err) {
       setGenerateError(err.message)
     } finally {
@@ -442,7 +410,6 @@ export default function CreateBlogPage() {
               ref={fileInputRef}
               type="file"
               accept="image/*"
-              multiple
               onChange={handleFileSelect}
               className="hidden"
             />

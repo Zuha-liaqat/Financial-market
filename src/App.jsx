@@ -15,6 +15,7 @@ import ThemesPage from './pages/Theme'
 import LibraryPage from './pages/LibraryPage'
 import ApprovalQueuePage from './pages/ApprovalQueuePage'
 import EditContentPage from './pages/EditContentPage'
+import EditBlogPage from './pages/EditBlogPage'
 import CalendarPage from './pages/CalendarPage'
 import PlannerPage from './pages/PlannerPage'
 import NotificationsPage from './pages/NotificationsPage'
@@ -65,6 +66,7 @@ function App() {
           <Route path="/library" element={<LibraryPage />} />
           <Route path="/approval-queue" element={<ApprovalQueuePage />} />
           <Route path="/approval-queue/:id/edit" element={<EditContentPage />} />
+          <Route path="/approval-queue/:id/edit-blog" element={<EditBlogPage />} />
           <Route path="/calendar" element={<CalendarPage />} />
           <Route path="/planner" element={<PlannerPage />} />
           <Route path="/notifications" element={<NotificationsPage />} />

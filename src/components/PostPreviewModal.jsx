@@ -1,6 +1,19 @@
 import { useState } from 'react'
+import { useNavigate } from 'react-router-dom'
 import { Wifi as WifiIcon } from 'lucide-react'
 import { apiPublishPost } from '../lib/api'
+
+function friendlyPublishError(message) {
+  const credMatch = /no credentials found for platform ['"]?([a-z]+)['"]?/i.exec(message || '')
+  if (credMatch) {
+    const platform = credMatch[1]
+    return {
+      text: `Your ${platform.charAt(0).toUpperCase() + platform.slice(1)} account isn't connected yet. Connect it from Integrations before publishing.`,
+      showIntegrationsLink: true,
+    }
+  }
+  return { text: message, showIntegrationsLink: false }
+}
 
 function getInitials(title) {
   const letters = title
@@ -767,6 +780,7 @@ const platforms = [
 ]
 
 export default function PostPreviewModal({ item, onClose, onPublished }) {
+  const navigate = useNavigate()
   const defaultTab = platforms.some((p) => p.key === item.platform) ? item.platform : 'LinkedIn'
   const [tab, setTab] = useState(defaultTab)
   const [device, setDevice] = useState('mobile')
@@ -784,7 +798,7 @@ export default function PostPreviewModal({ item, onClose, onPublished }) {
       setPosted(true)
       onPublished?.(item.id, result)
     } catch (err) {
-      setPublishError(err.message)
+      setPublishError(friendlyPublishError(err.message))
     } finally {
       setPublishing(false)
     }
@@ -876,28 +890,42 @@ export default function PostPreviewModal({ item, onClose, onPublished }) {
         )}
 
         {publishError && (
-          <p className="mt-3 rounded-lg border border-red-200 bg-red-50 px-3 py-2 text-xs text-red-600">
-            {publishError}
-          </p>
+          <div className="mt-3 rounded-lg border border-red-200 bg-red-50 px-3 py-2 text-xs text-red-600">
+            <p>{publishError.text}</p>
+            {publishError.showIntegrationsLink && (
+              <button
+                type="button"
+                onClick={() => {
+                  onClose()
+                  navigate('/integrations')
+                }}
+                className="mt-1.5 font-semibold underline hover:text-red-700"
+              >
+                Go to Integrations
+              </button>
+            )}
+          </div>
         )}
 
-        <div className="mt-4 flex items-center justify-between gap-4 border-t border-neutral-200 pt-4">
-          <p className="text-xs text-neutral-500">
-            Skip review and publish this post to the target platform(s) right away.
-          </p>
-          <button
-            onClick={handlePublish}
-            disabled={publishing || posted}
-            className="flex shrink-0 items-center gap-1.5 rounded-md bg-sky-500 px-4 py-2.5 text-sm font-semibold text-white shadow-sm transition hover:bg-sky-600 disabled:cursor-not-allowed disabled:opacity-60"
-          >
-            {!publishing && !posted && (
-              <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M4.5 12.75l6 6 9-13.5" />
-              </svg>
-            )}
-            {posted ? 'Published' : publishing ? 'Publishing…' : 'Post Now'}
-          </button>
-        </div>
+        {item.contentType !== 'blog' && (
+          <div className="mt-4 flex items-center justify-between gap-4 border-t border-neutral-200 pt-4">
+            <p className="text-xs text-neutral-500">
+              Skip review and publish this post to the target platform(s) right away.
+            </p>
+            <button
+              onClick={handlePublish}
+              disabled={publishing || posted}
+              className="flex shrink-0 items-center gap-1.5 rounded-md bg-sky-500 px-4 py-2.5 text-sm font-semibold text-white shadow-sm transition hover:bg-sky-600 disabled:cursor-not-allowed disabled:opacity-60"
+            >
+              {!publishing && !posted && (
+                <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M4.5 12.75l6 6 9-13.5" />
+                </svg>
+              )}
+              {posted ? 'Published' : publishing ? 'Publishing…' : 'Post Now'}
+            </button>
+          </div>
+        )}
       </div>
     </div>
   )

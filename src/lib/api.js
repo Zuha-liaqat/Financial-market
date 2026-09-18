@@ -201,16 +201,50 @@ export async function apiListPosts({ is_approved, is_posted, platform, company_i
   return body
 }
 
-export async function apiGetCalendarPosts({ is_posted, company_id } = {}) {
+export async function apiGetApprovalQueue({ content_type, flagged_only, flag_threshold, company_id } = {}) {
   const params = new URLSearchParams()
-  if (is_posted !== undefined) params.set('is_posted', is_posted)
+  if (content_type) params.set('content_type', content_type)
+  if (flagged_only !== undefined) params.set('flagged_only', flagged_only)
+  if (flag_threshold !== undefined) params.set('flag_threshold', flag_threshold)
   if (company_id) params.set('company_id', company_id)
   const query = params.toString() ? `?${params.toString()}` : ''
 
-  const res = await authorizedRequest(`/api/posts/calendar${query}`)
+  const res = await authorizedRequest(`/api/approval-queue${query}`)
   const body = await res.json().catch(() => null)
   if (!res.ok) {
-    throw new Error(extractErrorMessage(body, 'Failed to load calendar posts'))
+    throw new Error(extractErrorMessage(body, 'Failed to load approval queue'))
+  }
+  return body
+}
+
+export async function apiApprovalQueueDecision({ post_ids, blog_ids, is_approved }, companyId) {
+  const query = companyId ? `?company_id=${companyId}` : ''
+  const res = await authorizedRequest(`/api/approval-queue/decision${query}`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ post_ids, blog_ids, is_approved }),
+  })
+  const body = await res.json().catch(() => null)
+  if (!res.ok) {
+    throw new Error(extractErrorMessage(body, 'Failed to update approval status'))
+  }
+  return body
+}
+
+export async function apiGetCalendar({ start_date, end_date, content_type, platform, status, company_id } = {}) {
+  const params = new URLSearchParams()
+  if (start_date) params.set('start_date', start_date)
+  if (end_date) params.set('end_date', end_date)
+  if (content_type) params.set('content_type', content_type)
+  if (platform) params.set('platform', platform)
+  if (status) params.set('status', status)
+  if (company_id) params.set('company_id', company_id)
+  const query = params.toString() ? `?${params.toString()}` : ''
+
+  const res = await authorizedRequest(`/api/calendar${query}`)
+  const body = await res.json().catch(() => null)
+  if (!res.ok) {
+    throw new Error(extractErrorMessage(body, 'Failed to load calendar'))
   }
   return body
 }
@@ -269,6 +303,75 @@ export async function apiPublishPost(postId, companyId) {
   const body = await res.json().catch(() => null)
   if (!res.ok) {
     throw new Error(extractErrorMessage(body, 'Failed to publish post'))
+  }
+  return body
+}
+
+export async function apiGenerateBlog({
+  prompt,
+  platforms,
+  tone,
+  language,
+  hashtags,
+  reference_url,
+  date,
+  start_time,
+  image,
+  company_id,
+}) {
+  const formData = new FormData()
+  formData.append('prompt', prompt)
+  formData.append('platforms', platforms)
+  if (tone) formData.append('tone', tone)
+  if (language) formData.append('language', language)
+  if (hashtags) formData.append('hashtags', hashtags)
+  if (reference_url) formData.append('reference_url', reference_url)
+  if (date) formData.append('date', date)
+  if (start_time) formData.append('start_time', start_time)
+  if (company_id) formData.append('company_id', company_id)
+  if (image) formData.append('image', image)
+
+  const res = await authorizedRequest('/api/blogs/generate', {
+    method: 'POST',
+    body: formData,
+  })
+  const body = await res.json().catch(() => null)
+  if (!res.ok) {
+    throw new Error(extractErrorMessage(body, 'Failed to generate blog'))
+  }
+  return body
+}
+
+export async function apiGetBlog(blogId, companyId) {
+  const query = companyId ? `?company_id=${companyId}` : ''
+  const res = await authorizedRequest(`/api/blogs/${blogId}${query}`)
+  const body = await res.json().catch(() => null)
+  if (!res.ok) {
+    throw new Error(extractErrorMessage(body, 'Failed to load blog'))
+  }
+  return body
+}
+
+export async function apiUpdateBlog(blogId, updates, companyId) {
+  const query = companyId ? `?company_id=${companyId}` : ''
+  const res = await authorizedRequest(`/api/blogs/${blogId}${query}`, {
+    method: 'PUT',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(updates),
+  })
+  const body = await res.json().catch(() => null)
+  if (!res.ok) {
+    throw new Error(extractErrorMessage(body, 'Failed to update blog'))
+  }
+  return body
+}
+
+export async function apiDeleteBlog(blogId, companyId) {
+  const query = companyId ? `?company_id=${companyId}` : ''
+  const res = await authorizedRequest(`/api/blogs/${blogId}${query}`, { method: 'DELETE' })
+  const body = await res.json().catch(() => null)
+  if (!res.ok) {
+    throw new Error(extractErrorMessage(body, 'Failed to delete blog'))
   }
   return body
 }

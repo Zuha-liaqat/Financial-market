@@ -1,13 +1,53 @@
-import { useEffect, useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import { useNavigate, useParams, useSearchParams } from 'react-router-dom'
-import { apiGetPost, apiUpdatePost } from '../lib/api'
-import { mapApiPost } from '../lib/posts'
+import { apiGetBlog, apiUpdateBlog } from '../lib/api'
+import { platformDisplay, splitHashtags } from '../lib/posts'
 
-const channelMeta = {
+const fieldClass =
+  'w-full rounded-lg border border-neutral-200 bg-neutral-50 px-3 py-2.5 text-sm text-neutral-700 outline-none focus:border-brand-500 focus:bg-white focus:ring-2 focus:ring-brand-500/15'
+
+const tagColors = [
+  'bg-brand-100 text-brand-800',
+  'bg-fuchsia-100 text-fuchsia-700',
+  'bg-emerald-100 text-emerald-700',
+  'bg-amber-100 text-amber-700',
+  'bg-violet-100 text-violet-700',
+  'bg-sky-100 text-sky-700',
+]
+
+function MonogramIcon({ letter, bg }) {
+  return (
+    <span
+      className="flex h-6 w-6 shrink-0 items-center justify-center rounded-full text-[11px] font-bold text-white"
+      style={{ backgroundColor: bg }}
+    >
+      {letter}
+    </span>
+  )
+}
+
+const platformIcons = {
+  Website: (
+    <svg className="h-6 w-6 text-brand-500" viewBox="0 0 24 24" fill="none" stroke="currentColor" xmlns="http://www.w3.org/2000/svg">
+      <circle cx="12" cy="12" r="9" strokeWidth="1.75" />
+      <path strokeLinecap="round" strokeWidth="1.75" d="M3 12h18M12 3c2.485 2.4 3.75 5.55 3.75 9s-1.265 6.6-3.75 9c-2.485-2.4-3.75-5.55-3.75-9S9.515 5.4 12 3z" />
+    </svg>
+  ),
+  Medium: <MonogramIcon letter="M" bg="#000000" />,
+  WordPress: <MonogramIcon letter="W" bg="#21759B" />,
+  Blogger: <MonogramIcon letter="B" bg="#F57D00" />,
+  Substack: <MonogramIcon letter="S" bg="#FF6719" />,
+  Ghost: <MonogramIcon letter="G" bg="#15171A" />,
+  Wix: <MonogramIcon letter="Wx" bg="#0C6EFC" />,
+  LinkedIn: (
+    <svg className="h-6 w-6" viewBox="0 0 24 24" fill="#0A66C2" aria-label="LinkedIn">
+      <path d="M20.447 20.452h-3.554v-5.569c0-1.328-.027-3.037-1.852-3.037-1.853 0-2.136 1.445-2.136 2.939v5.667H9.351V9h3.414v1.561h.046c.477-.9 1.637-1.85 3.37-1.85 3.601 0 4.267 2.37 4.267 5.455v6.286zM5.337 7.433c-1.144 0-2.063-.926-2.063-2.065 0-1.138.92-2.063 2.063-2.063 1.14 0 2.064.925 2.064 2.063 0 1.139-.925 2.065-2.064 2.065zm1.782 13.019H3.555V9h3.564v11.452zM22.225 0H1.771C.792 0 0 .774 0 1.729v20.542C0 23.227.792 24 1.771 24h20.451C23.2 24 24 23.227 24 22.271V1.729C24 .774 23.2 0 22.222 0h.003z" />
+    </svg>
+  ),
   Instagram: (
     <svg className="h-6 w-6" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" aria-label="Instagram">
       <defs>
-        <linearGradient id="ec-ig" x1="3" y1="3" x2="21" y2="21" gradientUnits="userSpaceOnUse">
+        <linearGradient id="eb-ig" x1="3" y1="3" x2="21" y2="21" gradientUnits="userSpaceOnUse">
           <stop offset="0%" stopColor="#FEDA75" />
           <stop offset="25%" stopColor="#FA7E1E" />
           <stop offset="50%" stopColor="#D62976" />
@@ -15,14 +55,9 @@ const channelMeta = {
           <stop offset="100%" stopColor="#4F5BD5" />
         </linearGradient>
       </defs>
-      <rect x="2.5" y="2.5" width="19" height="19" rx="5.5" stroke="url(#ec-ig)" strokeWidth="2" />
-      <circle cx="12" cy="12" r="4.2" stroke="url(#ec-ig)" strokeWidth="2" />
-      <circle cx="17.3" cy="6.7" r="1.2" fill="url(#ec-ig)" />
-    </svg>
-  ),
-  LinkedIn: (
-    <svg className="h-6 w-6" viewBox="0 0 24 24" fill="#0A66C2" aria-label="LinkedIn">
-      <path d="M20.447 20.452h-3.554v-5.569c0-1.328-.027-3.037-1.852-3.037-1.853 0-2.136 1.445-2.136 2.939v5.667H9.351V9h3.414v1.561h.046c.477-.9 1.637-1.85 3.37-1.85 3.601 0 4.267 2.37 4.267 5.455v6.286zM5.337 7.433c-1.144 0-2.063-.926-2.063-2.065 0-1.138.92-2.063 2.063-2.063 1.14 0 2.064.925 2.064 2.063 0 1.139-.925 2.065-2.064 2.065zm1.782 13.019H3.555V9h3.564v11.452zM22.225 0H1.771C.792 0 0 .774 0 1.729v20.542C0 23.227.792 24 1.771 24h20.451C23.2 24 24 23.227 24 22.271V1.729C24 .774 23.2 0 22.222 0h.003z" />
+      <rect x="2.5" y="2.5" width="19" height="19" rx="5.5" stroke="url(#eb-ig)" strokeWidth="2" />
+      <circle cx="12" cy="12" r="4.2" stroke="url(#eb-ig)" strokeWidth="2" />
+      <circle cx="17.3" cy="6.7" r="1.2" fill="url(#eb-ig)" />
     </svg>
   ),
   Twitter: (
@@ -37,29 +72,16 @@ const channelMeta = {
   ),
 }
 
-const fieldClass =
-  'w-full rounded-lg border border-neutral-200 bg-neutral-50 px-3 py-2.5 text-sm text-neutral-700 outline-none focus:border-brand-500 focus:bg-white focus:ring-2 focus:ring-brand-500/15'
-
-const tagColors = [
-  'bg-brand-100 text-brand-800',
-  'bg-fuchsia-100 text-fuchsia-700',
-  'bg-emerald-100 text-emerald-700',
-  'bg-amber-100 text-amber-700',
-  'bg-violet-100 text-violet-700',
-  'bg-sky-100 text-sky-700',
-]
-
-export default function EditContentPage() {
+export default function EditBlogPage() {
   const { id } = useParams()
   const navigate = useNavigate()
   const [searchParams] = useSearchParams()
   const backTo = searchParams.get('view') === 'grid' ? '/approval-queue?view=grid' : '/approval-queue'
 
-  const [item, setItem] = useState(null)
+  const [blog, setBlog] = useState(null)
   const [status, setStatus] = useState('loading')
   const [title, setTitle] = useState('')
-  const [headline, setHeadline] = useState('')
-  const [caption, setCaption] = useState('')
+  const [content, setContent] = useState('')
   const [hashtags, setHashtags] = useState([])
   const [tone, setTone] = useState('')
   const [language, setLanguage] = useState('')
@@ -67,23 +89,22 @@ export default function EditContentPage() {
   const [startTime, setStartTime] = useState('')
   const [newTag, setNewTag] = useState('')
   const [saving, setSaving] = useState(false)
+  const contentRef = useRef(null)
 
   useEffect(() => {
     let cancelled = false
     setStatus('loading')
-    apiGetPost(id)
-      .then((post) => {
+    apiGetBlog(id)
+      .then((found) => {
         if (cancelled) return
-        const found = mapApiPost(post)
-        setItem(found)
+        setBlog(found)
         setTitle(found.title ?? '')
-        setHeadline(found.headline ?? '')
-        setCaption(found.caption ?? '')
-        setHashtags(found.hashtags ?? [])
+        setContent(found.content ?? '')
+        setHashtags(splitHashtags(found.hashtags))
         setTone(found.tone ?? '')
         setLanguage(found.language ?? '')
-        setDate(found.scheduleDate ?? '')
-        setStartTime(found.scheduleTime ?? '')
+        setDate(found.date ?? '')
+        setStartTime(found.start_time ?? '')
         setStatus('ready')
       })
       .catch(() => {
@@ -93,6 +114,15 @@ export default function EditContentPage() {
       cancelled = true
     }
   }, [id])
+
+  useEffect(() => {
+    if (status === 'ready' && contentRef.current) {
+      contentRef.current.innerHTML = content
+    }
+    // Only seed the editable area once when the blog first loads — re-running this
+    // on every `content` change would reset the cursor position while typing.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [status])
 
   if (status === 'loading') {
     return (
@@ -108,15 +138,15 @@ export default function EditContentPage() {
             </span>
           </span>
         </div>
-        <p className="text-sm text-neutral-500">Loading post…</p>
+        <p className="text-sm text-neutral-500">Loading blog…</p>
       </div>
     )
   }
 
-  if (status === 'error' || !item) {
+  if (status === 'error' || !blog) {
     return (
       <div className="rounded-lg border border-dashed border-neutral-300 p-10 text-center">
-        <p className="text-sm text-neutral-500">Post not found.</p>
+        <p className="text-sm text-neutral-500">Blog not found.</p>
         <button
           onClick={() => navigate(backTo)}
           className="mt-3 text-sm font-medium text-black hover:underline"
@@ -137,10 +167,9 @@ export default function EditContentPage() {
   async function handleSave() {
     setSaving(true)
     try {
-      await apiUpdatePost(id, {
+      await apiUpdateBlog(id, {
         title,
-        headline,
-        caption,
+        content: contentRef.current?.innerHTML ?? content,
         hashtags: hashtags.join(' '),
         tone,
         language,
@@ -178,72 +207,51 @@ export default function EditContentPage() {
 
       <div className="space-y-5 rounded-lg border border-neutral-200 bg-white p-5">
         <div className="flex items-center justify-between">
-          <h2 className="text-lg font-bold text-black">Edit Content</h2>
+          <h2 className="text-lg font-bold text-black">Edit Blog</h2>
           <span className="rounded-full bg-neutral-100 px-2.5 py-1 text-[10px] font-semibold tracking-wide text-neutral-500">
             DRAFT
           </span>
         </div>
 
+        {blog.image_url && (
+          <div>
+            <p className="mb-2 text-xs font-semibold tracking-widest text-neutral-400">
+              PRIMARY MEDIA
+            </p>
+            <div className="relative mx-auto flex h-56 w-full max-w-sm items-center justify-center overflow-hidden rounded-lg border border-dashed border-neutral-300 bg-neutral-100">
+              <img src={blog.image_url} alt="" className="h-full w-full object-cover" />
+            </div>
+          </div>
+        )}
+
         <div>
           <p className="mb-2 text-xs font-semibold tracking-widest text-neutral-400">
-            PRIMARY MEDIA
+            TITLE
           </p>
-          <div className={`relative mx-auto flex h-56 w-full max-w-sm items-center justify-center overflow-hidden rounded-lg border border-dashed border-neutral-300 ${item.images?.length ? 'bg-neutral-100' : item.thumbClass}`}>
-            {item.images?.length ? (
-              <img
-                src={item.images[0].dataUri}
-                alt={item.images[0].name}
-                className="h-full w-full object-cover"
-              />
-            ) : (
-              <span className="select-none text-6xl font-bold text-white/70">
-                {item.title?.charAt(0).toUpperCase()}
-              </span>
-            )}
-          </div>
-        </div>
-
-        <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
-          <div>
-            <p className="mb-2 text-xs font-semibold tracking-widest text-neutral-400">
-              TITLE
-            </p>
-            <input
-              value={title}
-              onChange={(e) => setTitle(e.target.value)}
-              className={fieldClass}
-            />
-          </div>
-          <div>
-            <p className="mb-2 text-xs font-semibold tracking-widest text-neutral-400">
-              HEADLINE
-            </p>
-            <input
-              value={headline}
-              onChange={(e) => setHeadline(e.target.value)}
-              className={fieldClass}
-            />
-          </div>
+          <input
+            value={title}
+            onChange={(e) => setTitle(e.target.value)}
+            className={fieldClass}
+          />
         </div>
 
         <div>
           <p className="mb-2 text-xs font-semibold tracking-widest text-neutral-400">
-            CAPTION
+            CONTENT
           </p>
-          <textarea
-            value={caption}
-            onChange={(e) => setCaption(e.target.value)}
-            rows={10}
-            className={`resize-none ${fieldClass}`}
+          <div
+            ref={contentRef}
+            contentEditable
+            suppressContentEditableWarning
+            className="max-h-105 min-h-50 overflow-y-auto rounded-lg border border-neutral-200 bg-neutral-50 px-4 py-3 text-sm leading-relaxed text-neutral-700 outline-none focus:border-brand-500 focus:bg-white focus:ring-2 focus:ring-brand-500/15 [&_h1]:mb-2 [&_h1]:mt-4 [&_h1]:text-lg [&_h1]:font-bold [&_h2]:mb-2 [&_h2]:mt-4 [&_h2]:text-base [&_h2]:font-bold [&_h3]:mb-2 [&_h3]:mt-3 [&_h3]:font-semibold [&_li]:mb-1 [&_ol]:mb-3 [&_ol]:list-decimal [&_ol]:pl-5 [&_p]:mb-3 [&_strong]:font-semibold [&_ul]:mb-3 [&_ul]:list-disc [&_ul]:pl-5"
           />
         </div>
 
         <div>
           <div className="mb-2 flex items-center justify-between">
             <p className="text-xs font-semibold tracking-widest text-neutral-400">
-              HASHTAGS
+              HASHTAGS / TAGS
             </p>
-            <span className="text-xs text-neutral-400">{hashtags.length}/30 used</span>
           </div>
           <div className="flex flex-wrap items-center gap-2">
             {hashtags.map((tag, i) => (
@@ -279,7 +287,7 @@ export default function EditContentPage() {
               />
               <button
                 type="submit"
-                aria-label="Add hashtag"
+                aria-label="Add tag"
                 className="ml-1 flex h-6 w-6 items-center justify-center rounded-full border border-neutral-300 text-neutral-500 hover:border-black hover:text-black"
               >
                 <svg className="h-3.5 w-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -343,8 +351,8 @@ export default function EditContentPage() {
             PLATFORM
           </p>
           <div className="flex items-center gap-3 rounded-lg border border-neutral-200 bg-white p-2.5">
-            {channelMeta[item.platform]}
-            <span className="text-sm font-medium text-neutral-700">{item.platform}</span>
+            {platformIcons[platformDisplay(blog.platform)]}
+            <span className="text-sm font-medium text-neutral-700">{platformDisplay(blog.platform)}</span>
           </div>
         </div>
       </div>

@@ -239,8 +239,8 @@ export default function LibraryPage() {
             {status === 'ready'
               ? activeType === 'all' && !activeCategory
                 ? `Showing ${filteredItems.length} total asset${filteredItems.length === 1 ? '' : 's'} for Financial Market`
-                : `Showing ${filteredItems.length} of ${items.length} assets for Demo`
-              : 'Loading assets for Demo…'}
+                : `Showing ${filteredItems.length} of ${items.length} assets for Financial Market`
+              : 'Loading assets for Financial Market…'}
           </p>
         </div>
         <div className="flex items-center gap-2">

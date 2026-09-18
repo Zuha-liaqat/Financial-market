@@ -2,8 +2,8 @@ import { useMemo, useState, useRef, useEffect } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { CalendarDays, ChevronLeft, ChevronRight, Plus, X } from 'lucide-react'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '../components/ui/select'
-import { apiGetCalendarPosts } from '../lib/api'
-import { mapApiPost } from '../lib/posts'
+import { apiGetCalendar } from '../lib/api'
+import { mapCalendarItem } from '../lib/posts'
 
 const WEEKDAYS = ['MON', 'TUE', 'WED', 'THU', 'FRI', 'SAT', 'SUN']
 
@@ -131,6 +131,13 @@ function formatTime24(t) {
   const ampm = h >= 12 ? 'PM' : 'AM'
   const hour12 = h % 12 === 0 ? 12 : h % 12
   return `${hour12}:${String(m).padStart(2, '0')} ${ampm}`
+}
+
+function toISODate(date) {
+  const year = date.getFullYear()
+  const month = String(date.getMonth() + 1).padStart(2, '0')
+  const day = String(date.getDate()).padStart(2, '0')
+  return `${year}-${month}-${day}`
 }
 
 function ScheduleModal({ date, onClose, onSave }) {
@@ -495,11 +502,28 @@ export default function CalendarPage() {
   const [extraEvents, setExtraEvents] = useState([])
   const [generatedPosts, setGeneratedPosts] = useState([])
 
+  const visibleRange = useMemo(() => {
+    if (view === 'day') return { start: anchor, end: anchor }
+    if (view === 'week') {
+      const start = startOfWeek(anchor)
+      return { start, end: addDays(start, 6) }
+    }
+    const first = new Date(anchor.getFullYear(), anchor.getMonth(), 1)
+    const startWeekday = (first.getDay() + 6) % 7
+    const gridStart = addDays(first, -startWeekday)
+    const daysInMonth = new Date(anchor.getFullYear(), anchor.getMonth() + 1, 0).getDate()
+    const totalCells = Math.ceil((startWeekday + daysInMonth) / 7) * 7
+    return { start: gridStart, end: addDays(gridStart, totalCells - 1) }
+  }, [view, anchor])
+
   useEffect(() => {
-    apiGetCalendarPosts()
-      .then((data) => setGeneratedPosts((data || []).map(mapApiPost)))
+    apiGetCalendar({
+      start_date: toISODate(visibleRange.start),
+      end_date: toISODate(visibleRange.end),
+    })
+      .then((data) => setGeneratedPosts((data?.items || []).map(mapCalendarItem)))
       .catch(() => setGeneratedPosts([]))
-  }, [])
+  }, [visibleRange])
 
   const eventsByDate = useMemo(() => {
     const postEvents = generatedPosts
@@ -511,6 +535,7 @@ export default function CalendarPage() {
         return {
           id: p.id,
           relatedId: p.id,
+          contentType: p.contentType,
           dayOffset,
           type: 'MOTION',
           title: p.title,
@@ -720,7 +745,9 @@ export default function CalendarPage() {
       {selectedWithImages && (
         <div className="flex w-full flex-col gap-7 rounded-lg border border-neutral-200 bg-white p-4 lg:w-80 lg:shrink-0">
           <div className="flex items-center justify-between">
-            <h3 className="text-base font-bold text-black">Post Details</h3>
+            <h3 className="text-base font-bold text-black">
+              {selectedWithImages.contentType === 'blog' ? 'Blog Details' : 'Post Details'}
+            </h3>
             <button
               onClick={() => setSelected(null)}
               aria-label="Close"

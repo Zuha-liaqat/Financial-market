@@ -152,7 +152,7 @@ export default function CreatePostPage() {
   const [scheduleDate, setScheduleDate] = useState('')
   const [scheduleTime, setScheduleTime] = useState('')
   const [selectedPlatforms, setSelectedPlatforms] = useState([])
-  const [tags, setTags] = useState(['#PIXMoving', '#RoboBus'])
+  const [tags, setTags] = useState(['#RoboBus'])
   const [newTag, setNewTag] = useState('')
   const [isGenerating, setIsGenerating] = useState(false)
   const [generateError, setGenerateError] = useState(null)

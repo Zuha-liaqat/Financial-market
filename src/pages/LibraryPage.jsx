@@ -2,7 +2,7 @@ import { useCallback, useEffect, useState } from 'react'
 import AssetCard from '../components/AssetCard'
 import UploadAssetModal from '../components/UploadAssetModal'
 import ConfirmDialog from '../components/ConfirmDialog'
-import { deleteLibraryItem, getLibraryItems } from '../data/libraryItems'
+import { apiDeleteLibraryAsset, apiListLibraryAssets } from '../lib/api'
 
 const mediaTypes = [
   {
@@ -83,18 +83,22 @@ export default function LibraryPage() {
   const [deleteTarget, setDeleteTarget] = useState(null)
   const [deleting, setDeleting] = useState(false)
 
-  const loadItems = useCallback(() => {
-    const data = getLibraryItems()
-    const totalKb = data.reduce((sum, item) => sum + (item.size_kb || 0), 0)
-    setItems(data)
-    setCounts({
-      all: data.length,
-      video: data.filter((item) => item.media_type === 'video').length,
-      photo: data.filter((item) => item.media_type === 'photo').length,
-      article: data.filter((item) => item.media_type === 'article').length,
-    })
-    setStorage({ usedMb: totalKb / 1024, usedKb: totalKb })
-    setStatus('ready')
+  const loadItems = useCallback(async () => {
+    setStatus('loading')
+    try {
+      const data = await apiListLibraryAssets()
+      setItems(data.items || [])
+      setCounts({
+        all: data.total_assets ?? 0,
+        video: data.total_video ?? 0,
+        photo: data.total_photo ?? 0,
+        article: data.total_article ?? 0,
+      })
+      setStorage({ usedMb: data.total_storage_mb ?? 0, usedKb: data.total_storage_kb ?? 0 })
+      setStatus('ready')
+    } catch {
+      setStatus('error')
+    }
   }, [])
 
   const filteredItems = items.filter((item) => {
@@ -107,13 +111,16 @@ export default function LibraryPage() {
     loadItems()
   }, [loadItems])
 
-  function confirmDelete() {
+  async function confirmDelete() {
     const id = deleteTarget.id
     setDeleting(true)
-    deleteLibraryItem(id)
-    loadItems()
-    setDeleteTarget(null)
-    setDeleting(false)
+    try {
+      await apiDeleteLibraryAsset(id)
+      await loadItems()
+    } finally {
+      setDeleteTarget(null)
+      setDeleting(false)
+    }
   }
 
   const usedMb = storage?.usedMb ?? 0
@@ -285,7 +292,7 @@ export default function LibraryPage() {
               key={item.id}
               type={(item.media_type ?? item.type)?.toUpperCase()}
               mediaType={item.media_type}
-              imageUrl={item.image_url}
+              imageUrl={item.media_url}
               title={item.name}
               date={formatDate(item.created_at)}
               size={formatSize(item.size_kb)}

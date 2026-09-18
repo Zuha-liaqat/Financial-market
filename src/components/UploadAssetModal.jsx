@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import { createLibraryItem, updateLibraryItem } from '../data/libraryItems'
+import { apiUploadLibraryAsset, apiUpdateLibraryAsset } from '../lib/api'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from './ui/select'
 
 const categoryOptions = ['Product', 'Engineering', 'Marketing', 'Design', 'Software', 'Events']
@@ -31,9 +31,13 @@ export default function UploadAssetModal({ item, onClose, onSaved }) {
     try {
       const mediaType = detectMediaType(media)
       if (isEditing) {
-        await updateLibraryItem(item.id, { name, type, mediaType, media })
+        await apiUpdateLibraryAsset(item.id, {
+          name,
+          type,
+          ...(media ? { media_type: mediaType, media } : {}),
+        })
       } else {
-        await createLibraryItem({ name, type, mediaType, media })
+        await apiUploadLibraryAsset({ name, type, media_type: mediaType, media })
       }
       onSaved()
       onClose()
@@ -100,9 +104,9 @@ export default function UploadAssetModal({ item, onClose, onSaved }) {
             <label htmlFor="asset-media" className="mb-1 block text-xs font-semibold tracking-wide text-neutral-500">
               MEDIA
             </label>
-            {isEditing && item.image_url && (
+            {isEditing && item.media_url && (
               <div className="mb-2 flex items-center gap-2">
-                <img src={item.image_url} alt="" className="h-12 w-12 rounded-md object-cover" />
+                <img src={item.media_url} alt="" className="h-12 w-12 rounded-md object-cover" />
                 <span className="text-xs text-neutral-400">Current file — choose a file to replace it</span>
               </div>
             )}

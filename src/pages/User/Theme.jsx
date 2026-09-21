@@ -1,14 +1,26 @@
-import { useState } from 'react'
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '../components/ui/select'
-import { addNotification } from '../data/notifications'
+import { useState } from "react";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "../../components/ui/select";
+import { addNotification } from "../../data/notifications";
 
-const toneOptions = ['Professional', 'Casual', 'Enthusiastic', 'Informative', 'Humorous']
+const toneOptions = [
+  "Professional",
+  "Casual",
+  "Enthusiastic",
+  "Informative",
+  "Humorous",
+];
 
 const visualStyles = [
   {
-    key: 'minimalist',
-    label: 'Minimalist',
-    description: 'Clean layouts, generous whitespace, quiet color.',
+    key: "minimalist",
+    label: "Minimalist",
+    description: "Clean layouts, generous whitespace, quiet color.",
     preview: (
       <div className="relative flex h-full w-full items-center justify-center bg-neutral-50">
         <div className="w-3/4 space-y-1.5 rounded-md bg-white p-3 shadow-sm ring-1 ring-neutral-200">
@@ -25,28 +37,31 @@ const visualStyles = [
     ),
   },
   {
-    key: 'bold',
-    label: 'Bold',
-    description: 'Punchy gradients and confident, high-contrast type.',
+    key: "bold",
+    label: "Bold",
+    description: "Punchy gradients and confident, high-contrast type.",
     preview: (
       <div className="relative flex h-full w-full items-center justify-center overflow-hidden bg-gradient-to-br from-brand-400 via-fuchsia-500 to-violet-600">
         <div className="absolute -right-4 -top-6 h-20 w-20 rotate-12 rounded-2xl bg-white/15" />
         <div className="absolute -bottom-6 -left-4 h-16 w-16 -rotate-12 rounded-full bg-white/15" />
-        <p className="relative text-lg font-black italic tracking-tight text-white">BOLD</p>
+        <p className="relative text-lg font-black italic tracking-tight text-white">
+          BOLD
+        </p>
       </div>
     ),
   },
   {
-    key: 'futuristic',
-    label: 'Futuristic',
-    description: 'Dark, glowing, technical — built for robotics content.',
+    key: "futuristic",
+    label: "Futuristic",
+    description: "Dark, glowing, technical — built for robotics content.",
     preview: (
       <div className="relative flex h-full w-full items-center justify-center overflow-hidden bg-gradient-to-br from-[#020617] via-[#0c1526] to-brand-900">
         <div
           className="absolute inset-0 opacity-25"
           style={{
-            backgroundImage: 'radial-gradient(rgba(76,202,225,0.7) 1px, transparent 1px)',
-            backgroundSize: '10px 10px',
+            backgroundImage:
+              "radial-gradient(rgba(76,202,225,0.7) 1px, transparent 1px)",
+            backgroundSize: "10px 10px",
           }}
         />
         <div className="absolute inset-x-0 top-1/2 h-px bg-gradient-to-r from-transparent via-brand-300/80 to-transparent" />
@@ -62,57 +77,71 @@ const visualStyles = [
       </div>
     ),
   },
-]
+];
 
 function SectionCard({ icon, chip, title, children }) {
   return (
     <div className="rounded-lg border border-neutral-200 bg-white p-5">
       <div className="mb-4 flex items-center gap-2.5">
-        <span className={`flex h-8 w-8 shrink-0 items-center justify-center rounded-md ${chip}`}>
+        <span
+          className={`flex h-8 w-8 shrink-0 items-center justify-center rounded-md ${chip}`}
+        >
           {icon}
         </span>
-        <h3 className="text-sm font-bold tracking-wide text-neutral-800">{title}</h3>
+        <h3 className="text-sm font-bold tracking-wide text-neutral-800">
+          {title}
+        </h3>
       </div>
       {children}
     </div>
-  )
+  );
 }
 
 const inputClass =
-  'w-full rounded-lg border border-neutral-200 bg-neutral-50 px-3 py-2.5 text-sm text-neutral-700 outline-none placeholder:text-neutral-400 focus:border-brand-500 focus:bg-white focus:ring-2 focus:ring-brand-500/20'
+  "w-full rounded-lg border border-neutral-200 bg-neutral-50 px-3 py-2.5 text-sm text-neutral-700 outline-none placeholder:text-neutral-400 focus:border-brand-500 focus:bg-white focus:ring-2 focus:ring-brand-500/20";
 
 export default function ThemesPage() {
-  const [companyName, setCompanyName] = useState('')
-  const [companyDescription, setCompanyDescription] = useState('')
-  const [brandTone, setBrandTone] = useState('Professional')
-  const [targetAudience, setTargetAudience] = useState('')
-  const [visualStyle, setVisualStyle] = useState('minimalist')
-  const [saving, setSaving] = useState(false)
+  const [companyName, setCompanyName] = useState("");
+  const [companyDescription, setCompanyDescription] = useState("");
+  const [brandTone, setBrandTone] = useState("Professional");
+  const [targetAudience, setTargetAudience] = useState("");
+  const [visualStyle, setVisualStyle] = useState("minimalist");
+  const [saving, setSaving] = useState(false);
 
   function handleSave(complete) {
-    setSaving(true)
+    setSaving(true);
     setTimeout(() => {
-      setSaving(false)
+      setSaving(false);
       addNotification({
-        type: 'creation',
-        title: complete ? 'Brand & voice setup completed' : 'Draft saved',
+        type: "creation",
+        title: complete ? "Brand & voice setup completed" : "Draft saved",
         description: complete
-          ? `${companyName || 'Your company'}'s brand profile is ready to guide future posts.`
-          : 'Your brand and voice settings were saved as a draft.',
-        platform: 'Multi-platform',
-        author: 'Relay AI',
-      })
-    }, 500)
+          ? `${companyName || "Your company"}'s brand profile is ready to guide future posts.`
+          : "Your brand and voice settings were saved as a draft.",
+        platform: "Multi-platform",
+        author: "Relay AI",
+      });
+    }, 500);
   }
 
   return (
     <div className="space-y-4">
-     
-
       <SectionCard
         icon={
-          <svg className="h-4 w-4 text-brand-700" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-            <rect x="3" y="7.5" width="18" height="12" rx="2" strokeWidth={1.75} />
+          <svg
+            className="h-4 w-4 text-brand-700"
+            fill="none"
+            viewBox="0 0 24 24"
+            stroke="currentColor"
+          >
+            <rect
+              x="3"
+              y="7.5"
+              width="18"
+              height="12"
+              rx="2"
+              strokeWidth={1.75}
+            />
             <path
               strokeLinecap="round"
               strokeLinejoin="round"
@@ -126,7 +155,10 @@ export default function ThemesPage() {
       >
         <div className="space-y-3">
           <div>
-            <label htmlFor="company-name" className="mb-1.5 block text-xs font-medium text-neutral-500">
+            <label
+              htmlFor="company-name"
+              className="mb-1.5 block text-xs font-medium text-neutral-500"
+            >
               Company Name
             </label>
             <input
@@ -138,7 +170,10 @@ export default function ThemesPage() {
             />
           </div>
           <div>
-            <label htmlFor="company-description" className="mb-1.5 block text-xs font-medium text-neutral-500">
+            <label
+              htmlFor="company-description"
+              className="mb-1.5 block text-xs font-medium text-neutral-500"
+            >
               Company Description
             </label>
             <textarea
@@ -155,7 +190,12 @@ export default function ThemesPage() {
 
       <SectionCard
         icon={
-          <svg className="h-4 w-4 text-amber-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+          <svg
+            className="h-4 w-4 text-amber-600"
+            fill="none"
+            viewBox="0 0 24 24"
+            stroke="currentColor"
+          >
             <path
               strokeLinecap="round"
               strokeLinejoin="round"
@@ -169,7 +209,9 @@ export default function ThemesPage() {
       >
         <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
           <div>
-            <label className="mb-1.5 block text-xs font-medium text-neutral-500">Brand Tone</label>
+            <label className="mb-1.5 block text-xs font-medium text-neutral-500">
+              Brand Tone
+            </label>
             <Select value={brandTone} onValueChange={setBrandTone}>
               <SelectTrigger className="w-full">
                 <SelectValue placeholder="Select a tone" />
@@ -184,7 +226,10 @@ export default function ThemesPage() {
             </Select>
           </div>
           <div>
-            <label htmlFor="target-audience" className="mb-1.5 block text-xs font-medium text-neutral-500">
+            <label
+              htmlFor="target-audience"
+              className="mb-1.5 block text-xs font-medium text-neutral-500"
+            >
               Target Audience
             </label>
             <input
@@ -200,7 +245,12 @@ export default function ThemesPage() {
 
       <SectionCard
         icon={
-          <svg className="h-4 w-4 text-violet-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+          <svg
+            className="h-4 w-4 text-violet-600"
+            fill="none"
+            viewBox="0 0 24 24"
+            stroke="currentColor"
+          >
             <path
               strokeLinecap="round"
               strokeLinejoin="round"
@@ -214,32 +264,48 @@ export default function ThemesPage() {
       >
         <div className="grid grid-cols-1 gap-3 sm:grid-cols-3">
           {visualStyles.map((style) => {
-            const active = visualStyle === style.key
+            const active = visualStyle === style.key;
             return (
               <button
                 key={style.key}
                 type="button"
                 onClick={() => setVisualStyle(style.key)}
                 className={`group flex cursor-pointer flex-col overflow-hidden rounded-lg border-2 text-left transition ${
-                  active ? 'border-brand-500 ring-2 ring-brand-100' : 'border-neutral-200 hover:border-neutral-300'
+                  active
+                    ? "border-brand-500 ring-2 ring-brand-100"
+                    : "border-neutral-200 hover:border-neutral-300"
                 }`}
               >
                 <div className="relative h-24 w-full">
                   {style.preview}
                   {active && (
                     <span className="absolute right-1.5 top-1.5 flex h-5 w-5 items-center justify-center rounded-full bg-brand-500 text-white shadow-sm">
-                      <svg className="h-3 w-3" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M4.5 12.75l6 6 9-13.5" />
+                      <svg
+                        className="h-3 w-3"
+                        fill="none"
+                        viewBox="0 0 24 24"
+                        stroke="currentColor"
+                      >
+                        <path
+                          strokeLinecap="round"
+                          strokeLinejoin="round"
+                          strokeWidth={3}
+                          d="M4.5 12.75l6 6 9-13.5"
+                        />
                       </svg>
                     </span>
                   )}
                 </div>
                 <div className="px-2.5 py-2">
-                  <p className="text-sm font-semibold text-black">{style.label}</p>
-                  <p className="mt-0.5 text-xs text-neutral-400">{style.description}</p>
+                  <p className="text-sm font-semibold text-black">
+                    {style.label}
+                  </p>
+                  <p className="mt-0.5 text-xs text-neutral-400">
+                    {style.description}
+                  </p>
                 </div>
               </button>
-            )
+            );
           })}
         </div>
       </SectionCard>
@@ -257,9 +323,9 @@ export default function ThemesPage() {
           disabled={saving}
           className="cursor-pointer rounded-md bg-brand-500 px-4 py-2.5 text-sm font-semibold text-white shadow-sm transition hover:bg-brand-600 disabled:cursor-not-allowed disabled:opacity-60"
         >
-          {saving ? 'Saving…' : 'Complete Setup'}
+          {saving ? "Saving…" : "Complete Setup"}
         </button>
       </div>
     </div>
-  )
+  );
 }

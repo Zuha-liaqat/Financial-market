@@ -159,6 +159,7 @@
 .fm-home .hero, .fm-home .page-banner { padding: 44px 0 20px; position: relative; overflow: hidden; }
 .fm-home .hero-grid { display: grid; grid-template-columns: 0.65fr 1.35fr; gap: 24px; align-items: center; overflow: hidden; }
 .fm-home .hero-grid > * { min-width: 0; }
+.fm-home .hero-grid.hero-grid--center { grid-template-columns: 1fr; gap: 40px; text-align: center; }
 .fm-home .hero-shot-wrap { position: relative; width: 100%; max-width: 100%; margin: 0; overflow: hidden; border-radius: 12px; }
 .fm-home .hero-shot { display: block; width: 100%; max-width: 100%; height: auto; background: #fff; }
 .fm-home .hero-shot-loading {
@@ -192,6 +193,12 @@
 .fm-home .stat .num { font-family: var(--font-sans); font-size: 23px; font-weight: 600; color: var(--navy); }
 .fm-home .stat .lbl { font-size: 11.5px; color: var(--muted); margin-top: 2px; }
 
+.fm-home .hero-grid--center .hero-copy { max-width: 900px; margin: 0 auto; }
+.fm-home .hero-grid--center .hero-ctas { justify-content: center; }
+.fm-home .hero-grid--center .stats-row { justify-content: center; }
+.fm-home .hero-grid--center p.lead { margin: 0 auto 22px; }
+.fm-home .hero-grid--center .hero-shot-wrap { max-width: 760px; margin: 0 auto; }
+
 .fm-home .hero::before, .fm-home .page-banner::before {
   content: ''; position: absolute; width: 520px; height: 520px; border-radius: 50%; z-index: 0; pointer-events: none;
   background: radial-gradient(circle, rgba(0, 166, 244, 0.16), transparent 68%);
@@ -211,6 +218,14 @@
 }
 .fm-home .floaty.f1 { top: -20px; right: 6%; animation-delay: 0.2s; }
 .fm-home .floaty.f2 { bottom: -18px; left: -6%; animation-delay: 1s; }
+.fm-home .floaty.f3 { top: -20px; left: 6%; animation-delay: 0.6s; }
+.fm-home .hero-grid--center .floaty.f1 { top: 15px; right: 8%; bottom: auto; left: auto; }
+.fm-home .hero-grid--center .floaty.f3 { top: 95px; left: 10%; bottom: auto; right: auto; }
+.fm-home .hero-grid--center .floaty.f7 { top: 190px; right: 27%; bottom: auto; left: auto; animation-delay: 2.6s; }
+.fm-home .hero-grid--center .floaty.f6 { top: 200px; left: 27%; bottom: auto; right: auto; animation-delay: 2.2s; }
+.fm-home .hero-grid--center .floaty.f5 { top: 280px; right: 9%; bottom: auto; left: auto; animation-delay: 1.8s; }
+.fm-home .hero-grid--center .floaty.f4 { top: 300px; left: 11%; bottom: auto; right: auto; animation-delay: 1.4s; }
+.fm-home .hero-grid--center .floaty.f2 { top: 300px; right: 24%; bottom: auto; left: auto; }
 @keyframes fm-float { 0%, 100% { transform: translateY(0); } 50% { transform: translateY(-10px); } }
 .fm-home .floaty .fi {
   width: 30px; height: 30px; border-radius: 8px; display: flex; align-items: center; justify-content: center;
@@ -469,6 +484,7 @@
   .fm-home .nav-links, .fm-home .navcta .btn-ghost { display: none; }
   .fm-home .burger { display: flex; }
   .fm-home .hero-grid { grid-template-columns: 1fr; gap: 60px; }
+  .fm-home .hero-grid--center .floaty { display: none; }
   .fm-home .cards-grid, .fm-home .cards-grid.cols-4 { grid-template-columns: repeat(2, 1fr); }
   .fm-home .plat-grid, .fm-home .proc-row, .fm-home .steps-row { grid-template-columns: 1fr; gap: 28px; }
   .fm-home .steps-row::before { display: none; }

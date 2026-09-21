@@ -61,6 +61,17 @@ const TESTIMONIAL_COLUMNS = [
   },
 ]
 
+function MonogramBadge({ letter, bg }) {
+  return (
+    <span
+      className="fi"
+      style={{ background: bg, color: '#fff', fontWeight: 700, fontSize: letter.length > 1 ? 10 : 13 }}
+    >
+      {letter}
+    </span>
+  )
+}
+
 function Counter({ target, suffix = '', decimals = 0 }) {
   const [value, setValue] = useState(0)
   const ref = useRef(null)
@@ -107,8 +118,42 @@ export default function HomePage() {
     <MarketingPage active="home">
       {/* Hero */}
       <section className="hero">
-        <div className="wrap hero-grid">
-          <div>
+        <div className="wrap hero-grid hero-grid--center">
+          <div className="floaty f1" aria-hidden="true">
+            <span className="fi" style={{ background: '#E8F2FC' }}>
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="#0A66C2">
+                <path d="M4.98 3.5C3.88 3.5 3 4.38 3 5.48c0 1.1.88 2 1.98 2h.02C6.1 7.48 7 6.6 7 5.48 7 4.38 6.1 3.5 4.98 3.5zM3.5 8.75h3v11.75h-3zM9.5 8.75h2.9v1.6h.04c.4-.76 1.4-1.6 2.9-1.6 3.1 0 3.66 2 3.66 4.6v6.65h-3v-5.9c0-1.4-.03-3.2-1.95-3.2-1.96 0-2.26 1.53-2.26 3.1v6h-3z" />
+              </svg>
+            </span>
+          </div>
+          <div className="floaty f3" aria-hidden="true">
+            <span className="fi" style={{ background: '#FDF0F3' }}>
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#E4405F" strokeWidth="1.8">
+                <rect x="3" y="3" width="18" height="18" rx="5" />
+                <circle cx="12" cy="12" r="4" />
+              </svg>
+            </span>
+          </div>
+          <div className="floaty f2" aria-hidden="true">
+            <span className="fi" style={{ background: '#EEF0F2' }}>
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="#111820">
+                <path d="M18.9 2H22l-7.6 8.7L23.3 22H16.6l-5.2-6.8L5.4 22H2.3l8.1-9.3L1.4 2h6.9l4.7 6.2L18.9 2z" />
+              </svg>
+            </span>
+          </div>
+          <div className="floaty f4" aria-hidden="true">
+            <MonogramBadge letter="M" bg="#000000" />
+          </div>
+          <div className="floaty f5" aria-hidden="true">
+            <MonogramBadge letter="W" bg="#21759B" />
+          </div>
+          <div className="floaty f6" aria-hidden="true">
+            <MonogramBadge letter="B" bg="#F57D00" />
+          </div>
+          <div className="floaty f7" aria-hidden="true">
+            <MonogramBadge letter="Wx" bg="#0C6EFC" />
+          </div>
+          <div className="hero-copy">
             <div className="eyebrow reveal">
               <span className="dot" /> TERM OF THE DAY: DIVIDEND YIELD
             </div>

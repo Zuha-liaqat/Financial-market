@@ -1,47 +1,47 @@
-import { useState } from 'react'
-import { useNavigate, Link } from 'react-router-dom'
-import Logo from '../components/Logo'
-import { setCurrentUserEmail, setSuperAdminStatus } from '../data/auth'
-import { apiGetCurrentUser, apiLogin } from '../lib/api'
-import { trackEvent } from '../lib/analytics'
-import { ErrorToast, SuccessToast } from '../components/Toast'
+import { useState } from "react";
+import { useNavigate, Link } from "react-router-dom";
+import Logo from "../../components/Logo";
+import { setCurrentUserEmail, setSuperAdminStatus } from "../../data/auth";
+import { apiGetCurrentUser, apiLogin } from "../../lib/api";
+import { trackEvent } from "../../lib/analytics";
+import { ErrorToast, SuccessToast } from "../../components/Toast";
 
 export default function LoginPage() {
-  const navigate = useNavigate()
-  const [showPassword, setShowPassword] = useState(false)
-  const [remember, setRemember] = useState(false)
-  const [form, setForm] = useState({ email: '', password: '' })
-  const [submitting, setSubmitting] = useState(false)
-  const [error, setError] = useState('')
-  const [success, setSuccess] = useState('')
+  const navigate = useNavigate();
+  const [showPassword, setShowPassword] = useState(false);
+  const [remember, setRemember] = useState(false);
+  const [form, setForm] = useState({ email: "", password: "" });
+  const [submitting, setSubmitting] = useState(false);
+  const [error, setError] = useState("");
+  const [success, setSuccess] = useState("");
 
   function handleChange(e) {
-    const { name, value } = e.target
-    setForm((prev) => ({ ...prev, [name]: value }))
+    const { name, value } = e.target;
+    setForm((prev) => ({ ...prev, [name]: value }));
   }
 
   async function handleSubmit(e) {
-    e.preventDefault()
-    setError('')
+    e.preventDefault();
+    setError("");
 
     if (!form.email.trim() || !form.password) {
-      setError('Please enter both your email and password.')
-      return
+      setError("Please enter both your email and password.");
+      return;
     }
 
-    setSubmitting(true)
+    setSubmitting(true);
     try {
-      await apiLogin(form.email.trim(), form.password)
-      const me = await apiGetCurrentUser()
-      setSuperAdminStatus(Boolean(me?.is_superuser))
-      setCurrentUserEmail(me?.email || form.email)
-      trackEvent('login', { method: 'password' })
-      setSuccess('Logged in successfully!')
-      await new Promise((resolve) => setTimeout(resolve, 900))
-      navigate('/dashboard')
+      await apiLogin(form.email.trim(), form.password);
+      const me = await apiGetCurrentUser();
+      setSuperAdminStatus(Boolean(me?.is_superuser));
+      setCurrentUserEmail(me?.email || form.email);
+      trackEvent("login", { method: "password" });
+      setSuccess("Logged in successfully!");
+      await new Promise((resolve) => setTimeout(resolve, 900));
+      navigate("/dashboard");
     } catch (err) {
-      setError(err.message || 'Invalid email or password.')
-      setSubmitting(false)
+      setError(err.message || "Invalid email or password.");
+      setSubmitting(false);
     }
   }
 
@@ -72,8 +72,10 @@ export default function LoginPage() {
             <Logo className="h-11 w-full object-contain" />
           </div>
 
-          {error && <ErrorToast message={error} onClose={() => setError('')} />}
-          {success && <SuccessToast message={success} onClose={() => setSuccess('')} />}
+          {error && <ErrorToast message={error} onClose={() => setError("")} />}
+          {success && (
+            <SuccessToast message={success} onClose={() => setSuccess("")} />
+          )}
 
           <form onSubmit={handleSubmit} className="space-y-4">
             <div>
@@ -116,7 +118,10 @@ export default function LoginPage() {
                 >
                   PASSWORD
                 </label>
-                <a href="#" className="text-xs text-neutral-500 hover:text-black">
+                <a
+                  href="#"
+                  className="text-xs text-neutral-500 hover:text-black"
+                >
                   FORGOT PASSWORD?
                 </a>
               </div>
@@ -137,7 +142,7 @@ export default function LoginPage() {
                 <input
                   id="password"
                   name="password"
-                  type={showPassword ? 'text' : 'password'}
+                  type={showPassword ? "text" : "password"}
                   autoComplete="current-password"
                   placeholder="••••••••"
                   value={form.password}
@@ -147,11 +152,16 @@ export default function LoginPage() {
                 <button
                   type="button"
                   onClick={() => setShowPassword((v) => !v)}
-                  aria-label={showPassword ? 'Hide password' : 'Show password'}
+                  aria-label={showPassword ? "Hide password" : "Show password"}
                   className="shrink-0 text-neutral-400 hover:text-black"
                 >
                   {showPassword ? (
-                    <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <svg
+                      className="h-4 w-4"
+                      fill="none"
+                      viewBox="0 0 24 24"
+                      stroke="currentColor"
+                    >
                       <path
                         strokeLinecap="round"
                         strokeLinejoin="round"
@@ -166,7 +176,12 @@ export default function LoginPage() {
                       />
                     </svg>
                   ) : (
-                    <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <svg
+                      className="h-4 w-4"
+                      fill="none"
+                      viewBox="0 0 24 24"
+                      stroke="currentColor"
+                    >
                       <path
                         strokeLinecap="round"
                         strokeLinejoin="round"
@@ -195,23 +210,41 @@ export default function LoginPage() {
               className="flex w-full items-center justify-center gap-2 rounded-lg bg-brand-500 py-2.5 text-sm font-semibold tracking-wide text-white shadow-sm transition hover:bg-brand-600 hover:shadow-md disabled:opacity-60"
             >
               {submitting && (
-                <svg className="h-4 w-4 animate-spin text-white" fill="none" viewBox="0 0 24 24">
-                  <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
-                  <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v4a4 4 0 00-4 4H4z" />
+                <svg
+                  className="h-4 w-4 animate-spin text-white"
+                  fill="none"
+                  viewBox="0 0 24 24"
+                >
+                  <circle
+                    className="opacity-25"
+                    cx="12"
+                    cy="12"
+                    r="10"
+                    stroke="currentColor"
+                    strokeWidth="4"
+                  />
+                  <path
+                    className="opacity-75"
+                    fill="currentColor"
+                    d="M4 12a8 8 0 018-8v4a4 4 0 00-4 4H4z"
+                  />
                 </svg>
               )}
-              {submitting ? 'SIGNING IN…' : 'SIGN IN'}
+              {submitting ? "SIGNING IN…" : "SIGN IN"}
             </button>
           </form>
 
           <p className="mt-6 text-center text-sm text-neutral-500">
-            Don't have an account?{' '}
-            <Link to="/signup" className="font-medium text-black hover:underline">
+            Don't have an account?{" "}
+            <Link
+              to="/signup"
+              className="font-medium text-black hover:underline"
+            >
               Sign up
             </Link>
           </p>
         </div>
       </div>
     </div>
-  )
+  );
 }

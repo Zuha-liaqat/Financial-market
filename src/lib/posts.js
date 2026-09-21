@@ -92,6 +92,55 @@ export function mapCalendarItem(item) {
   }
 }
 
+export function mapPlannerItem(item) {
+  const platform = platformDisplay(item.platform)
+  const images = item.image_url ? [{ name: item.title || item.id, dataUri: item.image_url }] : []
+  const status = item.is_posted ? 'PUBLISHED' : item.is_approved ? 'SCHEDULED' : 'AWAITING_APPROVAL'
+
+  return {
+    id: item.id,
+    contentType: item.content_type,
+    title: item.title || item.headline || 'Untitled',
+    headline: item.headline || '',
+    platform,
+    thumbClass: 'bg-gradient-to-br from-neutral-400 to-neutral-600',
+    thumbLabel: platform?.slice(0, 4).toUpperCase() || '',
+    score: item.ai_safety_score ?? 0,
+    status,
+    caption: item.caption || '',
+    hashtags: splitHashtags(item.hashtags),
+    images,
+    language: item.language || '',
+    scheduleDate: item.date || '',
+    scheduleTime: item.start_time || '',
+    isApproved: Boolean(item.is_approved),
+    isPosted: Boolean(item.is_posted),
+    createdAt: item.created_at || null,
+  }
+}
+
+export function formatRelativeTime(iso, { uppercase = false } = {}) {
+  if (!iso) return null
+  const date = new Date(iso)
+  if (Number.isNaN(date.getTime())) return null
+
+  const diffMin = Math.max(0, Math.round((Date.now() - date.getTime()) / 60000))
+  let label
+  if (diffMin < 1) label = 'just now'
+  else if (diffMin < 60) label = `${diffMin}m ago`
+  else if (diffMin < 1440) label = `${Math.round(diffMin / 60)}h ago`
+  else label = `${Math.round(diffMin / 1440)}d ago`
+
+  return uppercase ? label.toUpperCase() : label
+}
+
+export function formatScheduledLabel(iso) {
+  if (!iso) return null
+  const date = new Date(iso)
+  if (Number.isNaN(date.getTime())) return null
+  return date.toLocaleString('en-US', { weekday: 'short', hour: 'numeric', minute: '2-digit' })
+}
+
 export function mapApiPost(post) {
   const platform = platformDisplay(post.platform)
   const images = post.image_url ? [{ name: post.title || post.id, dataUri: post.image_url }] : []

@@ -152,6 +152,16 @@ export async function apiSaveCredentials({ platform, client_id, client_secret, c
   return body
 }
 
+export async function apiConnectInstagram(companyId) {
+  const query = companyId ? `?company_id=${companyId}` : ''
+  const res = await authorizedRequest(`/api/credentials/instagram/connect${query}`)
+  const body = await res.json().catch(() => null)
+  if (!res.ok) {
+    throw new Error(extractErrorMessage(body, 'Failed to start Instagram connection'))
+  }
+  return body
+}
+
 export async function apiGeneratePost({
   prompt,
   platforms,
@@ -453,4 +463,107 @@ export async function apiCreateCheckoutSession({ amount, currency = 'usd', produ
     throw new Error('Checkout session did not return a URL')
   }
   return url
+}
+
+export async function apiGetPlanner({ period = 'week', start_date, company_id } = {}) {
+  const params = new URLSearchParams()
+  params.set('period', period)
+  if (start_date) params.set('start_date', start_date)
+  if (company_id) params.set('company_id', company_id)
+
+  const res = await authorizedRequest(`/api/planner?${params.toString()}`)
+  const body = await res.json().catch(() => null)
+  if (!res.ok) {
+    throw new Error(extractErrorMessage(body, 'Failed to load planner'))
+  }
+  return body
+}
+
+export async function apiGeneratePlan(
+  { period, start_date, platforms, count, post_time, mode, topic, company_description, brand_tone, target_audience, language },
+  companyId,
+) {
+  const query = companyId ? `?company_id=${companyId}` : ''
+  const res = await authorizedRequest(`/api/planner/generate${query}`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({
+      period,
+      start_date,
+      platforms,
+      count,
+      post_time,
+      mode,
+      topic,
+      company_description,
+      brand_tone,
+      target_audience,
+      language,
+    }),
+  })
+  const body = await res.json().catch(() => null)
+  if (!res.ok) {
+    throw new Error(extractErrorMessage(body, 'Failed to generate plan'))
+  }
+  return body
+}
+
+export async function apiGetProfile() {
+  const res = await authorizedRequest('/api/settings/profile')
+  const body = await res.json().catch(() => null)
+  if (!res.ok) {
+    throw new Error(extractErrorMessage(body, 'Failed to load profile'))
+  }
+  return body
+}
+
+export async function apiUpdateProfile({ first_name, last_name }) {
+  const res = await authorizedRequest('/api/settings/profile', {
+    method: 'PUT',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ first_name, last_name }),
+  })
+  const body = await res.json().catch(() => null)
+  if (!res.ok) {
+    throw new Error(extractErrorMessage(body, 'Failed to update profile'))
+  }
+  return body
+}
+
+export async function apiUploadProfilePhoto(photo) {
+  const formData = new FormData()
+  formData.append('photo', photo)
+
+  const res = await authorizedRequest('/api/settings/profile/photo', {
+    method: 'POST',
+    body: formData,
+  })
+  const body = await res.json().catch(() => null)
+  if (!res.ok) {
+    throw new Error(extractErrorMessage(body, 'Failed to upload profile photo'))
+  }
+  return body
+}
+
+export async function apiChangePassword({ old_password, new_password, confirm_password }) {
+  const res = await authorizedRequest('/api/settings/change-password', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ old_password, new_password, confirm_password }),
+  })
+  const body = await res.json().catch(() => null)
+  if (!res.ok) {
+    throw new Error(extractErrorMessage(body, 'Failed to change password'))
+  }
+  return body
+}
+
+export async function apiGetDashboard(companyId) {
+  const query = companyId ? `?company_id=${companyId}` : ''
+  const res = await authorizedRequest(`/api/dashboard${query}`)
+  const body = await res.json().catch(() => null)
+  if (!res.ok) {
+    throw new Error(extractErrorMessage(body, 'Failed to load dashboard'))
+  }
+  return body
 }

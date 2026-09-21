@@ -1,82 +1,97 @@
-import { useState } from 'react'
-import { useNavigate, useSearchParams, Link } from 'react-router-dom'
-import Logo from '../components/Logo'
-import { apiCreateCheckoutSession, apiSignup } from '../lib/api'
-import { setActivePlanId, subscriptionPlans } from '../data/subscriptionPlans'
-import { setCurrentUserEmail, setSuperAdminStatus } from '../data/auth'
-import { trackEvent } from '../lib/analytics'
-import { ErrorToast, SuccessToast } from '../components/Toast'
+import { useState } from "react";
+import { useNavigate, useSearchParams, Link } from "react-router-dom";
+import Logo from "../../components/Logo";
+import { apiCreateCheckoutSession, apiSignup } from "../../lib/api";
+import {
+  setActivePlanId,
+  subscriptionPlans,
+} from "../../data/subscriptionPlans";
+import { setCurrentUserEmail, setSuperAdminStatus } from "../../data/auth";
+import { trackEvent } from "../../lib/analytics";
+import { ErrorToast, SuccessToast } from "../../components/Toast";
 
 export default function SignupPage() {
-  const navigate = useNavigate()
-  const [searchParams] = useSearchParams()
-  const planId = searchParams.get('plan')
-  const billingCycle = searchParams.get('cycle') === 'yearly' ? 'yearly' : 'monthly'
-  const [showPassword, setShowPassword] = useState(false)
-  const [showConfirmPassword, setShowConfirmPassword] = useState(false)
-  const [form, setForm] = useState({ name: '', email: '', password: '', confirmPassword: '' })
-  const [submitting, setSubmitting] = useState(false)
-  const [error, setError] = useState('')
-  const [success, setSuccess] = useState('')
+  const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
+  const planId = searchParams.get("plan");
+  const billingCycle =
+    searchParams.get("cycle") === "yearly" ? "yearly" : "monthly";
+  const [showPassword, setShowPassword] = useState(false);
+  const [showConfirmPassword, setShowConfirmPassword] = useState(false);
+  const [form, setForm] = useState({
+    name: "",
+    email: "",
+    password: "",
+    confirmPassword: "",
+  });
+  const [submitting, setSubmitting] = useState(false);
+  const [error, setError] = useState("");
+  const [success, setSuccess] = useState("");
 
   function handleChange(e) {
-    const { name, value } = e.target
-    setForm((prev) => ({ ...prev, [name]: value }))
+    const { name, value } = e.target;
+    setForm((prev) => ({ ...prev, [name]: value }));
   }
 
   async function handleSubmit(e) {
-    e.preventDefault()
-    setError('')
+    e.preventDefault();
+    setError("");
 
     if (!form.name.trim() || !form.email.trim() || !form.password) {
-      setError('Please fill in all required fields.')
-      return
+      setError("Please fill in all required fields.");
+      return;
     }
     if (form.password !== form.confirmPassword) {
-      setError('Passwords do not match.')
-      return
+      setError("Passwords do not match.");
+      return;
     }
 
-    setSubmitting(true)
+    setSubmitting(true);
     try {
       await apiSignup({
         full_name: form.name.trim(),
         email: form.email.trim(),
         password: form.password,
         confirm_password: form.confirmPassword,
-      })
-      setSuperAdminStatus(false)
-      setCurrentUserEmail(form.email.trim())
-      trackEvent('sign_up', { method: 'form' })
-      setSuccess('Account created successfully!')
-      await new Promise((resolve) => setTimeout(resolve, 900))
+      });
+      setSuperAdminStatus(false);
+      setCurrentUserEmail(form.email.trim());
+      trackEvent("sign_up", { method: "form" });
+      setSuccess("Account created successfully!");
+      await new Promise((resolve) => setTimeout(resolve, 900));
 
-      const selectedPlan = planId ? subscriptionPlans.find((p) => p.id === planId) : null
-      const amount = selectedPlan ? (billingCycle === 'yearly' ? selectedPlan.yearlyPrice : selectedPlan.price) : 0
+      const selectedPlan = planId
+        ? subscriptionPlans.find((p) => p.id === planId)
+        : null;
+      const amount = selectedPlan
+        ? billingCycle === "yearly"
+          ? selectedPlan.yearlyPrice
+          : selectedPlan.price
+        : 0;
 
       if (selectedPlan && amount > 0) {
         try {
           const checkoutUrl = await apiCreateCheckoutSession({
             amount,
-            currency: 'usd',
-            product_name: `${selectedPlan.name} Plan (${billingCycle === 'yearly' ? 'Yearly' : 'Monthly'})`,
+            currency: "usd",
+            product_name: `${selectedPlan.name} Plan (${billingCycle === "yearly" ? "Yearly" : "Monthly"})`,
             success_url: `${window.location.origin}/dashboard?signup_plan=success&plan=${selectedPlan.id}`,
             cancel_url: `${window.location.origin}/dashboard?signup_plan=cancelled&plan=${selectedPlan.id}`,
-          })
-          window.location.href = checkoutUrl
-          return
+          });
+          window.location.href = checkoutUrl;
+          return;
         } catch {
           // Couldn't start checkout — fall back to the Free plan.
-          setActivePlanId('free')
-          navigate('/dashboard')
-          return
+          setActivePlanId("free");
+          navigate("/dashboard");
+          return;
         }
       }
 
-      navigate(selectedPlan ? '/dashboard' : '/login')
+      navigate(selectedPlan ? "/dashboard" : "/login");
     } catch (err) {
-      setError(err.message || 'Failed to create account.')
-      setSubmitting(false)
+      setError(err.message || "Failed to create account.");
+      setSubmitting(false);
     }
   }
 
@@ -100,8 +115,10 @@ export default function SignupPage() {
             <Logo className="h-11 w-full object-contain" />
           </div>
 
-          {error && <ErrorToast message={error} onClose={() => setError('')} />}
-          {success && <SuccessToast message={success} onClose={() => setSuccess('')} />}
+          {error && <ErrorToast message={error} onClose={() => setError("")} />}
+          {success && (
+            <SuccessToast message={success} onClose={() => setSuccess("")} />
+          )}
 
           <form onSubmit={handleSubmit} className="space-y-4">
             <div>
@@ -194,7 +211,7 @@ export default function SignupPage() {
                 <input
                   id="password"
                   name="password"
-                  type={showPassword ? 'text' : 'password'}
+                  type={showPassword ? "text" : "password"}
                   autoComplete="new-password"
                   placeholder="••••••••"
                   value={form.password}
@@ -204,11 +221,16 @@ export default function SignupPage() {
                 <button
                   type="button"
                   onClick={() => setShowPassword((v) => !v)}
-                  aria-label={showPassword ? 'Hide password' : 'Show password'}
+                  aria-label={showPassword ? "Hide password" : "Show password"}
                   className="shrink-0 text-neutral-400 hover:text-black"
                 >
                   {showPassword ? (
-                    <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <svg
+                      className="h-4 w-4"
+                      fill="none"
+                      viewBox="0 0 24 24"
+                      stroke="currentColor"
+                    >
                       <path
                         strokeLinecap="round"
                         strokeLinejoin="round"
@@ -223,7 +245,12 @@ export default function SignupPage() {
                       />
                     </svg>
                   ) : (
-                    <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <svg
+                      className="h-4 w-4"
+                      fill="none"
+                      viewBox="0 0 24 24"
+                      stroke="currentColor"
+                    >
                       <path
                         strokeLinecap="round"
                         strokeLinejoin="round"
@@ -260,7 +287,7 @@ export default function SignupPage() {
                 <input
                   id="confirmPassword"
                   name="confirmPassword"
-                  type={showConfirmPassword ? 'text' : 'password'}
+                  type={showConfirmPassword ? "text" : "password"}
                   autoComplete="new-password"
                   placeholder="••••••••"
                   value={form.confirmPassword}
@@ -270,11 +297,18 @@ export default function SignupPage() {
                 <button
                   type="button"
                   onClick={() => setShowConfirmPassword((v) => !v)}
-                  aria-label={showConfirmPassword ? 'Show password' : 'Hide password'}
+                  aria-label={
+                    showConfirmPassword ? "Show password" : "Hide password"
+                  }
                   className="shrink-0 text-neutral-400 hover:text-black"
                 >
                   {showConfirmPassword ? (
-                    <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <svg
+                      className="h-4 w-4"
+                      fill="none"
+                      viewBox="0 0 24 24"
+                      stroke="currentColor"
+                    >
                       <path
                         strokeLinecap="round"
                         strokeLinejoin="round"
@@ -289,7 +323,12 @@ export default function SignupPage() {
                       />
                     </svg>
                   ) : (
-                    <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <svg
+                      className="h-4 w-4"
+                      fill="none"
+                      viewBox="0 0 24 24"
+                      stroke="currentColor"
+                    >
                       <path
                         strokeLinecap="round"
                         strokeLinejoin="round"
@@ -308,23 +347,41 @@ export default function SignupPage() {
               className="flex w-full items-center justify-center gap-2 rounded-lg bg-brand-500 py-2.5 text-sm font-semibold tracking-wide text-white shadow-sm transition hover:bg-brand-600 hover:shadow-md disabled:opacity-60"
             >
               {submitting && (
-                <svg className="h-4 w-4 animate-spin text-white" fill="none" viewBox="0 0 24 24">
-                  <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
-                  <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v4a4 4 0 00-4 4H4z" />
+                <svg
+                  className="h-4 w-4 animate-spin text-white"
+                  fill="none"
+                  viewBox="0 0 24 24"
+                >
+                  <circle
+                    className="opacity-25"
+                    cx="12"
+                    cy="12"
+                    r="10"
+                    stroke="currentColor"
+                    strokeWidth="4"
+                  />
+                  <path
+                    className="opacity-75"
+                    fill="currentColor"
+                    d="M4 12a8 8 0 018-8v4a4 4 0 00-4 4H4z"
+                  />
                 </svg>
               )}
-              {submitting ? 'CREATING ACCOUNT…' : 'CREATE ACCOUNT'}
+              {submitting ? "CREATING ACCOUNT…" : "CREATE ACCOUNT"}
             </button>
           </form>
 
           <p className="mt-6 text-center text-sm text-neutral-500">
-            Already have an account?{' '}
-            <Link to="/login" className="font-medium text-black hover:underline">
+            Already have an account?{" "}
+            <Link
+              to="/login"
+              className="font-medium text-black hover:underline"
+            >
               Sign in
             </Link>
           </p>
         </div>
       </div>
     </div>
-  )
+  );
 }

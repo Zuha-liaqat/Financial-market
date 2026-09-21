@@ -69,8 +69,17 @@ export default function Topbar({ onMenuClick = () => {} }) {
       .catch(() => {})
   }, [])
 
+  useEffect(() => {
+    function handleProfileUpdated(e) {
+      setUser((prev) => (prev ? { ...prev, ...e.detail } : prev))
+    }
+    window.addEventListener('user-profile-updated', handleProfileUpdated)
+    return () => window.removeEventListener('user-profile-updated', handleProfileUpdated)
+  }, [])
+
   const displayName = user?.name || 'Guest'
   const displayRole = user ? (user.is_superuser ? 'Super Admin' : formatRole(user.role)) : ''
+  const avatarUrl = user?.avatar_url || null
 
   return (
     <header className="flex items-center justify-between gap-2 border-b border-neutral-200 bg-white px-3 py-3 sm:px-6">
@@ -123,9 +132,17 @@ export default function Topbar({ onMenuClick = () => {} }) {
           </svg>
         </button> */}
         <div className="ml-2 flex items-center gap-2">
-          <div className="flex h-8 w-8 items-center justify-center rounded-full bg-gradient-to-br from-brand-400 to-brand-600 text-xs font-semibold text-white ring-2 ring-white shadow-sm">
-            {getInitials(displayName)}
-          </div>
+          {avatarUrl ? (
+            <img
+              src={avatarUrl}
+              alt={displayName}
+              className="h-8 w-8 rounded-full object-cover ring-2 ring-white shadow-sm"
+            />
+          ) : (
+            <div className="flex h-8 w-8 items-center justify-center rounded-full bg-gradient-to-br from-brand-400 to-brand-600 text-xs font-semibold text-white ring-2 ring-white shadow-sm">
+              {getInitials(displayName)}
+            </div>
+          )}
           <div className="hidden text-left leading-tight sm:block">
             <p className="text-sm font-medium text-black">{displayName}</p>
             <p className="text-xs text-neutral-400">{displayRole}</p>

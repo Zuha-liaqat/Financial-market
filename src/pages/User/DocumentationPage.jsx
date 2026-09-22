@@ -1,6 +1,6 @@
 import { useState } from 'react'
 
-const REDIRECT_URL = 'https://financial-marketing.vercel.app/api/credentials/linkedin/callback'
+const REDIRECT_URL = `${import.meta.env.VITE_API_BASE_URL}/api/credentials/linkedin/callback`
 
 const URL_PATTERN = /(https?:\/\/[^\s"]+)/g
 

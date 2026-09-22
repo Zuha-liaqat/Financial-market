@@ -1,6 +1,6 @@
 import { SUPER_ADMIN_EMAIL, SUPER_ADMIN_PASSWORD } from '../data/auth'
 
-const API_BASE_URL = 'https://financial-marketing.vercel.app'
+const API_BASE_URL = import.meta.env.VITE_API_BASE_URL
 const TOKEN_KEY = 'api_access_token'
 
 function getToken() {

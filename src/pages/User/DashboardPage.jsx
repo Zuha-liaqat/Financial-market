@@ -375,7 +375,7 @@ export default function DashboardPage() {
       {/* Middle Row */}
       <div className="grid grid-cols-1 gap-4 lg:grid-cols-[1.6fr_1fr]">
         {/* Platforms at a glance */}
-        <div>
+        <div className="min-w-0">
           <div className="mb-3 flex items-center justify-between">
             <h2 className="text-xl font-bold text-black">
               Platforms at a glance
@@ -473,7 +473,7 @@ export default function DashboardPage() {
         </div>
 
         {/* Top post this week */}
-        <div>
+        <div className="min-w-0">
           <h2 className="mb-3 text-xl font-bold text-black">
             Top post this week
           </h2>
@@ -540,7 +540,7 @@ export default function DashboardPage() {
       {/* Bottom Row */}
       <div className="grid grid-cols-1 gap-4 lg:grid-cols-[1.6fr_1fr]">
         {/* Recent activity */}
-        <div>
+        <div className="min-w-0">
           <h2 className="mb-3 text-xl font-bold text-black">Recent activity</h2>
           {status === "loading" ? (
             <div className="space-y-2">
@@ -582,7 +582,7 @@ export default function DashboardPage() {
         </div>
 
         {/* Coming up */}
-        <div>
+        <div className="min-w-0">
           <h2 className="mb-3 text-xl font-bold text-black">Coming up</h2>
           {status === "loading" ? (
             <ComingUpSkeleton />
@@ -611,8 +611,8 @@ export default function DashboardPage() {
                           <span className="shrink-0 rounded bg-orange-100 px-2 py-1 text-[10px] font-bold text-orange-600">
                             {dateLabel}
                           </span>
-                          <div>
-                            <p className="text-sm font-semibold text-black">
+                          <div className="min-w-0">
+                            <p className="text-sm font-semibold text-black wrap-break-word">
                               {event.title || "Untitled"}
                             </p>
                             <p className="mt-0.5 text-[10px] font-semibold tracking-wider text-neutral-400">

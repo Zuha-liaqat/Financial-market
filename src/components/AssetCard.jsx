@@ -46,7 +46,7 @@ const fallbackIcon = {
   ),
 }
 
-function Thumbnail({ type, mediaType, thumbClass, imageUrl, children }) {
+function Thumbnail({ type, mediaType, thumbClass, imageUrl, onView, children }) {
   const [imgError, setImgError] = useState(false)
   const [imgLoaded, setImgLoaded] = useState(false)
   const showImage = mediaType === 'photo' && imageUrl && !imgError
@@ -55,7 +55,8 @@ function Thumbnail({ type, mediaType, thumbClass, imageUrl, children }) {
     <div
       className={`relative flex h-40 items-center justify-center overflow-hidden rounded-t-lg ${
         showImage ? 'bg-neutral-100' : thumbClass || fallbackGradient[mediaType] || 'bg-neutral-300'
-      }`}
+      } ${showImage && onView ? 'cursor-pointer' : ''}`}
+      onClick={showImage && onView ? onView : undefined}
     >
       {showImage ? (
         <>
@@ -103,12 +104,13 @@ export default function AssetCard({
   description,
   onEdit,
   onDelete,
+  onView,
 }) {
   const [menuOpen, setMenuOpen] = useState(false)
 
   return (
     <div className="rounded-lg border border-neutral-200 bg-white transition hover:shadow-md">
-      <Thumbnail type={type} mediaType={mediaType} thumbClass={thumbClass} imageUrl={imageUrl}>
+      <Thumbnail type={type} mediaType={mediaType} thumbClass={thumbClass} imageUrl={imageUrl} onView={onView}>
         {usedIn != null && (
           <span className="absolute right-2 top-2 z-10 rounded-full bg-white/90 px-2 py-0.5 text-[10px] font-medium text-neutral-600 shadow-sm">
             Used in {usedIn} post{usedIn === 1 ? '' : 's'}

@@ -1,5 +1,4 @@
 import { useState, useRef, useEffect } from "react";
-import { useNavigate } from "react-router-dom";
 import { addNotification } from "../../data/notifications";
 import { apiGeneratePost } from "../../lib/api";
 import { SuccessToast } from "../../components/Toast";
@@ -203,7 +202,6 @@ const inputClass =
   "w-full rounded-lg border border-neutral-200 bg-white px-3 py-2.5 text-sm text-neutral-700 outline-none placeholder:text-neutral-400 focus:border-brand-500 focus:ring-2 focus:ring-brand-500/20";
 
 export default function CreatePostPage() {
-  const navigate = useNavigate();
   const fileInputRef = useRef(null);
   const dropdownRef = useRef(null);
   const [prompt, setPrompt] = useState("");
@@ -347,11 +345,9 @@ export default function CreatePostPage() {
       setIsGenerating(false);
       setGenerateSuccess(
         count > 1
-          ? `${count} posts generated successfully!`
-          : "Post generated successfully!",
+          ? `${count} posts created successfully!`
+          : "Post created successfully!",
       );
-      await new Promise((resolve) => setTimeout(resolve, 900));
-      navigate("/approval-queue");
     } catch (err) {
       setGenerateError(err.message);
       setIsGenerating(false);
@@ -371,6 +367,27 @@ export default function CreatePostPage() {
           message={generateSuccess}
           onClose={() => setGenerateSuccess(null)}
         />
+      )}
+
+      {isGenerating && (
+        <div className="flex items-center gap-2 rounded-lg border border-brand-200 bg-brand-50 px-4 py-2.5 text-sm text-brand-700">
+          <svg className="h-4 w-4 shrink-0 animate-spin" fill="none" viewBox="0 0 24 24">
+            <circle
+              className="opacity-25"
+              cx="12"
+              cy="12"
+              r="10"
+              stroke="currentColor"
+              strokeWidth="4"
+            />
+            <path
+              className="opacity-75"
+              fill="currentColor"
+              d="M4 12a8 8 0 018-8v4a4 4 0 00-4 4H4z"
+            />
+          </svg>
+          Generating your post — feel free to keep working elsewhere, we'll let you know when it's done.
+        </div>
       )}
 
       <div className="flex flex-col gap-3">
@@ -775,20 +792,42 @@ export default function CreatePostPage() {
             }
             className="flex cursor-pointer items-center justify-center gap-2 rounded-lg bg-brand-500 px-4 py-2.5 text-sm font-semibold text-white shadow-sm transition hover:bg-brand-600 disabled:cursor-not-allowed disabled:opacity-50 max-sm:w-full"
           >
-            <svg
-              className="h-4 w-4"
-              fill="none"
-              viewBox="0 0 24 24"
-              stroke="currentColor"
-            >
-              <path
-                strokeLinecap="round"
-                strokeLinejoin="round"
-                strokeWidth={2}
-                d="M12 4.5v15m7.5-7.5h-15"
-              />
-            </svg>
-            Generate
+            {isGenerating ? (
+              <svg
+                className="h-4 w-4 animate-spin"
+                fill="none"
+                viewBox="0 0 24 24"
+              >
+                <circle
+                  className="opacity-25"
+                  cx="12"
+                  cy="12"
+                  r="10"
+                  stroke="currentColor"
+                  strokeWidth="4"
+                />
+                <path
+                  className="opacity-75"
+                  fill="currentColor"
+                  d="M4 12a8 8 0 018-8v4a4 4 0 00-4 4H4z"
+                />
+              </svg>
+            ) : (
+              <svg
+                className="h-4 w-4"
+                fill="none"
+                viewBox="0 0 24 24"
+                stroke="currentColor"
+              >
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  strokeWidth={2}
+                  d="M12 4.5v15m7.5-7.5h-15"
+                />
+              </svg>
+            )}
+            {isGenerating ? "Generating…" : "Generate"}
           </button>
         </div>
       </div>
@@ -862,46 +901,6 @@ export default function CreatePostPage() {
         </div>
       )}
 
-      {isGenerating && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4">
-          <div className="w-full max-w-sm rounded-xl bg-white p-8 shadow-2xl">
-            <div className="flex flex-col items-center">
-              <div className="relative flex h-16 w-16 items-center justify-center">
-                <span className="absolute inset-0 animate-ping rounded-full bg-brand-400/30" />
-                <span className="absolute inset-1 animate-pulse rounded-full bg-gradient-to-br from-brand-300 via-brand-500 to-fuchsia-400 opacity-80 blur-[3px]" />
-                <span className="relative flex h-7 w-7 items-center justify-center rounded-full bg-gradient-to-br from-brand-400 to-brand-600 shadow-lg shadow-brand-500/50">
-                  <span className="flex items-center gap-0.5">
-                    <span
-                      className="h-1 w-1 rounded-full bg-white animate-claude-dot"
-                      style={{ animationDelay: "0s" }}
-                    />
-                    <span
-                      className="h-1 w-1 rounded-full bg-white animate-claude-dot"
-                      style={{ animationDelay: "0.15s" }}
-                    />
-                    <span
-                      className="h-1 w-1 rounded-full bg-white animate-claude-dot"
-                      style={{ animationDelay: "0.3s" }}
-                    />
-                  </span>
-                </span>
-              </div>
-
-              <h3 className="animate-shimmer-text mt-5 text-lg font-semibold">
-                Generating your post
-              </h3>
-              <p className="mt-2 text-center text-sm text-neutral-500">
-                Our AI is crafting your content based on your prompt. This
-                usually takes a few seconds.
-              </p>
-
-              <div className="mt-6 w-full overflow-hidden rounded-full bg-neutral-200">
-                <div className="h-1.5 w-1/3 rounded-full bg-gradient-to-r from-brand-400 via-brand-500 to-fuchsia-400 animate-progress-indeterminate" />
-              </div>
-            </div>
-          </div>
-        </div>
-      )}
     </div>
   );
 }

@@ -1,4 +1,4 @@
-import { useState, useRef, useEffect, useCallback } from "react";
+import { useState, useRef, useEffect, useCallback, useMemo } from "react";
 import { useNavigate } from "react-router-dom";
 import { apiGeneratePlan, apiGetPlanner } from "../../lib/api";
 import { mapPlannerItem } from "../../lib/posts";
@@ -125,6 +125,23 @@ const statusMeta = {
     className: "bg-emerald-50 text-emerald-600 ring-1 ring-emerald-200",
   },
 };
+
+const dayNames = [
+  "Monday",
+  "Tuesday",
+  "Wednesday",
+  "Thursday",
+  "Friday",
+  "Saturday",
+  "Sunday",
+];
+
+function dayIndex(dateStr) {
+  if (!dateStr) return null;
+  const d = new Date(`${dateStr}T00:00:00`);
+  if (Number.isNaN(d.getTime())) return null;
+  return (d.getDay() + 6) % 7;
+}
 
 function GenerateView({
   period,
@@ -801,9 +818,333 @@ function GenerateView({
   );
 }
 
+function formatPlannerDate(dateStr) {
+  if (!dateStr) return null;
+  const d = new Date(`${dateStr}T00:00:00`);
+  if (Number.isNaN(d.getTime())) return null;
+  return {
+    day: d.toLocaleDateString("en-US", { day: "2-digit" }),
+    month: d.toLocaleDateString("en-US", { month: "short" }).toUpperCase(),
+    full: d.toLocaleDateString("en-US", {
+      weekday: "long",
+      month: "long",
+      day: "numeric",
+      year: "numeric",
+    }),
+  };
+}
+
+function ReviewDialog({ item, period, onClose, onEdit }) {
+  const meta = statusMeta[item.status] || statusMeta.AWAITING_APPROVAL;
+  const date = formatPlannerDate(item.scheduleDate);
+
+  return (
+    <div
+      className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4"
+      onClick={onClose}
+    >
+      <div
+        onClick={(e) => e.stopPropagation()}
+        className="max-h-[calc(100vh-2rem)] w-full max-w-lg overflow-y-auto rounded-xl bg-white shadow-2xl"
+      >
+        <div className="flex items-center justify-between border-b border-neutral-200 px-5 py-4">
+          <span className="rounded-full bg-neutral-100 px-2.5 py-1 text-[10px] font-semibold tracking-widest text-neutral-500">
+            {period === "monthly" ? "MONTHLY PLAN" : "WEEKLY PLAN"}
+          </span>
+          <button
+            onClick={onClose}
+            aria-label="Close"
+            className="text-neutral-400 transition hover:text-black"
+          >
+            <svg
+              className="h-5 w-5"
+              fill="none"
+              viewBox="0 0 24 24"
+              stroke="currentColor"
+            >
+              <path
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                strokeWidth={1.75}
+                d="M6 18L18 6M6 6l12 12"
+              />
+            </svg>
+          </button>
+        </div>
+
+        <div className="flex items-start gap-4 px-5 pt-5">
+          <div className="flex w-16 shrink-0 flex-col items-center overflow-hidden rounded-lg border border-neutral-200">
+            <div className="w-full bg-brand-500 py-1 text-center text-[10px] font-bold tracking-widest text-white">
+              {date?.month ?? "—"}
+            </div>
+            <div className="py-1.5 text-center text-2xl font-bold text-black">
+              {date?.day ?? "—"}
+            </div>
+          </div>
+          <div className="min-w-0 flex-1">
+            <div className="flex items-center gap-1.5">
+              {queuePlatformIcons[item.platform]}
+              <span className="text-sm font-medium text-neutral-600">
+                {item.platform}
+              </span>
+              <span
+                className={`ml-auto shrink-0 rounded-full px-2 py-0.5 text-[10px] font-semibold ${meta.className}`}
+              >
+                {meta.label}
+              </span>
+            </div>
+            <p className="mt-1.5 text-sm text-neutral-500">
+              {date ? date.full : "No date scheduled"}
+              {item.scheduleTime ? ` · ${item.scheduleTime}` : ""}
+            </p>
+          </div>
+        </div>
+
+        {item.images.length > 0 && (
+          <div className="mt-4 px-5">
+            <img
+              src={item.images[0].dataUri}
+              alt={item.images[0].name}
+              className="max-h-64 w-full rounded-lg object-cover"
+            />
+          </div>
+        )}
+
+        <div className="px-5 pt-4">
+          <h3 className="text-lg font-bold text-black">{item.title}</h3>
+          <p className="mt-2 whitespace-pre-line text-sm leading-relaxed text-neutral-600">
+            {item.caption}
+          </p>
+        </div>
+
+        {item.hashtags.length > 0 && (
+          <div className="flex flex-wrap gap-1.5 px-5 pt-4">
+            {item.hashtags.map((tag, i) => (
+              <span
+                key={tag}
+                className={`rounded-full px-2.5 py-1 text-xs font-semibold ${tagColors[i % tagColors.length]}`}
+              >
+                {tag}
+              </span>
+            ))}
+          </div>
+        )}
+
+        <div className="mt-5 flex items-center justify-end gap-2 border-t border-neutral-200 px-5 py-4">
+          <button
+            onClick={onClose}
+            className="cursor-pointer rounded-md px-4 py-2 text-sm font-medium text-neutral-600 ring-1 ring-neutral-200 transition hover:bg-neutral-50"
+          >
+            Close
+          </button>
+          <button
+            onClick={onEdit}
+            className="cursor-pointer rounded-md bg-brand-500 px-4 py-2 text-sm font-semibold text-white shadow-sm transition hover:bg-brand-600"
+          >
+            Edit Content
+          </button>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+function getMonthDays(items) {
+  const dates = items
+    .map((i) => i.scheduleDate)
+    .filter(Boolean)
+    .map((d) => new Date(`${d}T00:00:00`))
+    .sort((a, b) => a - b);
+  const ref = dates.length > 0 ? dates[0] : new Date();
+  const year = ref.getFullYear();
+  const month = ref.getMonth();
+  const daysInMonth = new Date(year, month + 1, 0).getDate();
+  return Array.from(
+    { length: daysInMonth },
+    (_, i) => new Date(year, month, i + 1),
+  );
+}
+
+function toDateKey(d) {
+  return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`;
+}
+
+function ScheduleTable({ items, period, onSelect }) {
+  const isMonthly = period === "monthly";
+
+  const platforms = useMemo(
+    () => Array.from(new Set(items.map((i) => i.platform))).sort(),
+    [items],
+  );
+
+  const rows = useMemo(() => {
+    if (isMonthly) {
+      const buckets = getMonthDays(items).map((date) => ({
+        key: toDateKey(date),
+        label: date.getDate(),
+        sublabel: date.toLocaleDateString("en-US", { weekday: "short" }),
+        byPlatform: {},
+      }));
+      const byKey = Object.fromEntries(buckets.map((b) => [b.key, b]));
+      let unscheduled = null;
+      for (const item of items) {
+        const bucket = item.scheduleDate
+          ? byKey[item.scheduleDate]
+          : (unscheduled ??= {
+              key: "unscheduled",
+              label: "—",
+              sublabel: "Unscheduled",
+              byPlatform: {},
+            });
+        if (!bucket) continue;
+        (bucket.byPlatform[item.platform] ??= []).push(item);
+      }
+      return unscheduled ? [...buckets, unscheduled] : buckets;
+    }
+
+    const buckets = dayNames.map((label) => ({
+      key: label,
+      label,
+      byPlatform: {},
+    }));
+    let unscheduled = null;
+    for (const item of items) {
+      const idx = dayIndex(item.scheduleDate);
+      const bucket =
+        idx === null
+          ? (unscheduled ??= {
+              key: "unscheduled",
+              label: "Unscheduled",
+              byPlatform: {},
+            })
+          : buckets[idx];
+      (bucket.byPlatform[item.platform] ??= []).push(item);
+    }
+    return unscheduled ? [...buckets, unscheduled] : buckets;
+  }, [items, isMonthly]);
+
+  return (
+    <div className="overflow-x-auto rounded-xl border border-neutral-200 bg-white shadow-sm">
+      <table className="w-full border-collapse text-sm">
+        <thead>
+          <tr>
+            <th className="sticky left-0 z-10 w-10 border-b border-r border-neutral-200 bg-neutral-50" />
+            {platforms.map((p) => (
+              <th
+                key={p}
+                className="min-w-40 border-b border-r border-neutral-200 bg-neutral-50 px-3 py-2.5 text-left text-xs font-semibold whitespace-nowrap text-neutral-600 last:border-r-0"
+              >
+                <span className="flex items-center gap-1.5">
+                  {queuePlatformIcons[p]} {p}
+                </span>
+              </th>
+            ))}
+          </tr>
+        </thead>
+        <tbody>
+          {rows.map((row) => (
+            <tr key={row.key} className="border-b border-neutral-100 last:border-0">
+              <td className="sticky left-0 z-10 border-r border-neutral-200 bg-neutral-50 px-1 py-3">
+                {isMonthly ? (
+                  <span className="flex flex-col items-center leading-tight">
+                    <span className="text-xs font-bold text-neutral-600">
+                      {row.label}
+                    </span>
+                    <span className="text-[9px] font-medium tracking-wide text-neutral-400">
+                      {row.sublabel}
+                    </span>
+                  </span>
+                ) : (
+                  <span className="block [writing-mode:vertical-rl] rotate-180 text-center text-[10px] font-semibold tracking-widest text-neutral-400">
+                    {row.label}
+                  </span>
+                )}
+              </td>
+              {platforms.map((p) => {
+                const cellItems = row.byPlatform[p] || [];
+                return (
+                  <td
+                    key={p}
+                    className="min-w-40 border-r border-neutral-100 p-1.5 align-top last:border-r-0"
+                  >
+                    <div className="flex flex-col gap-1.5">
+                      {cellItems.map((item) => {
+                        const meta =
+                          statusMeta[item.status] ||
+                          statusMeta.AWAITING_APPROVAL;
+                        return (
+                          <button
+                            key={item.id}
+                            onClick={() => onSelect(item)}
+                            className="w-full cursor-pointer rounded-md border border-neutral-200 bg-neutral-50 px-2 py-1.5 text-left transition hover:border-brand-300 hover:bg-brand-50"
+                          >
+                            <p className="line-clamp-2 text-xs font-medium text-black">
+                              {item.title}
+                            </p>
+                            <div className="mt-1 flex items-center justify-between gap-1">
+                              <span className="text-[10px] text-neutral-400">
+                                {item.scheduleTime || ""}
+                              </span>
+                              <span
+                                className={`rounded-full px-1.5 py-0.5 text-[9px] font-semibold ${meta.className}`}
+                              >
+                                {meta.label}
+                              </span>
+                            </div>
+                          </button>
+                        );
+                      })}
+                    </div>
+                  </td>
+                );
+              })}
+            </tr>
+          ))}
+        </tbody>
+      </table>
+    </div>
+  );
+}
+
+function ScheduleTableSkeleton() {
+  return (
+    <div className="overflow-hidden rounded-xl border border-neutral-200 bg-white shadow-sm">
+      <div className="flex border-b border-neutral-200 bg-neutral-50">
+        <div className="w-10 shrink-0 border-r border-neutral-200 py-2.5" />
+        {Array.from({ length: 3 }).map((_, i) => (
+          <div
+            key={i}
+            className="flex-1 border-r border-neutral-200 px-3 py-2.5 last:border-r-0"
+          >
+            <div className="h-4 w-20 animate-pulse rounded bg-neutral-200" />
+          </div>
+        ))}
+      </div>
+      {Array.from({ length: 7 }).map((_, i) => (
+        <div key={i} className="flex border-b border-neutral-100 last:border-0">
+          <div className="flex w-10 shrink-0 flex-col items-center justify-center gap-1 border-r border-neutral-200 bg-neutral-50 py-3">
+            <div className="h-2.5 w-4 animate-pulse rounded bg-neutral-200" />
+          </div>
+          {Array.from({ length: 3 }).map((_, j) => (
+            <div
+              key={j}
+              className="flex-1 border-r border-neutral-100 p-1.5 last:border-r-0"
+            >
+              {(i + j) % 3 === 0 && (
+                <div className="h-10 animate-pulse rounded-md bg-neutral-100" />
+              )}
+            </div>
+          ))}
+        </div>
+      ))}
+    </div>
+  );
+}
+
 export default function PlannerPage() {
   const navigate = useNavigate();
   const [view, setView] = useState("home");
+  const [previewItem, setPreviewItem] = useState(null);
   const [isMonthly, setIsMonthly] = useState(false);
   const [items, setItems] = useState([]);
   const [counts, setCounts] = useState({
@@ -972,16 +1313,7 @@ export default function PlannerPage() {
         </div>
       )}
 
-      {status === "loading" && (
-        <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-3">
-          {Array.from({ length: 3 }).map((_, i) => (
-            <div
-              key={i}
-              className="h-48 animate-pulse rounded-lg border border-neutral-200 bg-neutral-100"
-            />
-          ))}
-        </div>
-      )}
+      {status === "loading" && <ScheduleTableSkeleton />}
 
       {status === "ready" && items.length === 0 && (
         <div className="rounded-lg border border-dashed border-neutral-300 bg-white p-12">
@@ -1029,71 +1361,20 @@ export default function PlannerPage() {
       )}
 
       {status === "ready" && items.length > 0 && (
-        <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-3">
-          {items.map((item) => {
-            const meta =
-              statusMeta[item.status] || statusMeta.AWAITING_APPROVAL;
-            const editPath = item.contentType === "blog" ? "edit-blog" : "edit";
-            return (
-              <div
-                key={item.id}
-                className="flex flex-col overflow-hidden rounded-lg border border-neutral-200 bg-white shadow-sm"
-              >
-                <div
-                  className={`flex h-32 items-center justify-center overflow-hidden ${
-                    item.images.length > 0 ? "" : item.thumbClass
-                  }`}
-                >
-                  {item.images.length > 0 ? (
-                    <img
-                      src={item.images[0].dataUri}
-                      alt={item.images[0].name}
-                      className="h-full w-full object-cover"
-                    />
-                  ) : (
-                    <span className="text-2xl font-bold tracking-wider text-white/80">
-                      {item.thumbLabel}
-                    </span>
-                  )}
-                </div>
-                <div className="flex flex-1 flex-col gap-2 p-3">
-                  <div className="flex items-center justify-between gap-2">
-                    <div className="flex items-center gap-1.5">
-                      {queuePlatformIcons[item.platform]}
-                      <span className="text-xs font-medium text-neutral-500">
-                        {item.platform}
-                      </span>
-                    </div>
-                    <span
-                      className={`rounded-full px-2 py-0.5 text-[10px] font-semibold ${meta.className}`}
-                    >
-                      {meta.label}
-                    </span>
-                  </div>
-                  <p className="line-clamp-2 text-sm font-semibold text-black">
-                    {item.title}
-                  </p>
-                  <p className="line-clamp-2 flex-1 text-xs text-neutral-500">
-                    {item.caption}
-                  </p>
-                  <div className="flex items-center justify-between border-t border-neutral-100 pt-2 text-xs text-neutral-400">
-                    <span>
-                      {item.scheduleDate || "—"} {item.scheduleTime}
-                    </span>
-                    <button
-                      onClick={() =>
-                        navigate(`/approval-queue/${item.id}/${editPath}`)
-                      }
-                      className="font-medium text-brand-600 hover:underline"
-                    >
-                      Review
-                    </button>
-                  </div>
-                </div>
-              </div>
-            );
-          })}
-        </div>
+        <ScheduleTable items={items} period={period} onSelect={setPreviewItem} />
+      )}
+
+      {previewItem && (
+        <ReviewDialog
+          item={previewItem}
+          period={period}
+          onClose={() => setPreviewItem(null)}
+          onEdit={() => {
+            const editPath =
+              previewItem.contentType === "blog" ? "edit-blog" : "edit";
+            navigate(`/approval-queue/${previewItem.id}/${editPath}`);
+          }}
+        />
       )}
     </div>
   );

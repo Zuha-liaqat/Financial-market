@@ -123,6 +123,7 @@ export default function LibraryPage() {
   const [editItem, setEditItem] = useState(null);
   const [deleteTarget, setDeleteTarget] = useState(null);
   const [deleting, setDeleting] = useState(false);
+  const [viewItem, setViewItem] = useState(null);
 
   const loadItems = useCallback(async () => {
     setStatus("loading");
@@ -166,8 +167,6 @@ export default function LibraryPage() {
       setDeleting(false);
     }
   }
-
-  const usedMb = storage?.usedMb ?? 0;
 
   return (
     <div className="space-y-6">
@@ -270,19 +269,14 @@ export default function LibraryPage() {
               STORAGE
             </p>
             <div className="rounded-lg bg-neutral-50 p-3 ring-1 ring-inset ring-neutral-200">
-              <div className="mb-2">
-                <span className="text-sm font-semibold text-neutral-800">
-                  {storage
-                    ? usedMb < 1
-                      ? `${storage.usedKb.toFixed(1)} KB`
-                      : `${usedMb.toFixed(2)} MB`
-                    : "—"}
-                </span>
-                <span className="ml-1 text-xs text-neutral-400">used</span>
-              </div>
-              <div className="h-1.5 w-full overflow-hidden rounded-full bg-neutral-200">
-                <div className="h-full w-full rounded-full bg-brand-500" />
-              </div>
+              <span className="text-sm font-semibold text-neutral-800">
+                {storage
+                  ? (storage.usedMb ?? 0) < 1
+                    ? `${(storage.usedKb ?? 0).toFixed(1)} KB`
+                    : `${(storage.usedMb ?? 0).toFixed(2)} MB`
+                  : "—"}
+              </span>
+              <span className="ml-1 text-xs text-neutral-400">used</span>
             </div>
           </div>
         </div>
@@ -359,8 +353,42 @@ export default function LibraryPage() {
               category={item.type?.toUpperCase()}
               onEdit={() => setEditItem(item)}
               onDelete={() => setDeleteTarget(item)}
+              onView={
+                item.media_type === "photo" && item.media_url
+                  ? () => setViewItem(item)
+                  : undefined
+              }
             />
           ))}
+        </div>
+      )}
+
+      {viewItem && (
+        <div
+          className="fixed inset-0 z-50 flex items-center justify-center bg-black/80 p-4"
+          onClick={() => setViewItem(null)}
+        >
+          <button
+            onClick={() => setViewItem(null)}
+            aria-label="Close"
+            className="absolute right-4 top-4 z-10 text-white/80 transition hover:text-white"
+          >
+            <svg className="h-7 w-7" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.75} d="M6 18L18 6M6 6l12 12" />
+            </svg>
+          </button>
+          <img
+            src={viewItem.media_url}
+            alt={viewItem.name}
+            onClick={(e) => e.stopPropagation()}
+            className="max-h-[85vh] max-w-full rounded-lg object-contain shadow-2xl"
+          />
+          <p
+            onClick={(e) => e.stopPropagation()}
+            className="absolute bottom-6 left-1/2 -translate-x-1/2 rounded-full bg-black/60 px-4 py-1.5 text-sm text-white"
+          >
+            {viewItem.name}
+          </p>
         </div>
       )}
 

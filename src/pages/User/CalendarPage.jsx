@@ -13,13 +13,6 @@ import { mapCalendarItem } from "../../lib/posts";
 
 const WEEKDAYS = ["MON", "TUE", "WED", "THU", "FRI", "SAT", "SUN"];
 
-const typeBadgeColor = {
-  REEL: "bg-fuchsia-100 text-fuchsia-700",
-  MOTION: "bg-brand-100 text-brand-700",
-  INTERIOR: "bg-neutral-800 text-white",
-  API: "bg-emerald-100 text-emerald-700",
-};
-
 const tagColors = [
   "bg-brand-100 text-brand-800",
   "bg-pink-100 text-pink-700",
@@ -42,9 +35,22 @@ const eventColorPalette = [
   "bg-indigo-500",
 ];
 
-function pickEventColor(id) {
+const platformColor = {
+  LinkedIn: "bg-sky-600",
+  Instagram: "bg-fuchsia-600",
+  Twitter: "bg-neutral-800",
+  Facebook: "bg-blue-600",
+  Website: "bg-brand-500",
+  Medium: "bg-neutral-900",
+  WordPress: "bg-sky-700",
+  Blogger: "bg-orange-500",
+  Wix: "bg-indigo-600",
+};
+
+function pickEventColor(platform) {
+  if (platform && platformColor[platform]) return platformColor[platform];
   let hash = 0;
-  const str = String(id);
+  const str = String(platform || "");
   for (let i = 0; i < str.length; i++) {
     hash = (hash * 31 + str.charCodeAt(i)) | 0;
   }
@@ -486,7 +492,7 @@ function TimeGrid({
                         selected?.id === ev.id
                           ? "ring-2 ring-brand-500 ring-offset-1"
                           : ""
-                      } ${ev.bannerColor ?? pickEventColor(ev.id)}`}
+                      } ${ev.bannerColor ?? pickEventColor(ev.bestPlatform)}`}
                       style={{
                         top,
                         height: Math.min(
@@ -598,7 +604,7 @@ function MonthView({
                           ? "rounded pl-1 pr-1.5 py-2 text-[11px]"
                           : "rounded pl-0.5 pr-1 py-0.5 text-[10px]"
                       } ${selected?.id === ev.id ? "ring-2 ring-brand-500" : ""} ${
-                        ev.bannerColor ?? pickEventColor(ev.id)
+                        ev.bannerColor ?? pickEventColor(ev.bestPlatform)
                       }`}
                     >
                       <span className="flex items-center gap-1">
@@ -702,7 +708,7 @@ export default function CalendarPage() {
           audienceLabel: "Scheduled",
           audiencePercent: 70,
           images: p.images || [],
-          bannerColor: pickEventColor(p.id),
+          bannerColor: pickEventColor(p.platform),
         };
       });
     return [...extraEvents, ...postEvents].map((ev) => ({
@@ -806,7 +812,7 @@ export default function CalendarPage() {
       time: ev.time,
       endTime: ev.endTime,
       thumbClass: "bg-gradient-to-br from-brand-200 to-brand-400",
-      bannerColor: pickEventColor(`cal-new-${Date.now()}`),
+      bannerColor: pickEventColor(ev.platform),
       description: ev.description,
       hashtags: ev.hashtags,
       expectedReach: "—",
@@ -941,14 +947,6 @@ export default function CalendarPage() {
                 {selectedWithImages.title?.charAt(0).toUpperCase()}
               </span>
             )}
-            <span
-              className={`absolute left-2 top-2 rounded px-2 py-0.5 text-[10px] font-semibold tracking-wide ${
-                typeBadgeColor[selectedWithImages.type] ??
-                "bg-brand-500 text-white"
-              }`}
-            >
-              {selectedWithImages.type}
-            </span>
           </div>
 
           <div>
@@ -966,7 +964,7 @@ export default function CalendarPage() {
                 , {selectedWithImages.time} – {selectedWithImages.endTime}
               </span>
             </p>
-            <p className="mt-2.5 line-clamp-3 text-xs leading-relaxed text-neutral-500">
+            <p className="mt-2.5 text-xs leading-relaxed text-neutral-500">
               {selectedWithImages.description}
             </p>
             <div className="mt-3 flex flex-wrap gap-1.5">
@@ -981,86 +979,16 @@ export default function CalendarPage() {
             </div>
           </div>
 
-          <div className="mt-1">
-            <p className="mb-3 flex items-center gap-1.5 text-xs font-semibold tracking-widest text-neutral-400">
-              <svg
-                className="h-3.5 w-3.5"
-                fill="none"
-                viewBox="0 0 24 24"
-                stroke="currentColor"
-              >
-                <path
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  strokeWidth={2}
-                  d="M3 13.5l3-3 3 2 4-5 4 3M3 19.5h18"
-                />
-              </svg>
-              PREDICTIVE ENGAGEMENT
-            </p>
-            <div className="grid grid-cols-2 gap-2">
-              <div className="rounded-lg bg-neutral-50 p-3">
-                <p className="text-[10px] font-semibold tracking-widest text-neutral-400">
-                  EXPECTED REACH
-                </p>
-                <p className="mt-1 text-lg font-bold text-black">
-                  {selectedWithImages.expectedReach}
-                </p>
-                <p className="text-xs font-medium text-emerald-600">
-                  {selectedWithImages.reachDelta}
-                </p>
-              </div>
-              <div className="rounded-lg bg-neutral-50 p-3">
-                <p className="text-[10px] font-semibold tracking-widest text-neutral-400">
-                  BEST PLATFORM
-                </p>
-                <p className="mt-1 text-lg font-bold text-black">
-                  {selectedWithImages.bestPlatform}
-                </p>
-                <p className="text-xs text-neutral-500">
-                  {selectedWithImages.matchScore}% Match Score
-                </p>
-              </div>
-            </div>
-          </div>
-
-          <div className="mt-1 rounded-lg bg-neutral-50 p-3.5">
-            <div className="mb-2 flex items-center justify-between">
-              <p className="text-[10px] font-semibold tracking-widest text-neutral-400">
-                AUDIENCE SENTIMENT FORECAST
-              </p>
-              <span className="rounded-full bg-emerald-50 px-2 py-0.5 text-[10px] font-semibold text-emerald-600 ring-1 ring-emerald-200">
-                {selectedWithImages.sentimentLabel}
-              </span>
-            </div>
-            <div className="h-1.5 overflow-hidden rounded-full bg-neutral-200">
-              <div
-                className="h-full rounded-full bg-emerald-500"
-                style={{ width: `${selectedWithImages.audiencePercent}%` }}
-              />
-            </div>
-            <p className="mt-1.5 text-xs text-neutral-500">
-              {selectedWithImages.audienceLabel}{" "}
-              {selectedWithImages.audiencePercent}%
-            </p>
-          </div>
-
           <div className="mt-auto flex items-center gap-2 pt-2">
             <button
               onClick={() =>
                 selectedWithImages.relatedId &&
                 navigate(`/approval-queue/${selectedWithImages.relatedId}/edit`)
               }
-              className={`flex-1 rounded-md px-3 py-2 text-sm font-medium ring-1 ring-neutral-200 hover:bg-neutral-50 ${
-                selectedWithImages.relatedId
-                  ? "text-neutral-600"
-                  : "cursor-not-allowed text-neutral-300"
-              }`}
+              disabled={!selectedWithImages.relatedId}
+              className="flex-1 rounded-md bg-brand-500 px-3 py-2 text-sm font-medium text-white transition hover:bg-brand-600 disabled:cursor-not-allowed disabled:opacity-50"
             >
               Edit Content
-            </button>
-            <button className="flex-1 rounded-md bg-brand-500 px-3 py-2 text-sm font-medium text-white transition hover:bg-brand-600">
-              Reschedule
             </button>
           </div>
         </div>

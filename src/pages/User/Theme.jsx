@@ -77,6 +77,29 @@ const visualStyles = [
       </div>
     ),
   },
+  {
+    key: "custom",
+    label: "Custom",
+    description: "Set your own color theme, text style, and font.",
+    preview: (
+      <div className="relative flex h-full w-full items-center justify-center bg-neutral-50">
+        <div className="flex items-center gap-1.5">
+          <span className="h-5 w-5 rounded-full bg-brand-400" />
+          <span className="h-5 w-5 rounded-full bg-fuchsia-400" />
+          <span className="h-5 w-5 rounded-full bg-emerald-400" />
+        </div>
+      </div>
+    ),
+  },
+];
+
+const fontOptions = [
+  "Inter",
+  "Roboto",
+  "Poppins",
+  "Montserrat",
+  "Playfair Display",
+  "Georgia",
 ];
 
 function SectionCard({ icon, chip, title, children }) {
@@ -103,10 +126,27 @@ const inputClass =
 export default function ThemesPage() {
   const [companyName, setCompanyName] = useState("");
   const [companyDescription, setCompanyDescription] = useState("");
+  const [companyLogo, setCompanyLogo] = useState(null);
+  const [contactEmail, setContactEmail] = useState("");
+  const [contactPhone, setContactPhone] = useState("");
   const [brandTone, setBrandTone] = useState("Professional");
   const [targetAudience, setTargetAudience] = useState("");
   const [visualStyle, setVisualStyle] = useState("minimalist");
+  const [customColor, setCustomColor] = useState("#4f46e5");
+  const [customText, setCustomText] = useState("");
+  const [customFont, setCustomFont] = useState(fontOptions[0]);
   const [saving, setSaving] = useState(false);
+
+  function handleLogoSelect(e) {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    setCompanyLogo({ file, preview: URL.createObjectURL(file) });
+  }
+
+  function removeLogo() {
+    if (companyLogo) URL.revokeObjectURL(companyLogo.preview);
+    setCompanyLogo(null);
+  }
 
   function handleSave(complete) {
     setSaving(true);
@@ -155,6 +195,56 @@ export default function ThemesPage() {
       >
         <div className="space-y-3">
           <div>
+            <label className="mb-1.5 block text-xs font-medium text-neutral-500">
+              Company Logo
+            </label>
+            <div className="flex items-center gap-3">
+              <div className="flex h-16 w-16 shrink-0 items-center justify-center overflow-hidden rounded-lg border border-dashed border-neutral-300 bg-neutral-50">
+                {companyLogo ? (
+                  <img
+                    src={companyLogo.preview}
+                    alt="Company logo"
+                    className="h-full w-full object-contain"
+                  />
+                ) : (
+                  <svg
+                    className="h-6 w-6 text-neutral-300"
+                    fill="none"
+                    viewBox="0 0 24 24"
+                    stroke="currentColor"
+                  >
+                    <path
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      strokeWidth={1.5}
+                      d="M2.25 15.75l5.159-5.159a2.25 2.25 0 013.182 0l5.159 5.159m-1.5-1.5l1.409-1.409a2.25 2.25 0 013.182 0l2.909 2.909M3 8.25V15a2.25 2.25 0 002.25 2.25h13.5A2.25 2.25 0 0021 15V8.25A2.25 2.25 0 0018.75 6H5.25A2.25 2.25 0 003 8.25z"
+                    />
+                  </svg>
+                )}
+              </div>
+              <div className="flex items-center gap-2">
+                <label className="cursor-pointer rounded-md px-3 py-2 text-xs font-semibold text-neutral-600 ring-1 ring-neutral-200 transition hover:bg-neutral-50">
+                  {companyLogo ? "Change" : "Upload logo"}
+                  <input
+                    type="file"
+                    accept="image/*"
+                    onChange={handleLogoSelect}
+                    className="hidden"
+                  />
+                </label>
+                {companyLogo && (
+                  <button
+                    type="button"
+                    onClick={removeLogo}
+                    className="cursor-pointer text-xs font-semibold text-neutral-400 hover:text-red-600"
+                  >
+                    Remove
+                  </button>
+                )}
+              </div>
+            </div>
+          </div>
+          <div>
             <label
               htmlFor="company-name"
               className="mb-1.5 block text-xs font-medium text-neutral-500"
@@ -183,6 +273,61 @@ export default function ThemesPage() {
               placeholder="Describe your company's mission, products, and unique value proposition..."
               rows={3}
               className={`resize-none ${inputClass}`}
+            />
+          </div>
+        </div>
+      </SectionCard>
+
+      <SectionCard
+        icon={
+          <svg
+            className="h-4 w-4 text-sky-600"
+            fill="none"
+            viewBox="0 0 24 24"
+            stroke="currentColor"
+          >
+            <path
+              strokeLinecap="round"
+              strokeLinejoin="round"
+              strokeWidth={1.75}
+              d="M2.25 6.75c0-.621.504-1.125 1.125-1.125h17.25c.621 0 1.125.504 1.125 1.125v10.5c0 .621-.504 1.125-1.125 1.125H3.375A1.125 1.125 0 012.25 17.25V6.75zm0 0l9.75 6.75 9.75-6.75"
+            />
+          </svg>
+        }
+        chip="bg-sky-100"
+        title="CONTENT DETAILS"
+      >
+        <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
+          <div>
+            <label
+              htmlFor="contact-email"
+              className="mb-1.5 block text-xs font-medium text-neutral-500"
+            >
+              Email
+            </label>
+            <input
+              id="contact-email"
+              type="email"
+              value={contactEmail}
+              onChange={(e) => setContactEmail(e.target.value)}
+              placeholder="e.g. hello@pixmoving.com"
+              className={inputClass}
+            />
+          </div>
+          <div>
+            <label
+              htmlFor="contact-phone"
+              className="mb-1.5 block text-xs font-medium text-neutral-500"
+            >
+              Mobile Number
+            </label>
+            <input
+              id="contact-phone"
+              type="tel"
+              value={contactPhone}
+              onChange={(e) => setContactPhone(e.target.value)}
+              placeholder="e.g. +1 555 123 4567"
+              className={inputClass}
             />
           </div>
         </div>
@@ -262,7 +407,7 @@ export default function ThemesPage() {
         chip="bg-violet-100"
         title="VISUAL STYLE"
       >
-        <div className="grid grid-cols-1 gap-3 sm:grid-cols-3">
+        <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-4">
           {visualStyles.map((style) => {
             const active = visualStyle === style.key;
             return (
@@ -308,6 +453,66 @@ export default function ThemesPage() {
             );
           })}
         </div>
+
+        {visualStyle === "custom" && (
+          <div className="mt-4 grid grid-cols-1 gap-3 border-t border-neutral-200 pt-4 sm:grid-cols-3">
+            <div>
+              <label
+                htmlFor="custom-color"
+                className="mb-1.5 block text-xs font-medium text-neutral-500"
+              >
+                Color Theme
+              </label>
+              <div className="flex items-center gap-2">
+                <input
+                  id="custom-color"
+                  type="color"
+                  value={customColor}
+                  onChange={(e) => setCustomColor(e.target.value)}
+                  className="h-10.5 w-11 shrink-0 cursor-pointer rounded-lg border border-neutral-200 bg-neutral-50 p-1"
+                />
+                <input
+                  value={customColor}
+                  onChange={(e) => setCustomColor(e.target.value)}
+                  placeholder="#4F46E5"
+                  className={inputClass}
+                />
+              </div>
+            </div>
+            <div>
+              <label
+                htmlFor="custom-text"
+                className="mb-1.5 block text-xs font-medium text-neutral-500"
+              >
+                Text
+              </label>
+              <input
+                id="custom-text"
+                value={customText}
+                onChange={(e) => setCustomText(e.target.value)}
+                placeholder="e.g. Confident, punchy headlines"
+                className={inputClass}
+              />
+            </div>
+            <div>
+              <label className="mb-1.5 block text-xs font-medium text-neutral-500">
+                Font
+              </label>
+              <Select value={customFont} onValueChange={setCustomFont}>
+                <SelectTrigger className="w-full">
+                  <SelectValue placeholder="Select a font" />
+                </SelectTrigger>
+                <SelectContent>
+                  {fontOptions.map((f) => (
+                    <SelectItem key={f} value={f}>
+                      {f}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+          </div>
+        )}
       </SectionCard>
 
       <div className="flex items-center justify-end gap-2 border-t border-neutral-200 pt-4">

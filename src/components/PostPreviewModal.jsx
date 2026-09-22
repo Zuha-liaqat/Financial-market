@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { Wifi as WifiIcon } from 'lucide-react'
 import { apiPublishPost } from '../lib/api'
@@ -294,9 +294,16 @@ function TruncatedCaption({ prefix, text, hashtags, hashtagClass, limit = 100 })
   const [expanded, setExpanded] = useState(false)
   const isLong = text.length > limit
   const shown = expanded || !isLong ? text : `${text.slice(0, limit).trimEnd()}...`
+  const ref = useRef(null)
+
+  useEffect(() => {
+    if (expanded) {
+      ref.current?.scrollIntoView({ behavior: 'smooth', block: 'nearest' })
+    }
+  }, [expanded])
 
   return (
-    <>
+    <span ref={ref}>
       {prefix}
       {shown}
       {!expanded && isLong && (
@@ -329,7 +336,7 @@ function TruncatedCaption({ prefix, text, hashtags, hashtagClass, limit = 100 })
           </button>
         </>
       )}
-    </>
+    </span>
   )
 }
 
@@ -377,6 +384,7 @@ function InstagramMobile({ item, initials }) {
       </div>
 
       <p className="px-3 pt-1.5 text-[11px] font-semibold text-black">1,284 likes</p>
+      <p className="px-3 pt-1 text-[12px] font-bold leading-snug text-black">{item.title}</p>
       <p className="px-3 pt-0.5 text-[11px] leading-snug text-neutral-800">
         <TruncatedCaption
           prefix={<span className="font-semibold text-black">financialmarket </span>}
@@ -423,6 +431,7 @@ function InstagramWeb({ item, initials }) {
               <DotsIcon className="ml-auto h-5 w-5 text-neutral-700" />
             </div>
             <div className="flex-1 space-y-2 px-3 py-2.5">
+              <p className="text-xs font-bold leading-relaxed text-black">{item.title}</p>
               <p className="text-xs leading-relaxed text-neutral-800">
                 <TruncatedCaption
                   prefix={<span className="font-semibold text-black">financialmarket </span>}
@@ -486,7 +495,8 @@ function LinkedInMobile({ item, initials }) {
           </button>
         </div>
 
-        <p className="whitespace-pre-line px-3 pt-2.5 text-[11px] leading-relaxed text-neutral-800">
+        <p className="px-3 pt-2.5 text-[12px] font-bold leading-relaxed text-black">{item.title}</p>
+        <p className="whitespace-pre-line px-3 pt-1 text-[11px] leading-relaxed text-neutral-800">
           <TruncatedCaption
             text={item.caption}
             hashtags={item.hashtags.join(' ')}
@@ -550,7 +560,8 @@ function LinkedInWeb({ item, initials }) {
               </button>
             </div>
 
-            <p className="whitespace-pre-line px-4 pt-3 text-[13px] leading-relaxed text-neutral-800">
+            <p className="px-4 pt-3 text-sm font-bold leading-relaxed text-black">{item.title}</p>
+            <p className="whitespace-pre-line px-4 pt-1 text-[13px] leading-relaxed text-neutral-800">
               <TruncatedCaption
                 text={item.caption}
                 hashtags={item.hashtags.join(' ')}
@@ -629,7 +640,8 @@ function TwitterMobile({ item, initials }) {
             <VerifiedBadge className="h-3.5 w-3.5" />
             <span className="text-xs text-neutral-500">@financialmarket · 2h</span>
           </div>
-          <p className="mt-1 whitespace-pre-line text-[12px] leading-snug text-neutral-800">
+          <p className="mt-1 text-[12px] font-bold leading-snug text-black">{item.title}</p>
+          <p className="whitespace-pre-line text-[12px] leading-snug text-neutral-800">
             <TruncatedCaption
               text={item.caption}
               hashtags={item.hashtags.join(' ')}
@@ -683,7 +695,8 @@ function TwitterWeb({ item, initials }) {
               <VerifiedBadge className="h-4 w-4" />
               <span className="text-[13px] text-neutral-500">@financialmarket · 2h</span>
             </div>
-            <p className="mt-1 whitespace-pre-line text-[14px] leading-relaxed text-neutral-800">
+            <p className="mt-1 text-[14px] font-bold leading-relaxed text-black">{item.title}</p>
+            <p className="whitespace-pre-line text-[14px] leading-relaxed text-neutral-800">
               <TruncatedCaption
                 text={item.caption}
                 hashtags={item.hashtags.join(' ')}

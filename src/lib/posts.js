@@ -25,6 +25,15 @@ export function splitHashtags(value) {
     .map((tag) => (tag.startsWith('#') ? tag : `#${tag}`))
 }
 
+export function stripHtml(html) {
+  if (!html) return ''
+  const withBreaks = html
+    .replace(/<\/(p|div|h[1-6]|li)>/gi, '\n\n')
+    .replace(/<br\s*\/?>/gi, '\n')
+  const doc = new DOMParser().parseFromString(withBreaks, 'text/html')
+  return (doc.body.textContent || '').replace(/\n{3,}/g, '\n\n').trim()
+}
+
 export function formatPostTimestamp(iso) {
   if (!iso) return '—'
   const date = new Date(iso)

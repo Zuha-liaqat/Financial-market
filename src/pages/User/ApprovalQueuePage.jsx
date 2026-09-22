@@ -3,13 +3,16 @@ import { useNavigate, useSearchParams } from "react-router-dom";
 import { addNotification } from "../../data/notifications";
 import PostPreviewModal from "../../components/PostPreviewModal";
 import ConfirmDialog from "../../components/ConfirmDialog";
+import { SuccessToast } from "../../components/Toast";
 import {
   apiApprovalQueueDecision,
   apiDeleteBlog,
   apiDeletePost,
   apiGetApprovalQueue,
+  apiGetBlog,
+  apiGetPost,
 } from "../../lib/api";
-import { mapApprovalQueueItem } from "../../lib/posts";
+import { mapApprovalQueueItem, splitHashtags, stripHtml } from "../../lib/posts";
 
 function MonogramIcon({ letter, bg }) {
   return (
@@ -530,22 +533,51 @@ function ListView({
   );
 }
 
-function TruncatedText({ text, limit = 140 }) {
+function ExpandableCaption({ item }) {
   const [expanded, setExpanded] = useState(false);
-  const isLong = text.length > limit;
-  const shown =
-    expanded || !isLong ? text : `${text.slice(0, limit).trimEnd()}...`;
+  const [fullText, setFullText] = useState(null);
+  const [loading, setLoading] = useState(false);
+
+  async function handleMore() {
+    if (fullText === null) {
+      setLoading(true);
+      try {
+        const isBlog = item.contentType === "blog";
+        const full = isBlog
+          ? await apiGetBlog(item.id)
+          : await apiGetPost(item.id);
+        const text = isBlog ? stripHtml(full.content) : full.caption;
+        setFullText(text || item.caption);
+      } catch {
+        setFullText(item.caption);
+      } finally {
+        setLoading(false);
+      }
+    }
+    setExpanded(true);
+  }
+
+  const shown = expanded && fullText !== null ? fullText : item.caption;
 
   return (
     <>
       {shown}
-      {isLong && (
+      {expanded ? (
         <button
           type="button"
-          onClick={() => setExpanded((v) => !v)}
+          onClick={() => setExpanded(false)}
           className="ml-1 font-medium text-brand-600 hover:underline"
         >
-          {expanded ? "less" : "more"}
+          less
+        </button>
+      ) : (
+        <button
+          type="button"
+          onClick={handleMore}
+          disabled={loading}
+          className="ml-1 font-medium text-brand-600 hover:underline disabled:opacity-50"
+        >
+          {loading ? "…" : "more"}
         </button>
       )}
     </>
@@ -565,6 +597,9 @@ function GridView({
   onEdit,
   onApprove,
   onDelete,
+  selectedIds,
+  onToggle,
+  onToggleAll,
   deletingId,
   page,
   totalPages,
@@ -572,32 +607,57 @@ function GridView({
   pageSize,
   onPageChange,
 }) {
-  const approvedCount = items.filter(
-    (item) => item.status === "PRODUCTION",
-  ).length;
+  const allSelected =
+    items.length > 0 && items.every((item) => selectedIds.has(item.id));
 
   return (
     <div className="space-y-4">
+      <div className="inline-flex items-center gap-3 rounded-lg border border-neutral-200 bg-white px-4 py-2.5">
+        <label className="flex cursor-pointer items-center gap-2 whitespace-nowrap text-sm font-medium text-neutral-600">
+          <input
+            type="checkbox"
+            checked={allSelected}
+            onChange={() => onToggleAll(items.map((item) => item.id))}
+            className="h-4 w-4 cursor-pointer rounded border-neutral-300 accent-brand-500"
+          />
+          Select all
+        </label>
+        {selectedIds.size > 0 && (
+          <span className="whitespace-nowrap text-xs font-medium text-neutral-400">
+            {selectedIds.size} selected
+          </span>
+        )}
+      </div>
+
       <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-4">
         {items.map((item) => {
           const approved = item.status === "PRODUCTION";
+          const checked = selectedIds.has(item.id);
           return (
             <div
               key={item.id}
-              className="flex flex-col overflow-hidden rounded-lg border border-neutral-200 bg-white shadow-sm"
+              className={`flex flex-col overflow-hidden rounded-lg border bg-white shadow-sm transition ${
+                checked ? "border-brand-300 ring-1 ring-brand-100" : "border-neutral-200"
+              }`}
             >
-              <div className="flex items-center justify-between border-b border-neutral-200 bg-neutral-50 px-3 py-2.5">
-                <div className="flex items-center gap-2">
+              <div className="flex items-center justify-between gap-2 border-b border-neutral-200 bg-neutral-50 px-3 py-2.5">
+                <div className="flex min-w-0 items-center gap-2">
+                  <input
+                    type="checkbox"
+                    checked={checked}
+                    onChange={() => onToggle(item.id)}
+                    className="h-4 w-4 shrink-0 cursor-pointer rounded border-neutral-300 accent-brand-500"
+                  />
                   {platformIcons[item.platform]}
-                  <span className="text-sm font-semibold text-black">
+                  <span className="truncate text-sm font-semibold text-black">
                     {item.platform} Draft
                   </span>
-                  <span className="rounded-sm bg-neutral-200 px-1.5 py-0.5 text-[10px] font-semibold tracking-wide text-neutral-500">
+                  <span className="shrink-0 rounded-sm bg-neutral-200 px-1.5 py-0.5 text-[10px] font-semibold tracking-wide text-neutral-500">
                     {item.contentType === "blog" ? "BLOG" : "POST"}
                   </span>
                 </div>
-                <div className="flex items-center gap-2">
-                  <span className="text-xs text-neutral-400">
+                <div className="flex shrink-0 items-center gap-2">
+                  <span className="whitespace-nowrap text-xs text-neutral-400">
                     {getMeta(item)}
                   </span>
                   <button
@@ -649,7 +709,7 @@ function GridView({
               <div className="flex flex-1 flex-col gap-2 p-3">
                 <p className="text-sm font-bold text-black">{item.title}</p>
                 <p className="flex-1 text-sm text-neutral-600">
-                  <TruncatedText text={item.caption} limit={280} />
+                  <ExpandableCaption item={item} />
                 </p>
                 <p className="text-sm text-sky-600">
                   {item.hashtags.join(" ")}
@@ -739,42 +799,6 @@ function GridView({
           pageSize={pageSize}
           onPageChange={onPageChange}
         />
-        <div className="flex flex-wrap items-center justify-between gap-4 border-t border-neutral-100 px-4 py-3">
-          <div>
-            <p className="text-[10px] font-semibold tracking-widest text-neutral-400">
-              APPROVAL PROGRESS
-            </p>
-            <div className="mt-1.5 flex items-center gap-2">
-              <div className="h-1.5 w-32 overflow-hidden rounded-full bg-neutral-200">
-                <div
-                  className="h-full rounded-full bg-brand-500 transition-all"
-                  style={{
-                    width: `${items.length ? (approvedCount / items.length) * 100 : 0}%`,
-                  }}
-                />
-              </div>
-              <span className="text-xs font-medium text-neutral-500">
-                {approvedCount}/{items.length}
-              </span>
-            </div>
-          </div>
-          <div className="flex flex-wrap items-center gap-3">
-            <div className="text-right">
-              <p className="text-[10px] font-semibold tracking-widest text-neutral-400">
-                SCHEDULED FOR
-              </p>
-              <p className="text-sm font-medium text-black">
-                Oct 24, 09:00 AM (UTC)
-              </p>
-            </div>
-            <button className="rounded-md px-3 py-2 text-sm font-medium text-brand-600 ring-1 ring-brand-200 hover:bg-brand-50">
-              Re-Generate All
-            </button>
-            <button className="rounded-md bg-brand-500 px-3 py-2 text-sm font-medium text-white transition hover:bg-brand-600">
-              Finalize &amp; Queue
-            </button>
-          </div>
-        </div>
       </div>
     </div>
   );
@@ -791,6 +815,7 @@ export default function ApprovalQueuePage() {
   const [deletingId, setDeletingId] = useState(null);
   const [deleteTarget, setDeleteTarget] = useState(null);
   const [deleteError, setDeleteError] = useState(null);
+  const [approveSuccess, setApproveSuccess] = useState(null);
   const [page, setPage] = useState(1);
   const [counts, setCounts] = useState({
     total: 0,
@@ -926,6 +951,11 @@ export default function ApprovalQueuePage() {
         readyForReview: Math.max(0, prev.readyForReview - ids.length),
       }));
       setSelectedIds(new Set());
+      setApproveSuccess(
+        ids.length > 1
+          ? `${ids.length} posts approved!`
+          : "Post approved!",
+      );
     } catch (err) {
       window.alert(err.message);
     }
@@ -955,13 +985,47 @@ export default function ApprovalQueuePage() {
         total: Math.max(0, prev.total - 1),
         readyForReview: Math.max(0, prev.readyForReview - 1),
       }));
+      setApproveSuccess(
+        target ? `"${target.title}" approved!` : "Post approved!",
+      );
     } catch (err) {
       window.alert(err.message);
     }
   }
 
+  async function handlePreview(item) {
+    setPreviewItem(item);
+    try {
+      const isBlog = item.contentType === "blog";
+      const full = isBlog
+        ? await apiGetBlog(item.id)
+        : await apiGetPost(item.id);
+      setPreviewItem((prev) =>
+        prev && prev.id === item.id
+          ? {
+              ...prev,
+              title: full.title || full.headline || prev.title,
+              caption:
+                (isBlog ? stripHtml(full.content) : full.caption) ||
+                prev.caption,
+              hashtags: splitHashtags(full.hashtags),
+            }
+          : prev,
+      );
+    } catch {
+      // Keep showing the lightweight preview if the full detail fetch fails.
+    }
+  }
+
   return (
     <div className="space-y-6">
+      {approveSuccess && (
+        <SuccessToast
+          message={approveSuccess}
+          onClose={() => setApproveSuccess(null)}
+        />
+      )}
+
       <div className="flex flex-wrap items-center justify-between gap-4">
         <div>
           <div className="flex items-center gap-2">
@@ -1125,7 +1189,7 @@ export default function ApprovalQueuePage() {
         (view === "list" ? (
           <ListView
             items={paginatedItems}
-            onPreview={setPreviewItem}
+            onPreview={handlePreview}
             onEdit={handleEdit}
             onDelete={handleDelete}
             onApprove={handleApprove}
@@ -1142,10 +1206,13 @@ export default function ApprovalQueuePage() {
         ) : (
           <GridView
             items={paginatedItems}
-            onPreview={setPreviewItem}
+            onPreview={handlePreview}
             onEdit={handleEdit}
             onApprove={handleApprove}
             onDelete={handleDelete}
+            selectedIds={selectedIds}
+            onToggle={handleToggle}
+            onToggleAll={handleToggleAll}
             deletingId={deletingId}
             page={page}
             totalPages={totalPages}

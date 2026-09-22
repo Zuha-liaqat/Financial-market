@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import { useNavigate, useSearchParams } from "react-router-dom";
 import { addNotification } from "../../data/notifications";
 import PostPreviewModal from "../../components/PostPreviewModal";
@@ -152,6 +152,108 @@ const statusStyles = {
 const scoreBarColor = (score) =>
   score >= 90 ? "bg-emerald-500" : score >= 60 ? "bg-amber-500" : "bg-red-500";
 
+const PAGE_SIZE = 12;
+
+function getPageNumbers(page, totalPages) {
+  const pages = [];
+  const add = (p) => {
+    if (!pages.includes(p)) pages.push(p);
+  };
+
+  add(1);
+  for (let p = page - 1; p <= page + 1; p++) {
+    if (p > 1 && p < totalPages) add(p);
+  }
+  if (totalPages > 1) add(totalPages);
+
+  const withGaps = [];
+  let prev = 0;
+  for (const p of pages.sort((a, b) => a - b)) {
+    if (prev && p - prev > 1) withGaps.push("…");
+    withGaps.push(p);
+    prev = p;
+  }
+  return withGaps;
+}
+
+function Pagination({ page, totalPages, totalCount, pageSize, onPageChange }) {
+  if (totalCount === 0) return null;
+
+  return (
+    <div className="flex flex-wrap items-center justify-between gap-3 px-4 py-3">
+      <p className="text-xs text-neutral-500">
+        Showing {(page - 1) * pageSize + 1}–
+        {Math.min(page * pageSize, totalCount)} of {totalCount}
+      </p>
+      <div className="flex items-center gap-1">
+        <button
+          onClick={() => onPageChange(Math.max(1, page - 1))}
+          disabled={page === 1}
+          className="flex h-8 w-8 items-center justify-center rounded-md border border-neutral-200 text-neutral-500 transition hover:border-brand-300 hover:bg-brand-50 hover:text-brand-600 disabled:cursor-not-allowed disabled:opacity-40 disabled:hover:border-neutral-200 disabled:hover:bg-transparent disabled:hover:text-neutral-500"
+          aria-label="Previous page"
+        >
+          <svg
+            className="h-4 w-4"
+            fill="none"
+            viewBox="0 0 24 24"
+            stroke="currentColor"
+          >
+            <path
+              strokeLinecap="round"
+              strokeLinejoin="round"
+              strokeWidth={1.75}
+              d="M15.75 19.5L8.25 12l7.5-7.5"
+            />
+          </svg>
+        </button>
+        {getPageNumbers(page, totalPages).map((p, i) =>
+          p === "…" ? (
+            <span
+              key={`gap-${i}`}
+              className="flex h-8 w-8 items-center justify-center text-xs text-neutral-400"
+            >
+              …
+            </span>
+          ) : (
+            <button
+              key={p}
+              onClick={() => onPageChange(p)}
+              aria-current={p === page ? "page" : undefined}
+              className={`flex h-8 w-8 items-center justify-center rounded-md text-xs font-semibold transition ${
+                p === page
+                  ? "bg-brand-500 text-white shadow-sm"
+                  : "text-neutral-600 hover:bg-brand-50 hover:text-brand-600"
+              }`}
+            >
+              {p}
+            </button>
+          ),
+        )}
+        <button
+          onClick={() => onPageChange(Math.min(totalPages, page + 1))}
+          disabled={page === totalPages}
+          className="flex h-8 w-8 items-center justify-center rounded-md border border-neutral-200 text-neutral-500 transition hover:border-brand-300 hover:bg-brand-50 hover:text-brand-600 disabled:cursor-not-allowed disabled:opacity-40 disabled:hover:border-neutral-200 disabled:hover:bg-transparent disabled:hover:text-neutral-500"
+          aria-label="Next page"
+        >
+          <svg
+            className="h-4 w-4"
+            fill="none"
+            viewBox="0 0 24 24"
+            stroke="currentColor"
+          >
+            <path
+              strokeLinecap="round"
+              strokeLinejoin="round"
+              strokeWidth={1.75}
+              d="M8.25 4.5l7.5 7.5-7.5 7.5"
+            />
+          </svg>
+        </button>
+      </div>
+    </div>
+  );
+}
+
 function getInitials(title) {
   const letters = title
     .trim()
@@ -300,6 +402,11 @@ function ListView({
   onToggle,
   onToggleAll,
   deletingId,
+  page,
+  totalPages,
+  totalCount,
+  pageSize,
+  onPageChange,
 }) {
   const allSelected =
     items.length > 0 && items.every((item) => selectedIds.has(item.id));
@@ -410,6 +517,15 @@ function ListView({
           </tbody>
         </table>
       </div>
+      <div className="border-t border-neutral-100">
+        <Pagination
+          page={page}
+          totalPages={totalPages}
+          totalCount={totalCount}
+          pageSize={pageSize}
+          onPageChange={onPageChange}
+        />
+      </div>
     </div>
   );
 }
@@ -450,6 +566,11 @@ function GridView({
   onApprove,
   onDelete,
   deletingId,
+  page,
+  totalPages,
+  totalCount,
+  pageSize,
+  onPageChange,
 }) {
   const approvedCount = items.filter(
     (item) => item.status === "PRODUCTION",
@@ -610,40 +731,49 @@ function GridView({
         })}
       </div>
 
-      <div className="flex flex-wrap mt-7 items-center justify-between gap-4 rounded-lg border border-neutral-200 bg-white px-4 py-3">
-        <div>
-          <p className="text-[10px] font-semibold tracking-widest text-neutral-400">
-            APPROVAL PROGRESS
-          </p>
-          <div className="mt-1.5 flex items-center gap-2">
-            <div className="h-1.5 w-32 overflow-hidden rounded-full bg-neutral-200">
-              <div
-                className="h-full rounded-full bg-brand-500 transition-all"
-                style={{
-                  width: `${items.length ? (approvedCount / items.length) * 100 : 0}%`,
-                }}
-              />
-            </div>
-            <span className="text-xs font-medium text-neutral-500">
-              {approvedCount}/{items.length}
-            </span>
-          </div>
-        </div>
-        <div className="flex flex-wrap items-center gap-3">
-          <div className="text-right">
+      <div className="mt-7 rounded-lg border border-neutral-200 bg-white">
+        <Pagination
+          page={page}
+          totalPages={totalPages}
+          totalCount={totalCount}
+          pageSize={pageSize}
+          onPageChange={onPageChange}
+        />
+        <div className="flex flex-wrap items-center justify-between gap-4 border-t border-neutral-100 px-4 py-3">
+          <div>
             <p className="text-[10px] font-semibold tracking-widest text-neutral-400">
-              SCHEDULED FOR
+              APPROVAL PROGRESS
             </p>
-            <p className="text-sm font-medium text-black">
-              Oct 24, 09:00 AM (UTC)
-            </p>
+            <div className="mt-1.5 flex items-center gap-2">
+              <div className="h-1.5 w-32 overflow-hidden rounded-full bg-neutral-200">
+                <div
+                  className="h-full rounded-full bg-brand-500 transition-all"
+                  style={{
+                    width: `${items.length ? (approvedCount / items.length) * 100 : 0}%`,
+                  }}
+                />
+              </div>
+              <span className="text-xs font-medium text-neutral-500">
+                {approvedCount}/{items.length}
+              </span>
+            </div>
           </div>
-          <button className="rounded-md px-3 py-2 text-sm font-medium text-brand-600 ring-1 ring-brand-200 hover:bg-brand-50">
-            Re-Generate All
-          </button>
-          <button className="rounded-md bg-brand-500 px-3 py-2 text-sm font-medium text-white transition hover:bg-brand-600">
-            Finalize &amp; Queue
-          </button>
+          <div className="flex flex-wrap items-center gap-3">
+            <div className="text-right">
+              <p className="text-[10px] font-semibold tracking-widest text-neutral-400">
+                SCHEDULED FOR
+              </p>
+              <p className="text-sm font-medium text-black">
+                Oct 24, 09:00 AM (UTC)
+              </p>
+            </div>
+            <button className="rounded-md px-3 py-2 text-sm font-medium text-brand-600 ring-1 ring-brand-200 hover:bg-brand-50">
+              Re-Generate All
+            </button>
+            <button className="rounded-md bg-brand-500 px-3 py-2 text-sm font-medium text-white transition hover:bg-brand-600">
+              Finalize &amp; Queue
+            </button>
+          </div>
         </div>
       </div>
     </div>
@@ -661,6 +791,7 @@ export default function ApprovalQueuePage() {
   const [deletingId, setDeletingId] = useState(null);
   const [deleteTarget, setDeleteTarget] = useState(null);
   const [deleteError, setDeleteError] = useState(null);
+  const [page, setPage] = useState(1);
   const [counts, setCounts] = useState({
     total: 0,
     readyForReview: 0,
@@ -677,6 +808,7 @@ export default function ApprovalQueuePage() {
         readyForReview: data?.ready_for_review ?? 0,
         flagged: data?.flagged ?? 0,
       });
+      setPage(1);
       setStatus("ready");
     } catch {
       setStatus("error");
@@ -686,6 +818,17 @@ export default function ApprovalQueuePage() {
   useEffect(() => {
     loadItems();
   }, [loadItems]);
+
+  const totalPages = Math.max(1, Math.ceil(items.length / PAGE_SIZE));
+
+  useEffect(() => {
+    setPage((p) => Math.min(p, totalPages));
+  }, [totalPages]);
+
+  const paginatedItems = useMemo(
+    () => items.slice((page - 1) * PAGE_SIZE, page * PAGE_SIZE),
+    [items, page],
+  );
 
   function setView(next) {
     setSearchParams(next === "list" ? {} : { view: next });
@@ -981,7 +1124,7 @@ export default function ApprovalQueuePage() {
         items.length > 0 &&
         (view === "list" ? (
           <ListView
-            items={items}
+            items={paginatedItems}
             onPreview={setPreviewItem}
             onEdit={handleEdit}
             onDelete={handleDelete}
@@ -990,15 +1133,25 @@ export default function ApprovalQueuePage() {
             onToggle={handleToggle}
             onToggleAll={handleToggleAll}
             deletingId={deletingId}
+            page={page}
+            totalPages={totalPages}
+            totalCount={items.length}
+            pageSize={PAGE_SIZE}
+            onPageChange={setPage}
           />
         ) : (
           <GridView
-            items={items}
+            items={paginatedItems}
             onPreview={setPreviewItem}
             onEdit={handleEdit}
             onApprove={handleApprove}
             onDelete={handleDelete}
             deletingId={deletingId}
+            page={page}
+            totalPages={totalPages}
+            totalCount={items.length}
+            pageSize={PAGE_SIZE}
+            onPageChange={setPage}
           />
         ))}
 

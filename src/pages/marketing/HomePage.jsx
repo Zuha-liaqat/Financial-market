@@ -267,6 +267,30 @@ export default function HomePage() {
                   </span>
                   X / Twitter
                 </div>,
+                <div className="logo-chip" key={`medium-${dup}`}>
+                  <span className="lc-ico">
+                    <span style={{ fontSize: 13, fontWeight: 800, color: '#000' }}>M</span>
+                  </span>
+                  Medium
+                </div>,
+                <div className="logo-chip" key={`wp-${dup}`}>
+                  <span className="lc-ico">
+                    <span style={{ fontSize: 13, fontWeight: 800, color: '#21759B' }}>W</span>
+                  </span>
+                  WordPress
+                </div>,
+                <div className="logo-chip" key={`blogger-${dup}`}>
+                  <span className="lc-ico">
+                    <span style={{ fontSize: 13, fontWeight: 800, color: '#F57D00' }}>B</span>
+                  </span>
+                  Blogger
+                </div>,
+                <div className="logo-chip" key={`wix-${dup}`}>
+                  <span className="lc-ico">
+                    <span style={{ fontSize: 11, fontWeight: 800, color: '#0C6EFC' }}>Wx</span>
+                  </span>
+                  Wix
+                </div>,
               ])}
             </div>
           </div>

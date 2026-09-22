@@ -667,7 +667,9 @@ export default function CalendarPage() {
       end_date: toISODate(visibleRange.end),
     })
       .then((data) =>
-        setGeneratedPosts((data?.items || []).map(mapCalendarItem)),
+        setGeneratedPosts(
+          (data?.items || []).map(mapCalendarItem).filter((p) => !p.isPosted),
+        ),
       )
       .catch(() => setGeneratedPosts([]));
   }, [visibleRange]);

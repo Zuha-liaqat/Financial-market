@@ -805,7 +805,6 @@ export default function PlannerPage() {
   const navigate = useNavigate();
   const [view, setView] = useState("home");
   const [isMonthly, setIsMonthly] = useState(false);
-  const [autoSchedule, setAutoSchedule] = useState(false);
   const [items, setItems] = useState([]);
   const [counts, setCounts] = useState({
     total: 0,
@@ -871,7 +870,7 @@ export default function PlannerPage() {
         period: isMonthly ? "month" : "week",
         platforms: selectedPlatforms.map((p) => p.toLowerCase()).join(","),
         count: frequency,
-        mode: autoSchedule ? "auto_schedule" : "manual_approval",
+        mode: "manual_approval",
         topic: prompt,
         brand_tone: tone,
         language,
@@ -929,30 +928,25 @@ export default function PlannerPage() {
           </div>
         </div>
 
-        <div className="flex flex-wrap items-center gap-4">
-          <div className="flex items-center gap-1.5 rounded-lg bg-neutral-100 p-1 w-fit ring-1 ring-neutral-200">
-            <button
-              onClick={() => setAutoSchedule(false)}
-              className={`flex items-center gap-1.5 rounded-md px-3 py-2 text-xs font-semibold transition ${
-                !autoSchedule
-                  ? "bg-brand-500 text-white shadow-sm"
-                  : "bg-transparent text-neutral-500 hover:bg-brand-50 hover:text-brand-700"
-              }`}
-            >
-              Auto-Schedule
-            </button>
-            <button
-              onClick={() => setAutoSchedule(true)}
-              className={`flex items-center gap-1.5 rounded-md px-3 py-2 text-xs font-semibold transition ${
-                autoSchedule
-                  ? "bg-brand-500 text-white shadow-sm"
-                  : "bg-transparent text-neutral-500 hover:bg-brand-50 hover:text-brand-700"
-              }`}
-            >
-              Manual Approval
-            </button>
-          </div>
-        </div>
+        <button
+          onClick={() => setView("generate")}
+          className="flex items-center gap-2 rounded-lg bg-brand-500 px-5 py-3 text-sm font-semibold text-white shadow-sm transition hover:bg-brand-600"
+        >
+          <svg
+            className="h-4 w-4"
+            fill="none"
+            viewBox="0 0 24 24"
+            stroke="currentColor"
+          >
+            <path
+              strokeLinecap="round"
+              strokeLinejoin="round"
+              strokeWidth={2}
+              d="M9.813 15.904L9 18.75l-.813-2.846a4.5 4.5 0 00-3.09-3.09L2.25 12l2.846-.813a4.5 4.5 0 003.09-3.09L9 5.25l.813 2.846a4.5 4.5 0 003.09 3.09L15.75 12l-2.846.813a4.5 4.5 0 00-3.09 3.09zM18.259 8.715L18 9.75l-.259-1.035a3.375 3.375 0 00-2.455-2.456L14.25 6l1.036-.259a3.375 3.375 0 002.455-2.456L18 2.25l.259 1.035a3.375 3.375 0 002.456 2.456L21.75 6l-1.035.259a3.375 3.375 0 00-2.456 2.456z"
+            />
+          </svg>
+          {buttonText}
+        </button>
       </div>
 
       {status === "ready" && items.length > 0 && (

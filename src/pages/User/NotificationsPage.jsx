@@ -1,4 +1,11 @@
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
+import {
+  apiDisconnectNotificationChannel,
+  apiListNotificationChannels,
+  apiSaveNotificationChannel,
+  apiTestNotificationChannel,
+} from '../../lib/api'
+import { ErrorToast } from '../../components/Toast'
 
 function Toggle({ checked, onChange, disabled, label }) {
   return (
@@ -22,33 +29,27 @@ function Toggle({ checked, onChange, disabled, label }) {
   )
 }
 
-const triggerLabels = [
-  'New Post Ready for Approval',
-  'Post Published Successfully',
-  'Post Failed / Error Alerts',
+const triggerFields = [
+  { key: 'ready_for_approval', label: 'New Post Ready for Approval' },
+  { key: 'published', label: 'Post Published Successfully' },
+  { key: 'failed', label: 'Post Failed / Error Alerts' },
 ]
 
-const channels = [
-  {
-    key: 'whatsapp',
+const channelMeta = {
+  whatsapp: {
     name: 'WhatsApp',
-    connected: false,
     fieldLabel: 'Recipient Group Invite Link',
     fieldPlaceholder: 'https://chat.whatsapp.com/…',
-    defaultTriggers: [false, false, false],
     icon: (
       <div className="flex h-9 w-9 items-center justify-center overflow-hidden rounded-lg bg-neutral-50 ring-1 ring-neutral-200">
-        <img src="/whatsapp.jfif" alt="WhatsApp" className="h-full w-full object-cover" />
+        <img src="/whatsapp.png" alt="WhatsApp" className="h-full w-full object-cover" />
       </div>
     ),
   },
-  {
-    key: 'slack',
+  slack: {
     name: 'Slack',
-    connected: true,
-    fieldLabel: 'Target Channel',
-    fieldPlaceholder: '#content-approvals',
-    defaultTriggers: [true, false, true],
+    webhookPlaceholder: 'https://hooks.slack.com/services/…',
+    webhookHelp: 'Found under Slack → Apps → Incoming Webhooks.',
     icon: (
       <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-neutral-50 ring-1 ring-neutral-200">
         <svg className="h-5 w-5" viewBox="0 0 122.8 122.8">
@@ -72,88 +73,192 @@ const channels = [
       </div>
     ),
   },
-  {
-    key: 'teams',
+  teams: {
     name: 'Microsoft Teams',
-    connected: false,
-    fieldLabel: 'Target Channel',
-    fieldPlaceholder: 'Content Approvals',
-    defaultTriggers: [false, false, false],
+    webhookPlaceholder: 'https://…webhook.office.com/…',
+    webhookHelp: 'Found via the Workflows app inside the Teams channel.',
     icon: (
       <div className="flex h-9 w-9 items-center justify-center overflow-hidden rounded-lg bg-white ring-1 ring-neutral-200">
         <img src="/Teams.png" alt="Microsoft Teams" className="h-full w-full object-contain p-1" />
       </div>
     ),
   },
-]
+}
 
-function ChannelCard({ channel }) {
-  const [connected, setConnected] = useState(channel.connected)
-  const [target, setTarget] = useState('')
-  const [triggers, setTriggers] = useState(channel.defaultTriggers)
+const providerOrder = ['whatsapp', 'slack', 'teams']
+
+function ChannelCard({ channel, onChange }) {
+  const meta = channelMeta[channel.provider]
+  const needsWebhook = channel.provider !== 'whatsapp'
+  const needsTarget = channel.provider === 'whatsapp'
+
+  const [target, setTarget] = useState(channel.target || '')
+  const [webhookUrl, setWebhookUrl] = useState('')
+  const [saving, setSaving] = useState(false)
+  const [saveError, setSaveError] = useState('')
   const [testing, setTesting] = useState(false)
+  const [testResult, setTestResult] = useState(null)
+  const [togglingKey, setTogglingKey] = useState(null)
 
-  function toggleTrigger(i) {
-    setTriggers((prev) => prev.map((v, idx) => (idx === i ? !v : v)))
+  useEffect(() => {
+    setTarget(channel.target || '')
+  }, [channel.target])
+
+  async function handleSave() {
+    setSaving(true)
+    setSaveError('')
+    setTestResult(null)
+    try {
+      const payload = {}
+      if (needsTarget) {
+        payload.target = target.trim() || null
+      }
+      if (needsWebhook && webhookUrl.trim()) {
+        payload.webhook_url = webhookUrl.trim()
+      }
+      await apiSaveNotificationChannel(channel.provider, payload)
+      setWebhookUrl('')
+      onChange()
+    } catch (err) {
+      setSaveError(err.message)
+    } finally {
+      setSaving(false)
+    }
   }
 
-  function handleTest() {
+  async function handleDisconnect() {
+    setSaving(true)
+    setSaveError('')
+    try {
+      await apiDisconnectNotificationChannel(channel.provider)
+      onChange()
+    } catch (err) {
+      setSaveError(err.message)
+    } finally {
+      setSaving(false)
+    }
+  }
+
+  async function toggleTrigger(field) {
+    setTogglingKey(field)
+    setSaveError('')
+    try {
+      await apiSaveNotificationChannel(channel.provider, { [field]: !channel.triggers[field] })
+      onChange()
+    } catch (err) {
+      setSaveError(err.message)
+    } finally {
+      setTogglingKey(null)
+    }
+  }
+
+  async function handleTest() {
     setTesting(true)
-    setTimeout(() => setTesting(false), 900)
+    setTestResult(null)
+    try {
+      const result = await apiTestNotificationChannel(channel.provider)
+      setTestResult(result)
+    } catch (err) {
+      setTestResult({ success: false, message: err.message })
+    } finally {
+      setTesting(false)
+    }
   }
 
   return (
     <div className="flex flex-col rounded-lg border border-neutral-200 bg-white p-4">
       <div className="flex items-center justify-between gap-2">
         <div className="flex items-center gap-3">
-          {channel.icon}
+          {meta.icon}
           <div>
-            <p className="text-sm font-semibold text-black">{channel.name}</p>
+            <p className="text-sm font-semibold text-black">{meta.name}</p>
             <span
               className={`mt-0.5 flex items-center gap-1 text-[11px] font-medium ${
-                connected ? 'text-emerald-600' : 'text-neutral-400'
+                channel.is_connected ? 'text-emerald-600' : 'text-neutral-400'
               }`}
             >
-              <span className={`h-1.5 w-1.5 rounded-full ${connected ? 'bg-emerald-500' : 'bg-neutral-300'}`} />
-              {connected ? 'Connected' : 'Disconnected'}
+              <span className={`h-1.5 w-1.5 rounded-full ${channel.is_connected ? 'bg-emerald-500' : 'bg-neutral-300'}`} />
+              {channel.is_connected ? 'Connected' : 'Disconnected'}
             </span>
+            {!channel.can_send && (
+              <span className="mt-1 inline-block rounded-full bg-amber-50 px-2 py-0.5 text-[10px] font-medium text-amber-700 ring-1 ring-amber-200">
+                Can't send messages
+              </span>
+            )}
           </div>
         </div>
-        <button
-          onClick={() => setConnected((v) => !v)}
-          className={`shrink-0 cursor-pointer rounded-md px-3 py-1.5 text-xs font-semibold transition ${
-            connected
-              ? 'text-neutral-600 ring-1 ring-neutral-200 hover:bg-neutral-50'
-              : 'bg-brand-500 text-white hover:bg-brand-600'
-          }`}
-        >
-          {connected ? 'Configure' : 'Connect'}
-        </button>
+        {channel.is_connected && (
+          <button
+            onClick={handleDisconnect}
+            disabled={saving}
+            data-track-label={`${meta.name} - Disconnect`}
+            className="shrink-0 cursor-pointer text-xs font-semibold text-neutral-500 hover:text-red-600 disabled:cursor-not-allowed disabled:opacity-50"
+          >
+            Disconnect
+          </button>
+        )}
       </div>
 
-      <div className="mt-4">
-        <label className="mb-1.5 block text-xs font-medium text-neutral-500">{channel.fieldLabel}</label>
-        <input
-          value={target}
-          onChange={(e) => setTarget(e.target.value)}
-          placeholder={channel.fieldPlaceholder}
-          className="w-full rounded-lg border border-neutral-200 bg-neutral-50 px-3 py-2 text-sm text-neutral-700 outline-none placeholder:text-neutral-400 focus:border-brand-500 focus:bg-white focus:ring-2 focus:ring-brand-500/20"
-        />
-      </div>
+      {needsTarget && (
+        <div className="mt-4">
+          <label className="mb-1.5 block text-xs font-medium text-neutral-500">{meta.fieldLabel}</label>
+          <input
+            value={target}
+            onChange={(e) => setTarget(e.target.value)}
+            placeholder={meta.fieldPlaceholder}
+            className="w-full rounded-lg border border-neutral-200 bg-neutral-50 px-3 py-2 text-sm text-neutral-700 outline-none placeholder:text-neutral-400 focus:border-brand-500 focus:bg-white focus:ring-2 focus:ring-brand-500/20"
+          />
+        </div>
+      )}
+
+      {needsWebhook && (
+        <div className="mt-4">
+          <label className="mb-1.5 block text-xs font-medium text-neutral-500">
+            Webhook URL
+            {channel.webhook_configured && <span className="ml-1 font-normal text-emerald-600">(saved)</span>}
+          </label>
+          <input
+            value={webhookUrl}
+            onChange={(e) => setWebhookUrl(e.target.value)}
+            placeholder={meta.webhookPlaceholder}
+            className="w-full rounded-lg border border-neutral-200 bg-neutral-50 px-3 py-2 text-sm text-neutral-700 outline-none placeholder:text-neutral-400 focus:border-brand-500 focus:bg-white focus:ring-2 focus:ring-brand-500/20"
+          />
+          <p className="mt-1 text-[11px] text-neutral-400">{meta.webhookHelp}</p>
+        </div>
+      )}
+
+      <button
+        onClick={handleSave}
+        disabled={saving}
+        data-track-label={`${meta.name} - ${channel.is_connected ? 'Save' : 'Connect'}`}
+        className={`mt-4 shrink-0 cursor-pointer rounded-md px-3 py-1.5 text-xs font-semibold transition disabled:cursor-not-allowed disabled:opacity-50 ${
+          channel.is_connected
+            ? 'text-neutral-600 ring-1 ring-neutral-200 hover:bg-neutral-50'
+            : 'bg-brand-500 text-white hover:bg-brand-600'
+        }`}
+      >
+        {saving ? 'Saving…' : channel.is_connected ? 'Save Changes' : 'Connect'}
+      </button>
+      {saveError && <ErrorToast message={saveError} onClose={() => setSaveError('')} />}
 
       <div className="mt-4 space-y-2.5">
         <p className="text-[10px] font-semibold tracking-widest text-neutral-400">NOTIFICATION TRIGGERS</p>
-        {triggerLabels.map((label, i) => (
-          <div key={label} className="flex items-center justify-between gap-2">
-            <span className="text-xs text-neutral-600">{label}</span>
-            <Toggle checked={triggers[i]} onChange={() => toggleTrigger(i)} label={`${channel.name} - ${label}`} />
+        {triggerFields.map((field) => (
+          <div key={field.key} className="flex items-center justify-between gap-2">
+            <span className="text-xs text-neutral-600">{field.label}</span>
+            <Toggle
+              checked={channel.triggers[field.key]}
+              onChange={() => toggleTrigger(field.key)}
+              disabled={!channel.is_connected || togglingKey === field.key}
+              label={`${meta.name} - ${field.label}`}
+            />
           </div>
         ))}
       </div>
 
       <button
         onClick={handleTest}
-        disabled={!connected || testing}
+        disabled={!channel.is_connected || testing}
         className="mt-4 flex cursor-pointer items-center justify-center gap-1.5 rounded-md py-2 text-xs font-semibold text-brand-600 ring-1 ring-brand-200 transition hover:bg-brand-50 disabled:cursor-not-allowed disabled:text-neutral-300 disabled:ring-neutral-200 disabled:hover:bg-transparent"
       >
         <svg className={`h-3.5 w-3.5 ${testing ? 'animate-spin' : ''}`} fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -166,19 +271,50 @@ function ChannelCard({ channel }) {
         </svg>
         {testing ? 'Testing…' : 'Test Connection'}
       </button>
+      {testResult && (
+        <p className={`mt-2 text-[11px] ${testResult.success ? 'text-emerald-600' : 'text-amber-700'}`}>
+          {testResult.message}
+        </p>
+      )}
     </div>
   )
 }
 
 export default function NotificationChannelsPage() {
+  const [channels, setChannels] = useState(null)
+  const [loadError, setLoadError] = useState('')
+
+  function load() {
+    setLoadError('')
+    apiListNotificationChannels()
+      .then((list) => {
+        const sorted = [...list].sort(
+          (a, b) => providerOrder.indexOf(a.provider) - providerOrder.indexOf(b.provider),
+        )
+        setChannels(sorted)
+      })
+      .catch((err) => setLoadError(err.message))
+  }
+
+  useEffect(() => {
+    load()
+  }, [])
+
   return (
     <div className="space-y-4">
-      
-      <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-3">
-        {channels.map((channel) => (
-          <ChannelCard key={channel.key} channel={channel} />
-        ))}
-      </div>
+      {loadError && <ErrorToast message={loadError} onClose={() => setLoadError('')} />}
+      {channels === null && (
+        <p className="text-sm text-neutral-400">
+          {loadError ? "Couldn't load notification channels." : 'Loading notification channels…'}
+        </p>
+      )}
+      {channels && (
+        <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-3">
+          {channels.map((channel) => (
+            <ChannelCard key={channel.provider} channel={channel} onChange={load} />
+          ))}
+        </div>
+      )}
     </div>
   )
 }

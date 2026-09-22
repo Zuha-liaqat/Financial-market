@@ -162,6 +162,50 @@ export async function apiConnectInstagram(companyId) {
   return body
 }
 
+export async function apiListNotificationChannels(companyId) {
+  const query = companyId ? `?company_id=${companyId}` : ''
+  const res = await authorizedRequest(`/api/notifications/channels${query}`)
+  const body = await res.json().catch(() => null)
+  if (!res.ok) {
+    throw new Error(extractErrorMessage(body, 'Failed to load notification channels'))
+  }
+  return body?.channels || []
+}
+
+export async function apiSaveNotificationChannel(provider, payload, companyId) {
+  const query = companyId ? `?company_id=${companyId}` : ''
+  const res = await authorizedRequest(`/api/notifications/channels/${provider}${query}`, {
+    method: 'PUT',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(payload),
+  })
+  const body = await res.json().catch(() => null)
+  if (!res.ok) {
+    throw new Error(extractErrorMessage(body, 'Failed to save channel settings'))
+  }
+  return body
+}
+
+export async function apiDisconnectNotificationChannel(provider, companyId) {
+  const query = companyId ? `?company_id=${companyId}` : ''
+  const res = await authorizedRequest(`/api/notifications/channels/${provider}${query}`, { method: 'DELETE' })
+  const body = await res.json().catch(() => null)
+  if (!res.ok) {
+    throw new Error(extractErrorMessage(body, 'Failed to disconnect channel'))
+  }
+  return body
+}
+
+export async function apiTestNotificationChannel(provider, companyId) {
+  const query = companyId ? `?company_id=${companyId}` : ''
+  const res = await authorizedRequest(`/api/notifications/channels/${provider}/test${query}`, { method: 'POST' })
+  const body = await res.json().catch(() => null)
+  if (!res.ok) {
+    throw new Error(extractErrorMessage(body, 'Failed to test channel connection'))
+  }
+  return body
+}
+
 export async function apiGeneratePost({
   prompt,
   platforms,

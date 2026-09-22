@@ -41,8 +41,8 @@ const channelMeta = {
     fieldLabel: 'Recipient Group Invite Link',
     fieldPlaceholder: 'https://chat.whatsapp.com/…',
     icon: (
-      <div className="flex h-9 w-9 items-center justify-center overflow-hidden rounded-lg bg-neutral-50 ring-1 ring-neutral-200">
-        <img src="/whatsapp.png" alt="WhatsApp" className="h-full w-full object-cover" />
+      <div className="flex h-9 w-9 items-center justify-center overflow-hidden rounded-lg bg-white ring-1 ring-neutral-200">
+        <img src="/whatsapp.png" alt="WhatsApp" className="h-full w-full object-contain p-1" />
       </div>
     ),
   },
@@ -86,6 +86,33 @@ const channelMeta = {
 }
 
 const providerOrder = ['whatsapp', 'slack', 'teams']
+
+function ChannelCardSkeleton() {
+  return (
+    <div className="flex flex-col rounded-lg border border-neutral-200 bg-white p-4">
+      <div className="flex items-center gap-3">
+        <div className="h-9 w-9 shrink-0 animate-pulse rounded-lg bg-neutral-200" />
+        <div className="space-y-1.5">
+          <div className="h-3.5 w-24 animate-pulse rounded bg-neutral-200" />
+          <div className="h-2.5 w-16 animate-pulse rounded bg-neutral-200" />
+        </div>
+      </div>
+      <div className="mt-4 h-2.5 w-28 animate-pulse rounded bg-neutral-200" />
+      <div className="mt-1.5 h-9 w-full animate-pulse rounded-lg bg-neutral-100" />
+      <div className="mt-4 h-8 w-full animate-pulse rounded-md bg-neutral-200" />
+      <div className="mt-4 space-y-3">
+        <div className="h-2.5 w-32 animate-pulse rounded bg-neutral-200" />
+        {Array.from({ length: 3 }).map((_, i) => (
+          <div key={i} className="flex items-center justify-between">
+            <div className="h-2.5 w-36 animate-pulse rounded bg-neutral-200" />
+            <div className="h-5 w-9 animate-pulse rounded-full bg-neutral-200" />
+          </div>
+        ))}
+      </div>
+      <div className="mt-4 h-8 w-full animate-pulse rounded-md bg-neutral-100" />
+    </div>
+  )
+}
 
 function ChannelCard({ channel, onChange }) {
   const meta = channelMeta[channel.provider]
@@ -180,11 +207,6 @@ function ChannelCard({ channel, onChange }) {
               <span className={`h-1.5 w-1.5 rounded-full ${channel.is_connected ? 'bg-emerald-500' : 'bg-neutral-300'}`} />
               {channel.is_connected ? 'Connected' : 'Disconnected'}
             </span>
-            {!channel.can_send && (
-              <span className="mt-1 inline-block rounded-full bg-amber-50 px-2 py-0.5 text-[10px] font-medium text-amber-700 ring-1 ring-amber-200">
-                Can't send messages
-              </span>
-            )}
           </div>
         </div>
         {channel.is_connected && (
@@ -198,6 +220,19 @@ function ChannelCard({ channel, onChange }) {
           </button>
         )}
       </div>
+
+      {!channel.can_send && (
+        <div className="mt-3">
+          <span className="inline-block rounded-full bg-amber-50 px-2 py-0.5 text-[10px] font-medium text-amber-700 ring-1 ring-amber-200">
+            Can't send messages
+          </span>
+          <p className="mt-1 text-[11px] text-neutral-400">
+            {channel.provider === 'whatsapp'
+              ? "WhatsApp's official API doesn't support sending to groups via invite links."
+              : "This channel can't send messages right now."}
+          </p>
+        </div>
+      )}
 
       {needsTarget && (
         <div className="mt-4">
@@ -303,10 +338,15 @@ export default function NotificationChannelsPage() {
   return (
     <div className="space-y-4">
       {loadError && <ErrorToast message={loadError} onClose={() => setLoadError('')} />}
-      {channels === null && (
-        <p className="text-sm text-neutral-400">
-          {loadError ? "Couldn't load notification channels." : 'Loading notification channels…'}
-        </p>
+      {channels === null && loadError && (
+        <p className="text-sm text-neutral-400">Couldn't load notification channels.</p>
+      )}
+      {channels === null && !loadError && (
+        <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-3">
+          {Array.from({ length: 3 }).map((_, i) => (
+            <ChannelCardSkeleton key={i} />
+          ))}
+        </div>
       )}
       {channels && (
         <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-3">

@@ -1,7 +1,7 @@
 import { useState, useRef, useEffect } from "react";
 import { addNotification } from "../../data/notifications";
 import { apiGeneratePost } from "../../lib/api";
-import { SuccessToast } from "../../components/Toast";
+import { showGlobalToast } from "../../lib/toastBus";
 
 const toneOptions = [
   "Professional",
@@ -216,7 +216,6 @@ export default function CreatePostPage() {
   const [newTag, setNewTag] = useState("");
   const [isGenerating, setIsGenerating] = useState(false);
   const [generateError, setGenerateError] = useState(null);
-  const [generateSuccess, setGenerateSuccess] = useState(null);
   const [showToneDropdown, setShowToneDropdown] = useState(false);
   const [showLanguageDropdown, setShowLanguageDropdown] = useState(false);
   const [showUrlDialog, setShowUrlDialog] = useState(false);
@@ -343,7 +342,7 @@ export default function CreatePostPage() {
       });
 
       setIsGenerating(false);
-      setGenerateSuccess(
+      showGlobalToast(
         count > 1
           ? `${count} posts created successfully!`
           : "Post created successfully!",
@@ -360,13 +359,6 @@ export default function CreatePostPage() {
         <div className="rounded-lg border border-red-200 bg-red-50 px-4 py-2.5 text-sm text-red-600">
           {generateError}
         </div>
-      )}
-
-      {generateSuccess && (
-        <SuccessToast
-          message={generateSuccess}
-          onClose={() => setGenerateSuccess(null)}
-        />
       )}
 
       {isGenerating && (

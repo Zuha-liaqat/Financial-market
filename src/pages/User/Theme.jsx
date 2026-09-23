@@ -295,7 +295,7 @@ export default function ThemesPage() {
           </svg>
         }
         chip="bg-sky-100"
-        title="CONTENT DETAILS"
+        title="CONTACT DETAILS"
       >
         <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
           <div>

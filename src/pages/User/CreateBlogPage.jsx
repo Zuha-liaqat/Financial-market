@@ -1,7 +1,17 @@
 import { useState, useRef, useEffect } from "react";
-import { useNavigate } from "react-router-dom";
 import { addNotification } from "../../data/notifications";
 import { apiGenerateBlog } from "../../lib/api";
+import { showGlobalToast } from "../../lib/toastBus";
+
+const DRAFT_KEY = "create_blog_draft";
+
+function loadDraft() {
+  try {
+    return JSON.parse(localStorage.getItem(DRAFT_KEY) || "null");
+  } catch {
+    return null;
+  }
+}
 
 const toneOptions = [
   "Professional",
@@ -129,18 +139,20 @@ const inputClass =
   "w-full rounded-lg border border-neutral-200 bg-white px-3 py-2.5 text-sm text-neutral-700 outline-none placeholder:text-neutral-400 focus:border-brand-500 focus:ring-2 focus:ring-brand-500/20";
 
 export default function CreateBlogPage() {
-  const navigate = useNavigate();
   const fileInputRef = useRef(null);
   const dropdownRef = useRef(null);
-  const [prompt, setPrompt] = useState("");
-  const [tone, setTone] = useState("Professional");
-  const [language, setLanguage] = useState("EN-US");
-  const [referenceUrl, setReferenceUrl] = useState("");
+  const draft = loadDraft();
+  const [prompt, setPrompt] = useState(draft?.prompt ?? "");
+  const [tone, setTone] = useState(draft?.tone ?? "Professional");
+  const [language, setLanguage] = useState(draft?.language ?? "EN-US");
+  const [referenceUrl, setReferenceUrl] = useState(draft?.referenceUrl ?? "");
   const [urlDraft, setUrlDraft] = useState("");
-  const [scheduleDate, setScheduleDate] = useState("");
-  const [scheduleTime, setScheduleTime] = useState("");
-  const [selectedPlatforms, setSelectedPlatforms] = useState(["Website"]);
-  const [tags, setTags] = useState(["#NewProduct", "#Launch"]);
+  const [scheduleDate, setScheduleDate] = useState(draft?.scheduleDate ?? "");
+  const [scheduleTime, setScheduleTime] = useState(draft?.scheduleTime ?? "");
+  const [selectedPlatforms, setSelectedPlatforms] = useState(
+    draft?.selectedPlatforms ?? ["Website"],
+  );
+  const [tags, setTags] = useState(draft?.tags ?? ["#NewProduct", "#Launch"]);
   const [newTag, setNewTag] = useState("");
   const [isGenerating, setIsGenerating] = useState(false);
   const [generateError, setGenerateError] = useState(null);
@@ -171,6 +183,31 @@ export default function CreateBlogPage() {
       document.removeEventListener("keydown", handleEscape);
     };
   }, []);
+
+  useEffect(() => {
+    localStorage.setItem(
+      DRAFT_KEY,
+      JSON.stringify({
+        prompt,
+        tone,
+        language,
+        referenceUrl,
+        scheduleDate,
+        scheduleTime,
+        selectedPlatforms,
+        tags,
+      }),
+    );
+  }, [
+    prompt,
+    tone,
+    language,
+    referenceUrl,
+    scheduleDate,
+    scheduleTime,
+    selectedPlatforms,
+    tags,
+  ]);
 
   function addTag(tag) {
     const clean = tag.trim().replace(/^#*/, "#");
@@ -272,10 +309,11 @@ export default function CreateBlogPage() {
         author: "Relay AI",
       });
 
-      navigate("/approval-queue");
+      setIsGenerating(false);
+      localStorage.removeItem(DRAFT_KEY);
+      showGlobalToast("Blog post created successfully!");
     } catch (err) {
       setGenerateError(err.message);
-    } finally {
       setIsGenerating(false);
     }
   }
@@ -285,6 +323,27 @@ export default function CreateBlogPage() {
       {generateError && (
         <div className="rounded-lg border border-red-200 bg-red-50 px-4 py-2.5 text-sm text-red-600">
           {generateError}
+        </div>
+      )}
+
+      {isGenerating && (
+        <div className="flex items-center gap-2 rounded-lg border border-brand-200 bg-brand-50 px-4 py-2.5 text-sm text-brand-700">
+          <svg className="h-4 w-4 shrink-0 animate-spin" fill="none" viewBox="0 0 24 24">
+            <circle
+              className="opacity-25"
+              cx="12"
+              cy="12"
+              r="10"
+              stroke="currentColor"
+              strokeWidth="4"
+            />
+            <path
+              className="opacity-75"
+              fill="currentColor"
+              d="M4 12a8 8 0 018-8v4a4 4 0 00-4 4H4z"
+            />
+          </svg>
+          Generating your blog post — feel free to keep working elsewhere, we'll let you know when it's done.
         </div>
       )}
 
@@ -683,20 +742,42 @@ export default function CreateBlogPage() {
             }
             className="flex cursor-pointer items-center justify-center gap-2 rounded-lg bg-brand-500 px-4 py-2.5 text-sm font-semibold text-white shadow-sm transition hover:bg-brand-600 disabled:cursor-not-allowed disabled:opacity-50 max-sm:w-full"
           >
-            <svg
-              className="h-4 w-4"
-              fill="none"
-              viewBox="0 0 24 24"
-              stroke="currentColor"
-            >
-              <path
-                strokeLinecap="round"
-                strokeLinejoin="round"
-                strokeWidth={2}
-                d="M12 4.5v15m7.5-7.5h-15"
-              />
-            </svg>
-            Generate
+            {isGenerating ? (
+              <svg
+                className="h-4 w-4 animate-spin"
+                fill="none"
+                viewBox="0 0 24 24"
+              >
+                <circle
+                  className="opacity-25"
+                  cx="12"
+                  cy="12"
+                  r="10"
+                  stroke="currentColor"
+                  strokeWidth="4"
+                />
+                <path
+                  className="opacity-75"
+                  fill="currentColor"
+                  d="M4 12a8 8 0 018-8v4a4 4 0 00-4 4H4z"
+                />
+              </svg>
+            ) : (
+              <svg
+                className="h-4 w-4"
+                fill="none"
+                viewBox="0 0 24 24"
+                stroke="currentColor"
+              >
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  strokeWidth={2}
+                  d="M12 4.5v15m7.5-7.5h-15"
+                />
+              </svg>
+            )}
+            {isGenerating ? "Generating…" : "Generate"}
           </button>
         </div>
       </div>

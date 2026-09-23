@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import {
   Select,
   SelectContent,
@@ -7,18 +7,16 @@ import {
   SelectValue,
 } from "../../components/ui/select";
 import { addNotification } from "../../data/notifications";
+import { ErrorToast, SuccessToast } from "../../components/Toast";
+import {
+  apiGetBrandProfile,
+  apiGetThemeOptions,
+  apiSaveBrandProfile,
+  apiUploadBrandLogo,
+} from "../../lib/api";
 
-const toneOptions = [
-  "Professional",
-  "Casual",
-  "Enthusiastic",
-  "Informative",
-  "Humorous",
-];
-
-const visualStyles = [
-  {
-    key: "minimalist",
+const visualStyleMeta = {
+  minimalist: {
     label: "Minimalist",
     description: "Clean layouts, generous whitespace, quiet color.",
     preview: (
@@ -36,8 +34,7 @@ const visualStyles = [
       </div>
     ),
   },
-  {
-    key: "bold",
+  bold: {
     label: "Bold",
     description: "Punchy gradients and confident, high-contrast type.",
     preview: (
@@ -50,8 +47,7 @@ const visualStyles = [
       </div>
     ),
   },
-  {
-    key: "futuristic",
+  futuristic: {
     label: "Futuristic",
     description: "Dark, glowing, technical — built for robotics content.",
     preview: (
@@ -77,8 +73,7 @@ const visualStyles = [
       </div>
     ),
   },
-  {
-    key: "custom",
+  custom: {
     label: "Custom",
     description: "Set your own color theme, text style, and font.",
     preview: (
@@ -91,16 +86,7 @@ const visualStyles = [
       </div>
     ),
   },
-];
-
-const fontOptions = [
-  "Inter",
-  "Roboto",
-  "Poppins",
-  "Montserrat",
-  "Playfair Display",
-  "Georgia",
-];
+};
 
 function SectionCard({ icon, chip, title, children }) {
   return (
@@ -123,35 +109,180 @@ function SectionCard({ icon, chip, title, children }) {
 const inputClass =
   "w-full rounded-lg border border-neutral-200 bg-neutral-50 px-3 py-2.5 text-sm text-neutral-700 outline-none placeholder:text-neutral-400 focus:border-brand-500 focus:bg-white focus:ring-2 focus:ring-brand-500/20";
 
+function FieldSkeleton() {
+  return (
+    <div>
+      <div className="mb-1.5 h-3 w-24 animate-pulse rounded bg-neutral-200" />
+      <div className="h-9 w-full animate-pulse rounded-lg bg-neutral-100" />
+    </div>
+  );
+}
+
+function SectionSkeleton({ chip, children }) {
+  return (
+    <div className="rounded-lg border border-neutral-200 bg-white p-5">
+      <div className="mb-4 flex items-center gap-2.5">
+        <span className={`h-8 w-8 shrink-0 animate-pulse rounded-md ${chip}`} />
+        <span className="h-3.5 w-32 animate-pulse rounded bg-neutral-200" />
+      </div>
+      {children}
+    </div>
+  );
+}
+
+function ThemeSkeleton() {
+  return (
+    <div className="space-y-4">
+      <SectionSkeleton chip="bg-brand-100">
+        <div className="space-y-3">
+          <div>
+            <div className="mb-1.5 h-3 w-24 animate-pulse rounded bg-neutral-200" />
+            <div className="flex items-center gap-3">
+              <div className="h-16 w-16 shrink-0 animate-pulse rounded-lg bg-neutral-100" />
+              <div className="h-8 w-24 animate-pulse rounded-md bg-neutral-100" />
+            </div>
+          </div>
+          <FieldSkeleton />
+          <div>
+            <div className="mb-1.5 h-3 w-32 animate-pulse rounded bg-neutral-200" />
+            <div className="h-20 w-full animate-pulse rounded-lg bg-neutral-100" />
+          </div>
+        </div>
+      </SectionSkeleton>
+
+      <SectionSkeleton chip="bg-sky-100">
+        <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
+          <FieldSkeleton />
+          <FieldSkeleton />
+        </div>
+      </SectionSkeleton>
+
+      <SectionSkeleton chip="bg-amber-100">
+        <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
+          <FieldSkeleton />
+          <FieldSkeleton />
+        </div>
+      </SectionSkeleton>
+
+      <SectionSkeleton chip="bg-violet-100">
+        <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-4">
+          {Array.from({ length: 4 }).map((_, i) => (
+            <div key={i} className="overflow-hidden rounded-lg border-2 border-neutral-200">
+              <div className="h-24 w-full animate-pulse bg-neutral-100" />
+              <div className="space-y-1.5 px-2.5 py-2">
+                <div className="h-3.5 w-16 animate-pulse rounded bg-neutral-200" />
+                <div className="h-2.5 w-full animate-pulse rounded bg-neutral-100" />
+              </div>
+            </div>
+          ))}
+        </div>
+      </SectionSkeleton>
+
+      <div className="flex items-center justify-end gap-2 border-t border-neutral-200 pt-4">
+        <div className="h-10 w-24 animate-pulse rounded-md bg-neutral-100" />
+        <div className="h-10 w-32 animate-pulse rounded-md bg-neutral-200" />
+      </div>
+    </div>
+  );
+}
+
 export default function ThemesPage() {
+  const [status, setStatus] = useState("loading");
+  const [loadError, setLoadError] = useState("");
+  const [toneOptions, setToneOptions] = useState([]);
+  const [fontOptions, setFontOptions] = useState([]);
+  const [visualStyleKeys, setVisualStyleKeys] = useState([]);
+
   const [companyName, setCompanyName] = useState("");
   const [companyDescription, setCompanyDescription] = useState("");
-  const [companyLogo, setCompanyLogo] = useState(null);
+  const [logoUrl, setLogoUrl] = useState(null);
+  const [logoUploading, setLogoUploading] = useState(false);
   const [contactEmail, setContactEmail] = useState("");
   const [contactPhone, setContactPhone] = useState("");
-  const [brandTone, setBrandTone] = useState("Professional");
+  const [brandTone, setBrandTone] = useState("");
   const [targetAudience, setTargetAudience] = useState("");
   const [visualStyle, setVisualStyle] = useState("minimalist");
   const [customColor, setCustomColor] = useState("#4f46e5");
   const [customText, setCustomText] = useState("");
-  const [customFont, setCustomFont] = useState(fontOptions[0]);
-  const [saving, setSaving] = useState(false);
+  const [customFont, setCustomFont] = useState("");
+  const [savingDraft, setSavingDraft] = useState(false);
+  const [savingComplete, setSavingComplete] = useState(false);
+  const [saveError, setSaveError] = useState("");
+  const [saveSuccess, setSaveSuccess] = useState("");
 
-  function handleLogoSelect(e) {
+  useEffect(() => {
+    let cancelled = false;
+    Promise.all([apiGetThemeOptions(), apiGetBrandProfile()])
+      .then(([options, profile]) => {
+        if (cancelled) return;
+        setToneOptions(options?.brand_tones || []);
+        setFontOptions(options?.fonts || []);
+        setVisualStyleKeys(options?.visual_styles || []);
+
+        setCompanyName(profile?.company_name || "");
+        setCompanyDescription(profile?.company_description || "");
+        setLogoUrl(profile?.logo_url || null);
+        setContactEmail(profile?.contact_email || "");
+        setContactPhone(profile?.contact_mobile || "");
+        setBrandTone(profile?.brand_tone || options?.brand_tones?.[0] || "");
+        setTargetAudience(profile?.target_audience || "");
+        setVisualStyle(profile?.visual_style || "minimalist");
+        setCustomColor(profile?.custom_color || "#4f46e5");
+        setCustomText(profile?.custom_text_style || "");
+        setCustomFont(profile?.custom_font || options?.fonts?.[0] || "");
+        setStatus("ready");
+      })
+      .catch((err) => {
+        if (cancelled) return;
+        setLoadError(err.message);
+        setStatus("error");
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, []);
+
+  async function handleLogoSelect(e) {
     const file = e.target.files?.[0];
     if (!file) return;
-    setCompanyLogo({ file, preview: URL.createObjectURL(file) });
+    setLogoUploading(true);
+    setSaveError("");
+    try {
+      const profile = await apiUploadBrandLogo(file);
+      setLogoUrl(profile?.logo_url || null);
+    } catch (err) {
+      setSaveError(err.message);
+    } finally {
+      setLogoUploading(false);
+      e.target.value = "";
+    }
   }
 
-  function removeLogo() {
-    if (companyLogo) URL.revokeObjectURL(companyLogo.preview);
-    setCompanyLogo(null);
-  }
-
-  function handleSave(complete) {
+  async function handleSave(complete) {
+    if (complete && (!companyName.trim() || !companyDescription.trim())) {
+      setSaveError(
+        "Company name and description are required to complete setup.",
+      );
+      return;
+    }
+    const setSaving = complete ? setSavingComplete : setSavingDraft;
     setSaving(true);
-    setTimeout(() => {
-      setSaving(false);
+    setSaveError("");
+    try {
+      const profile = await apiSaveBrandProfile({
+        company_name: companyName || null,
+        company_description: companyDescription || null,
+        contact_email: contactEmail || null,
+        contact_mobile: contactPhone || null,
+        brand_tone: brandTone || null,
+        target_audience: targetAudience || null,
+        visual_style: visualStyle || null,
+        custom_color: visualStyle === "custom" ? customColor : null,
+        custom_text_style: visualStyle === "custom" ? customText : null,
+        custom_font: visualStyle === "custom" ? customFont : null,
+        status: complete ? "complete" : "draft",
+      });
+      if (profile?.logo_url) setLogoUrl(profile.logo_url);
       addNotification({
         type: "creation",
         title: complete ? "Brand & voice setup completed" : "Draft saved",
@@ -161,11 +292,40 @@ export default function ThemesPage() {
         platform: "Multi-platform",
         author: "Relay AI",
       });
-    }, 500);
+      setSaveSuccess(
+        complete ? "Brand setup completed!" : "Draft saved!",
+      );
+    } catch (err) {
+      setSaveError(err.message);
+    } finally {
+      setSaving(false);
+    }
+  }
+
+  if (status === "loading") {
+    return <ThemeSkeleton />;
+  }
+
+  if (status === "error") {
+    return (
+      <div className="rounded-lg border border-dashed border-red-300 bg-red-50 p-6 text-center text-sm text-red-600">
+        {loadError || "Couldn't load the brand profile. Please try again later."}
+      </div>
+    );
   }
 
   return (
     <div className="space-y-4">
+      {saveError && (
+        <ErrorToast message={saveError} onClose={() => setSaveError("")} />
+      )}
+      {saveSuccess && (
+        <SuccessToast
+          message={saveSuccess}
+          onClose={() => setSaveSuccess("")}
+        />
+      )}
+
       <SectionCard
         icon={
           <svg
@@ -200,11 +360,31 @@ export default function ThemesPage() {
             </label>
             <div className="flex items-center gap-3">
               <div className="flex h-16 w-16 shrink-0 items-center justify-center overflow-hidden rounded-lg border border-dashed border-neutral-300 bg-neutral-50">
-                {companyLogo ? (
+                {logoUploading ? (
+                  <svg
+                    className="h-5 w-5 animate-spin text-neutral-300"
+                    fill="none"
+                    viewBox="0 0 24 24"
+                  >
+                    <circle
+                      className="opacity-25"
+                      cx="12"
+                      cy="12"
+                      r="10"
+                      stroke="currentColor"
+                      strokeWidth="4"
+                    />
+                    <path
+                      className="opacity-75"
+                      fill="currentColor"
+                      d="M4 12a8 8 0 018-8v4a4 4 0 00-4 4H4z"
+                    />
+                  </svg>
+                ) : logoUrl ? (
                   <img
-                    src={companyLogo.preview}
+                    src={logoUrl}
                     alt="Company logo"
-                    className="h-full w-full object-contain"
+                    className="h-full w-full object-cover"
                   />
                 ) : (
                   <svg
@@ -222,26 +402,16 @@ export default function ThemesPage() {
                   </svg>
                 )}
               </div>
-              <div className="flex items-center gap-2">
-                <label className="cursor-pointer rounded-md px-3 py-2 text-xs font-semibold text-neutral-600 ring-1 ring-neutral-200 transition hover:bg-neutral-50">
-                  {companyLogo ? "Change" : "Upload logo"}
-                  <input
-                    type="file"
-                    accept="image/*"
-                    onChange={handleLogoSelect}
-                    className="hidden"
-                  />
-                </label>
-                {companyLogo && (
-                  <button
-                    type="button"
-                    onClick={removeLogo}
-                    className="cursor-pointer text-xs font-semibold text-neutral-400 hover:text-red-600"
-                  >
-                    Remove
-                  </button>
-                )}
-              </div>
+              <label className="cursor-pointer rounded-md px-3 py-2 text-xs font-semibold text-neutral-600 ring-1 ring-neutral-200 transition hover:bg-neutral-50">
+                {logoUrl ? "Change" : "Upload logo"}
+                <input
+                  type="file"
+                  accept="image/*"
+                  onChange={handleLogoSelect}
+                  disabled={logoUploading}
+                  className="hidden"
+                />
+              </label>
             </div>
           </div>
           <div>
@@ -255,7 +425,7 @@ export default function ThemesPage() {
               id="company-name"
               value={companyName}
               onChange={(e) => setCompanyName(e.target.value)}
-              placeholder="e.g. PIX Moving"
+              placeholder="e.g. Financial Market"
               className={inputClass}
             />
           </div>
@@ -408,13 +578,15 @@ export default function ThemesPage() {
         title="VISUAL STYLE"
       >
         <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-4">
-          {visualStyles.map((style) => {
-            const active = visualStyle === style.key;
+          {visualStyleKeys.map((key) => {
+            const meta = visualStyleMeta[key];
+            if (!meta) return null;
+            const active = visualStyle === key;
             return (
               <button
-                key={style.key}
+                key={key}
                 type="button"
-                onClick={() => setVisualStyle(style.key)}
+                onClick={() => setVisualStyle(key)}
                 className={`group flex cursor-pointer flex-col overflow-hidden rounded-lg border-2 text-left transition ${
                   active
                     ? "border-brand-500 ring-2 ring-brand-100"
@@ -422,7 +594,7 @@ export default function ThemesPage() {
                 }`}
               >
                 <div className="relative h-24 w-full">
-                  {style.preview}
+                  {meta.preview}
                   {active && (
                     <span className="absolute right-1.5 top-1.5 flex h-5 w-5 items-center justify-center rounded-full bg-brand-500 text-white shadow-sm">
                       <svg
@@ -443,10 +615,10 @@ export default function ThemesPage() {
                 </div>
                 <div className="px-2.5 py-2">
                   <p className="text-sm font-semibold text-black">
-                    {style.label}
+                    {meta.label}
                   </p>
                   <p className="mt-0.5 text-xs text-neutral-400">
-                    {style.description}
+                    {meta.description}
                   </p>
                 </div>
               </button>
@@ -518,17 +690,17 @@ export default function ThemesPage() {
       <div className="flex items-center justify-end gap-2 border-t border-neutral-200 pt-4">
         <button
           onClick={() => handleSave(false)}
-          disabled={saving}
+          disabled={savingDraft || savingComplete}
           className="cursor-pointer rounded-md px-4 py-2.5 text-sm font-medium text-neutral-600 ring-1 ring-neutral-200 transition hover:bg-neutral-50 disabled:cursor-not-allowed disabled:opacity-50"
         >
-          Save Draft
+          {savingDraft ? "Saving…" : "Save Draft"}
         </button>
         <button
           onClick={() => handleSave(true)}
-          disabled={saving}
+          disabled={savingDraft || savingComplete}
           className="cursor-pointer rounded-md bg-brand-500 px-4 py-2.5 text-sm font-semibold text-white shadow-sm transition hover:bg-brand-600 disabled:cursor-not-allowed disabled:opacity-60"
         >
-          {saving ? "Saving…" : "Complete Setup"}
+          {savingComplete ? "Saving…" : "Complete Setup"}
         </button>
       </div>
     </div>

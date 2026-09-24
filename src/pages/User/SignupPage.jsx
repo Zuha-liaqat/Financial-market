@@ -1,11 +1,11 @@
 import { useState } from "react";
 import { useNavigate, useSearchParams, Link } from "react-router-dom";
 import Logo from "../../components/Logo";
-import { apiCreateCheckoutSession, apiSignup } from "../../lib/api";
 import {
-  setActivePlanId,
-  subscriptionPlans,
-} from "../../data/subscriptionPlans";
+  apiGetSubscriptionPlans,
+  apiSignup,
+  apiStartSubscriptionCheckout,
+} from "../../lib/api";
 import { setCurrentUserEmail, setSuperAdminStatus } from "../../data/auth";
 import { trackEvent } from "../../lib/analytics";
 import { ErrorToast, SuccessToast } from "../../components/Toast";
@@ -13,7 +13,7 @@ import { ErrorToast, SuccessToast } from "../../components/Toast";
 export default function SignupPage() {
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
-  const planId = searchParams.get("plan");
+  const planCode = searchParams.get("plan");
   const billingCycle =
     searchParams.get("cycle") === "yearly" ? "yearly" : "monthly";
   const [showPassword, setShowPassword] = useState(false);
@@ -60,35 +60,41 @@ export default function SignupPage() {
       setSuccess("Account created successfully!");
       await new Promise((resolve) => setTimeout(resolve, 900));
 
-      const selectedPlan = planId
-        ? subscriptionPlans.find((p) => p.id === planId)
-        : null;
+      let selectedPlan = null;
+      if (planCode) {
+        try {
+          const { plans = [] } = await apiGetSubscriptionPlans();
+          selectedPlan = plans.find((p) => p.code === planCode) || null;
+        } catch {
+          // Couldn't load plans — the account stays on the Free plan.
+        }
+      }
       const amount = selectedPlan
         ? billingCycle === "yearly"
-          ? selectedPlan.yearlyPrice
-          : selectedPlan.price
+          ? selectedPlan.yearly_price
+          : selectedPlan.monthly_price
         : 0;
 
       if (selectedPlan && amount > 0) {
         try {
-          const checkoutUrl = await apiCreateCheckoutSession({
-            amount,
-            currency: "usd",
-            product_name: `${selectedPlan.name} Plan (${billingCycle === "yearly" ? "Yearly" : "Monthly"})`,
-            success_url: `${window.location.origin}/dashboard?signup_plan=success&plan=${selectedPlan.id}`,
-            cancel_url: `${window.location.origin}/dashboard?signup_plan=cancelled&plan=${selectedPlan.id}`,
+          const { checkout_url } = await apiStartSubscriptionCheckout({
+            plan_code: selectedPlan.code,
+            billing_period: billingCycle,
+            success_url: `${window.location.origin}/dashboard?signup_plan=success&plan=${selectedPlan.code}`,
+            cancel_url: `${window.location.origin}/dashboard?signup_plan=cancelled&plan=${selectedPlan.code}`,
           });
-          window.location.href = checkoutUrl;
-          return;
+          if (checkout_url) {
+            window.location.href = checkout_url;
+            return;
+          }
         } catch {
-          // Couldn't start checkout — fall back to the Free plan.
-          setActivePlanId("free");
-          navigate("/dashboard");
-          return;
+          // Couldn't start checkout — the account stays on the Free plan.
         }
+        navigate("/dashboard");
+        return;
       }
 
-      navigate(selectedPlan ? "/dashboard" : "/login");
+      navigate(planCode ? "/dashboard" : "/login");
     } catch (err) {
       setError(err.message || "Failed to create account.");
       setSubmitting(false);

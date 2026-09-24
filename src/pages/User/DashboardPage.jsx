@@ -1,6 +1,5 @@
 import { useEffect, useState } from "react";
 import { useNavigate, useSearchParams } from "react-router-dom";
-import { setActivePlanId } from "../../data/subscriptionPlans";
 import { apiGetDashboard } from "../../lib/api";
 import {
   platformDisplay,
@@ -253,8 +252,7 @@ export default function DashboardPage() {
     const signupPlanStatus = searchParams.get("signup_plan");
     if (!signupPlanStatus) return;
 
-    const planId = searchParams.get("plan");
-    setActivePlanId(signupPlanStatus === "success" && planId ? planId : "free");
+    // The backend records the plan from the checkout itself; just clean the URL.
     setSearchParams({}, { replace: true });
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);

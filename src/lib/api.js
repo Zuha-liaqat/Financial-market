@@ -492,21 +492,74 @@ export async function apiDeleteLibraryAsset(libraryId) {
   return body
 }
 
-export async function apiCreateCheckoutSession({ amount, currency = 'usd', product_name, success_url, cancel_url }) {
-  const res = await authorizedRequest('/api/payments/create-checkout-session', {
+export async function apiGetSubscriptionPlans() {
+  const res = await authorizedRequest('/api/subscriptions/plans')
+  const body = await res.json().catch(() => null)
+  if (!res.ok) {
+    throw new Error(extractErrorMessage(body, 'Failed to load plans'))
+  }
+  return body
+}
+
+// For the public pricing page: sends the token only if the visitor already
+// has one, instead of logging in on their behalf.
+export async function apiGetPublicSubscriptionPlans() {
+  const token = getToken()
+  const res = await fetch(`${API_BASE_URL}/api/subscriptions/plans`, {
+    headers: {
+      accept: 'application/json',
+      ...(token ? { Authorization: `Bearer ${token}` } : {}),
+    },
+  })
+  const body = await res.json().catch(() => null)
+  if (!res.ok) {
+    throw new Error(extractErrorMessage(body, 'Failed to load plans'))
+  }
+  return body
+}
+
+export async function apiGetCurrentSubscription() {
+  const res = await authorizedRequest('/api/subscriptions/current')
+  const body = await res.json().catch(() => null)
+  if (!res.ok) {
+    throw new Error(extractErrorMessage(body, 'Failed to load current plan'))
+  }
+  return body
+}
+
+export async function apiAdminListPlans() {
+  const res = await authorizedRequest('/api/subscriptions/admin/plans')
+  const body = await res.json().catch(() => null)
+  if (!res.ok) {
+    throw new Error(extractErrorMessage(body, 'Failed to load plans'))
+  }
+  return body
+}
+
+export async function apiAdminUpdatePlan(planId, updates) {
+  const res = await authorizedRequest(`/api/subscriptions/admin/plans/${planId}`, {
+    method: 'PUT',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(updates),
+  })
+  const body = await res.json().catch(() => null)
+  if (!res.ok) {
+    throw new Error(extractErrorMessage(body, 'Failed to update plan'))
+  }
+  return body
+}
+
+export async function apiStartSubscriptionCheckout({ plan_code, billing_period = 'monthly', success_url, cancel_url }) {
+  const res = await authorizedRequest('/api/subscriptions/checkout', {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ amount, currency, product_name, success_url, cancel_url }),
+    body: JSON.stringify({ plan_code, billing_period, success_url, cancel_url }),
   })
   const body = await res.json().catch(() => null)
   if (!res.ok) {
     throw new Error(extractErrorMessage(body, 'Failed to start checkout'))
   }
-  const url = body?.url || body?.checkout_url || body?.session_url || body?.payment_url
-  if (!url) {
-    throw new Error('Checkout session did not return a URL')
-  }
-  return url
+  return body
 }
 
 export async function apiGetPlanner({ period = 'week', start_date, company_id } = {}) {

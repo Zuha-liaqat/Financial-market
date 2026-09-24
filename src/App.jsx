@@ -24,9 +24,12 @@ import IntegrationsPage from './pages/User/IntegrationsPage'
 import DocumentationPage from './pages/User/DocumentationPage'
 import CompaniesPage from './pages/superadmin/CompaniesPage'
 import SubscriptionsPage from './pages/User/SubscriptionsPage'
+import ManageSubscriptionsPage from './pages/superadmin/ManageSubscriptionsPage'
+import AdminDashboardPage from './pages/superadmin/AdminDashboardPage'
 import DashboardLayout from './layouts/DashboardLayout'
 import RequireSuperAdmin from './components/RequireSuperAdmin'
 import RequireNotSuperAdmin from './components/RequireNotSuperAdmin'
+import { isSuperAdmin } from './data/auth'
 
 function PageTracker() {
   const location = useLocation()
@@ -36,6 +39,11 @@ function PageTracker() {
   }, [location.pathname, location.search])
 
   return null
+}
+
+// Checked on each visit so logging in as a different role picks the right dashboard.
+function DashboardRoute() {
+  return isSuperAdmin() ? <AdminDashboardPage /> : <DashboardPage />
 }
 
 function App() {
@@ -58,7 +66,7 @@ function App() {
         <Route element={<DashboardLayout />}>
           <Route
             path="/dashboard"
-            element={<DashboardPage />}
+            element={<DashboardRoute />}
           />
           <Route path="/create-post" element={<CreatePostPage />} />
           <Route path="/create-blog" element={<CreateBlogPage />} />
@@ -77,6 +85,14 @@ function App() {
             element={
               <RequireSuperAdmin>
                 <CompaniesPage />
+              </RequireSuperAdmin>
+            }
+          />
+          <Route
+            path="/super-admin/plans"
+            element={
+              <RequireSuperAdmin>
+                <ManageSubscriptionsPage />
               </RequireSuperAdmin>
             }
           />

@@ -73,7 +73,7 @@ export function mapApprovalQueueItem(item) {
     language: item.language || '',
     scheduleDate: item.date || '',
     scheduleTime: item.start_time || '',
-    isApproved: false,
+    isApproved: Boolean(item.is_approved),
     isPosted: false,
   }
 }
@@ -98,6 +98,7 @@ export function mapCalendarItem(item) {
     isPosted: Boolean(item.is_posted),
     postedAt: item.posted_at || null,
     postError: item.post_error || null,
+    publishedUrl: item.published_url || null,
   }
 }
 
@@ -125,6 +126,7 @@ export function mapPlannerItem(item) {
     isApproved: Boolean(item.is_approved),
     isPosted: Boolean(item.is_posted),
     createdAt: item.created_at || null,
+    publishedUrl: item.published_url || null,
   }
 }
 
@@ -176,5 +178,41 @@ export function mapApiPost(post) {
     isApproved: Boolean(post.is_approved),
     isPosted: Boolean(post.is_posted),
     postError: post.post_error || null,
+    publishedUrl: post.published_url || null,
+  }
+}
+
+export function mapApiBlog(blog) {
+  const platform = platformDisplay(blog.platform)
+  const status = blog.post_error
+    ? 'FLAGGED'
+    : blog.is_posted
+      ? 'PUBLISHED'
+      : blog.is_approved
+        ? 'PRODUCTION'
+        : 'STAGING'
+
+  return {
+    id: blog.id,
+    contentType: 'blog',
+    title: blog.title || blog.headline || 'Untitled blog',
+    headline: blog.headline || '',
+    platform,
+    thumbClass: 'bg-gradient-to-br from-neutral-400 to-neutral-600',
+    thumbLabel: platform?.slice(0, 4).toUpperCase() || '',
+    score: blog.ai_safety_score ?? 0,
+    status,
+    timestamp: formatPostTimestamp(blog.created_at),
+    caption: blog.preview || '',
+    hashtags: splitHashtags(blog.hashtags),
+    images: blog.image_url ? [{ name: blog.title || blog.id, dataUri: blog.image_url }] : [],
+    channels: platform ? [platform] : [],
+    language: blog.language || '',
+    scheduleDate: blog.date || '',
+    scheduleTime: blog.start_time || '',
+    isApproved: Boolean(blog.is_approved),
+    isPosted: Boolean(blog.is_posted),
+    postError: blog.post_error || null,
+    publishedUrl: blog.published_url || null,
   }
 }

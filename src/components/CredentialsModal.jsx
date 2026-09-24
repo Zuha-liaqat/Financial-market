@@ -35,16 +35,54 @@ function EyeButton({ show, onClick }) {
 export default function CredentialsModal({ platform, platformLabel, onClose, onSave }) {
   const [clientId, setClientId] = useState('')
   const [clientSecret, setClientSecret] = useState('')
+  const [organizationId, setOrganizationId] = useState('')
   const [showSecret, setShowSecret] = useState(false)
   const [submitting, setSubmitting] = useState(false)
   const [error, setError] = useState('')
+
+  const needsOrgId = platform === 'wordpress' || platform === 'ghost' || platform === 'wix'
+
+  const orgField = platform === 'wordpress'
+    ? {
+        label: 'WORDPRESS SITE URL',
+        placeholder: 'https://yoursite.com',
+        hint: 'The site you publish to. Must have Application Passwords enabled (Users → Profile).',
+      }
+    : platform === 'wix'
+      ? {
+          label: 'WIX SITE ID',
+          placeholder: 'e.g. 82f2b9e1-1a2b-3c4d-9e0f-1234567890ab',
+          hint: 'Your Wix site’s SITE ID. Find it in Wix Dashboard under Settings → Site History (the text in parentheses next to the site URL), or in the browser URL once logged in to your Wix site.',
+        }
+      : {
+          label: 'GHOST ADMIN API URL',
+          placeholder: 'https://yoursite.ghost.io',
+          hint: 'Your site’s Admin API URL, from Settings → Integrations → Custom Integration.',
+        }
+
+  const idField = platform === 'wordpress'
+    ? { label: 'USERNAME', placeholder: 'your-username', hint: 'A WordPress user with posting rights.' }
+    : platform === 'wix'
+      ? { label: 'CLIENT ID (ANY)', placeholder: 'e.g. main-site', hint: 'Optional. Any identifier you like — Wix connects with the SITE ID + API Key below.' }
+      : { label: 'CLIENT ID', placeholder: '86xxxxxxxxxxxx', hint: 'Paste the Client ID from your developer app.' }
+
+  const secretField = platform === 'wordpress'
+    ? { label: 'APPLICATION PASSWORD', placeholder: 'xxxx xxxx xxxx xxxx xxxx xxxx', hint: 'Generate it in WordPress: Users → Profile → Application Passwords.' }
+    : platform === 'wix'
+      ? { label: 'WIX API KEY', placeholder: 'paste-your-wix-api-key', hint: 'Your Wix site API key. Get it in Wix Dashboard under Settings → Site History → API Key, or via the Wix Dev Center.' }
+      : { label: 'CLIENT SECRET', placeholder: '••••••••••••••', hint: 'Paste the Client Secret from your developer app.' }
 
   async function handleSubmit(e) {
     e.preventDefault()
     setError('')
 
     if (!clientId.trim() || !clientSecret.trim()) {
-      setError('Please fill in both Client ID and Client Secret.')
+      setError('Please fill in both fields.')
+      return
+    }
+
+    if (needsOrgId && !organizationId.trim()) {
+      setError(`Please fill in the site URL.`)
       return
     }
 
@@ -54,6 +92,7 @@ export default function CredentialsModal({ platform, platformLabel, onClose, onS
         platform,
         client_id: clientId.trim(),
         client_secret: clientSecret.trim(),
+        organization_id: needsOrgId ? organizationId.trim() : '',
       })
     } catch (err) {
       setError(err.message || 'Failed to save credentials.')
@@ -66,7 +105,7 @@ export default function CredentialsModal({ platform, platformLabel, onClose, onS
       <div className="w-full max-w-md rounded-xl bg-white p-6 shadow-2xl">
         <h3 className="text-base font-semibold text-black">Configure {platformLabel}</h3>
         <p className="mt-1 text-sm text-neutral-500">
-          Paste the Client ID and Client Secret from your {platformLabel} developer app.
+          {needsOrgId ? `Enter your ${platformLabel} site details below to connect it.` : `Paste the Client ID and Client Secret from your ${platformLabel} developer app.`}
         </p>
 
         <form onSubmit={handleSubmit} className="mt-5 space-y-4">
@@ -77,32 +116,49 @@ export default function CredentialsModal({ platform, platformLabel, onClose, onS
             </div>
           </div>
 
+          {needsOrgId && (
+            <div>
+              <label className="mb-1 block text-xs font-semibold tracking-wide text-neutral-500">
+                {orgField.label} <span className="text-brand-500">*</span>
+              </label>
+              <input
+                value={organizationId}
+                onChange={(e) => setOrganizationId(e.target.value)}
+                placeholder={orgField.placeholder}
+                className="w-full rounded-lg border border-neutral-200 bg-neutral-50 px-3 py-2.5 text-sm outline-none placeholder:text-neutral-400 focus:border-brand-500 focus:bg-white focus:ring-2 focus:ring-brand-500/20"
+              />
+              <p className="mt-1 text-xs text-neutral-400">{orgField.hint}</p>
+            </div>
+          )}
+
           <div>
             <label className="mb-1 block text-xs font-semibold tracking-wide text-neutral-500">
-              CLIENT ID <span className="text-brand-500">*</span>
+              {idField.label} <span className="text-brand-500">*</span>
             </label>
             <input
               value={clientId}
               onChange={(e) => setClientId(e.target.value)}
-              placeholder="86xxxxxxxxxxxx"
+              placeholder={idField.placeholder}
               className="w-full rounded-lg border border-neutral-200 bg-neutral-50 px-3 py-2.5 text-sm outline-none placeholder:text-neutral-400 focus:border-brand-500 focus:bg-white focus:ring-2 focus:ring-brand-500/20"
             />
+            {idField.hint && <p className="mt-1 text-xs text-neutral-400">{idField.hint}</p>}
           </div>
 
           <div>
             <label className="mb-1 block text-xs font-semibold tracking-wide text-neutral-500">
-              CLIENT SECRET <span className="text-brand-500">*</span>
+              {secretField.label} <span className="text-brand-500">*</span>
             </label>
             <div className="flex items-center gap-2 rounded-lg border border-neutral-200 bg-neutral-50 px-3 py-2.5 transition focus-within:border-brand-500 focus-within:bg-white focus-within:ring-2 focus-within:ring-brand-500/20">
               <input
                 type={showSecret ? 'text' : 'password'}
                 value={clientSecret}
                 onChange={(e) => setClientSecret(e.target.value)}
-                placeholder="••••••••••••••"
+                placeholder={secretField.placeholder}
                 className="w-full bg-transparent text-sm outline-none placeholder:text-neutral-400"
               />
               <EyeButton show={showSecret} onClick={() => setShowSecret((v) => !v)} />
             </div>
+            {secretField.hint && <p className="mt-1 text-xs text-neutral-400">{secretField.hint}</p>}
           </div>
 
           {error && <p className="text-xs font-medium text-red-600">{error}</p>}

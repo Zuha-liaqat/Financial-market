@@ -134,7 +134,7 @@ export async function apiListPlatformCredentials(companyId) {
   return body
 }
 
-export async function apiSaveCredentials({ platform, client_id, client_secret, company_id }) {
+export async function apiSaveCredentials({ platform, client_id, client_secret, organization_id, company_id }) {
   const res = await authorizedRequest('/api/credentials', {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
@@ -142,6 +142,7 @@ export async function apiSaveCredentials({ platform, client_id, client_secret, c
       client_id,
       client_secret,
       platform,
+      ...(organization_id ? { organization_id } : {}),
       ...(company_id ? { company_id } : {}),
     }),
   })
@@ -158,6 +159,26 @@ export async function apiConnectInstagram(companyId) {
   const body = await res.json().catch(() => null)
   if (!res.ok) {
     throw new Error(extractErrorMessage(body, 'Failed to start Instagram connection'))
+  }
+  return body
+}
+
+export async function apiConnectBlogger(companyId) {
+  const query = companyId ? `?company_id=${companyId}` : ''
+  const res = await authorizedRequest(`/api/credentials/blogger/connect${query}`)
+  const body = await res.json().catch(() => null)
+  if (!res.ok) {
+    throw new Error(extractErrorMessage(body, 'Failed to start Blogger connection'))
+  }
+  return body
+}
+
+export async function apiConnectWix(companyId) {
+  const query = companyId ? `?company_id=${companyId}` : ''
+  const res = await authorizedRequest(`/api/credentials/wix/connect${query}`)
+  const body = await res.json().catch(() => null)
+  if (!res.ok) {
+    throw new Error(extractErrorMessage(body, 'Failed to start Wix connection'))
   }
   return body
 }

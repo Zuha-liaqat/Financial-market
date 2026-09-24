@@ -1,6 +1,8 @@
 import { useEffect, useState } from "react";
 import {
+  apiConnectBlogger,
   apiConnectInstagram,
+  apiConnectWix,
   apiGetCurrentUser,
   apiListPlatformCredentials,
   apiSaveCredentials,
@@ -110,6 +112,63 @@ const integrations = [
       </svg>
     ),
   },
+  {
+    key: "wordpress",
+    name: "WordPress",
+    status: "INACTIVE",
+    description:
+      "Publish and schedule blog articles directly to your WordPress site using Application Passwords.",
+    meta: { type: "none", text: "Not configured" },
+    action: "Enable",
+    icon: (
+      <svg className="h-6 w-6" viewBox="0 0 24 24" fill="#21759B">
+        <path d="M12 2C6.477 2 2 6.477 2 12s4.477 10 10 10 10-4.477 10-10S17.523 2 12 2zm0 1.8a8.2 8.2 0 016.9 12.7L13.7 5.6A8.2 8.2 0 0012 3.8zm-3.7.9a8.2 8.2 0 00-5 10.6l4.8-8.7a8.2 8.2 0 00.2-1.9zm2.4.6l4.7 12.9a8.2 8.2 0 003.9-3.6l-2.7-8A8.2 8.2 0 0010.7 5.3zM12 15.3l-2.7 7.5A8.2 8.2 0 0012 22.2a8.2 8.2 0 002.6-.4l-2.6-6.5zm-3.4-.6L3.3 12.4a8.2 8.2 0 0015.2 3.7L8.6 14.7zM9.6 7.5a8.2 8.2 0 00-1.2 8.8L12 5.3l-2.4 2.2z" />
+      </svg>
+    ),
+  },
+  {
+    key: "blogger",
+    name: "Blogger",
+    status: "INACTIVE",
+    description:
+      "Connect your Google account with Blogger and publish articles to your blog automatically.",
+    meta: { type: "none", text: "Not configured" },
+    action: "Enable",
+    icon: (
+      <svg className="h-6 w-6" viewBox="0 0 24 24" fill="#F57C00">
+        <path d="M14.9 2H10C6.7 2 4 4.7 4 8v8c0 3.3 2.7 6 6 6h8c3.3 0 6-2.7 6-6V9.1C24 6.2 20.8 2 14.9 2zm-1.9 12.9c0 1.5-1.2 2.7-2.7 2.7H9c-1.5 0-2.7-1.2-2.7-2.7V9c0-1.5 1.2-2.7 2.7-2.7h1.3c1.5 0 2.7 1.2 2.7 2.7v5.9zm5 .1c0 1.4-1.1 2.5-2.5 2.5a2.5 2.5 0 01-2.5-2.5c0-1.4 1.1-2.5 2.5-2.5s2.5 1.1 2.5 2.5zm0-6.5c0 1.4-1.1 2.5-2.5 2.5S13 8.3 13 6.9s1.1-2.5 2.5-2.5 2.5 1.1 2.5 2.5z" />
+      </svg>
+    ),
+  },
+  {
+    key: "wix",
+    name: "Wix",
+    status: "INACTIVE",
+    description:
+      "Connect your Wix site and publish blog posts directly using the Wix Blog API.",
+    meta: { type: "none", text: "Not configured" },
+    action: "Enable",
+    icon: (
+      <svg className="h-6 w-6" viewBox="0 0 24 24" fill="#0C6EFC">
+        <path d="M4 4a2 2 0 012-2h4.8c.6 2.2 1.5 4.2 2.7 6.1 1.2-1.9 2.1-3.9 2.7-6.1H18a2 2 0 012 2v16a2 2 0 01-2 2H6a2 2 0 01-2-2V4zm5.4 3.2c-.2-.2-.5-.2-.7 0l-1.8 3.6c-.1.2 0 .5.3.6l3.4 1.7c.2.1.5 0 .6-.2.1-.3.1-.6-.1-.8l-1.7-4.9zm5.2 0c-.3-.1-.6-.3-.6-.6V6.6c0-.3.2-.6.5-.6.2 0 .4 0 .5.2l1.7 4.9c.1.3.1.6-.1.8-.2.2-.5.3-.6.2l-3.4-1.7c-.3-.1-.4-.4-.3-.6l1.4-1.1.9 1.2z" />
+      </svg>
+    ),
+  },
+  {
+    key: "medium",
+    name: "Medium",
+    status: "INACTIVE",
+    description:
+      "Medium discontinued its public publishing API in 2023, so posting from third-party apps is no longer possible.",
+    meta: { type: "none", text: "Unavailable" },
+    action: "Unavailable",
+    disabled: true,
+    icon: (
+      <svg className="h-6 w-6" viewBox="0 0 24 24" fill="black">
+        <path d="M13.54 12a6.8 6.8 0 01-6.77 6.82A6.8 6.8 0 010 12a6.8 6.8 0 016.77-6.82A6.8 6.8 0 0113.54 12zM20.96 12c0 3.54-1.51 6.42-3.38 6.42-1.87 0-3.39-2.88-3.39-6.42s1.52-6.42 3.39-6.42 3.38 2.88 3.38 6.42M24 12c0 3.17-.53 5.75-1.19 5.75-.66 0-1.19-2.58-1.19-5.75s.53-5.75 1.19-5.75C23.47 6.25 24 8.83 24 12z" />
+      </svg>
+    ),
+  },
 ];
 
 function Toggle({ checked, onChange, disabled, label }) {
@@ -142,9 +201,14 @@ function IntegrationCard({
   statusLoading,
 }) {
   const disconnected = integration.status === "DISCONNECTED";
+  const unavailable = Boolean(integration.disabled);
 
   return (
-    <div className="flex flex-col rounded-lg border border-neutral-200 bg-white p-4 shadow-sm">
+    <div
+      className={`flex flex-col rounded-lg border bg-white p-4 shadow-sm ${
+        unavailable ? "border-neutral-200 opacity-70" : "border-neutral-200"
+      }`}
+    >
       <div className="flex items-start justify-between">
         <span className="flex h-9 w-9 items-center justify-center rounded-lg bg-neutral-50 ring-1 ring-neutral-200">
           {integration.icon}
@@ -175,7 +239,9 @@ function IntegrationCard({
             </span>
           ) : (
             <span
-              className={`rounded-full px-2.5 py-1 text-[10px] font-semibold tracking-wide ${statusStyles[integration.status]}`}
+              className={`rounded-full px-2.5 py-1 text-[10px] font-semibold tracking-wide ${
+                statusStyles[integration.status]
+              }`}
             >
               {integration.status}
             </span>
@@ -183,7 +249,7 @@ function IntegrationCard({
           <Toggle
             checked={enabled}
             onChange={onToggle}
-            disabled={statusLoading}
+            disabled={statusLoading || unavailable}
             label={integration.name}
           />
         </div>
@@ -278,10 +344,11 @@ function IntegrationCard({
             <button
               type="button"
               onClick={onConfigure}
+              disabled={unavailable}
               data-track-label={`Integrations - ${disconnected ? "Reconnect" : integration.action} ${integration.name}`}
-              className={`cursor-pointer font-semibold hover:underline ${
+              className={`cursor-pointer font-semibold hover:underline disabled:cursor-not-allowed disabled:no-underline ${
                 disconnected ? "text-red-600" : "text-brand-600"
-              }`}
+              } ${unavailable ? "text-neutral-400" : ""}`}
             >
               {disconnected ? "Reconnect" : integration.action}
             </button>
@@ -297,8 +364,8 @@ export default function IntegrationsPage() {
   const [configureTarget, setConfigureTarget] = useState(null);
   const [companyId, setCompanyId] = useState(null);
   const [statusLoading, setStatusLoading] = useState(true);
-  const [connectingInstagram, setConnectingInstagram] = useState(false);
-  const [instagramError, setInstagramError] = useState("");
+  const [connectingKey, setConnectingKey] = useState("");
+  const [connectError, setConnectError] = useState("");
 
   function loadConnectedStatus() {
     apiListPlatformCredentials()
@@ -332,24 +399,33 @@ export default function IntegrationsPage() {
     setConfigureTarget(null);
   }
 
-  async function handleConnectInstagram() {
-    setInstagramError("");
-    setConnectingInstagram(true);
+  async function handleOAuthConnect(key, connectFn) {
+    setConnectError("");
+    setConnectingKey(key);
     try {
-      const result = await apiConnectInstagram(companyId ?? undefined);
+      const result = await connectFn(companyId ?? undefined);
       if (!result?.authorization_url) {
-        throw new Error("Instagram did not return an authorization URL.");
+        throw new Error("The platform did not return an authorization URL.");
       }
       window.location.href = result.authorization_url;
     } catch (err) {
-      setInstagramError(err.message);
-      setConnectingInstagram(false);
+      setConnectError(err.message);
+      setConnectingKey("");
     }
   }
 
   function handleIntegrationAction(integration) {
+    if (integration.disabled) return;
     if (integration.key === "instagram") {
-      handleConnectInstagram();
+      handleOAuthConnect("instagram", apiConnectInstagram);
+      return;
+    }
+    if (integration.key === "blogger") {
+      handleOAuthConnect("blogger", apiConnectBlogger);
+      return;
+    }
+    if (integration.key === "wix") {
+      setConfigureTarget(integration);
       return;
     }
     setConfigureTarget(integration);
@@ -361,10 +437,12 @@ export default function IntegrationsPage() {
     return {
       ...integration,
       status: isConnected ? "ACTIVE" : "INACTIVE",
-      action: isConnected ? "Configure" : "Enable",
+      action: isConnected ? "Configure" : integration.disabled ? "Unavailable" : "Enable",
       meta: isConnected
         ? { type: "connected", text: "Connected" }
-        : { type: "none", text: "Not configured" },
+        : integration.disabled
+          ? { type: "none", text: "Unavailable" }
+          : { type: "none", text: "Not configured" },
     };
   });
 
@@ -379,16 +457,15 @@ export default function IntegrationsPage() {
             onToggle={() => handleIntegrationAction(integration)}
             onConfigure={() => handleIntegrationAction(integration)}
             statusLoading={
-              statusLoading ||
-              (integration.key === "instagram" && connectingInstagram)
+              statusLoading || (connectingKey === integration.key && Boolean(connectingKey))
             }
           />
         ))}
       </div>
 
-      {instagramError && (
+      {connectError && (
         <div className="rounded-lg border border-red-200 bg-red-50 px-4 py-2.5 text-sm text-red-600">
-          {instagramError}
+          {connectError}
         </div>
       )}
 

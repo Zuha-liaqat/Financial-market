@@ -1,7 +1,7 @@
 import { useState, useRef, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { addNotification } from "../../data/notifications";
-import { apiGenerateBlog } from "../../lib/api";
+import { apiGenerateBlog, apiGetCurrentUser, apiListPlatformCredentials } from "../../lib/api";
 
 const toneOptions = [
   "Professional",
@@ -149,6 +149,20 @@ export default function CreateBlogPage() {
   const [showUrlDialog, setShowUrlDialog] = useState(false);
   const [uploadedFiles, setUploadedFiles] = useState([]);
   const [isDragOver, setIsDragOver] = useState(false);
+  const [connectedMap, setConnectedMap] = useState({});
+
+  useEffect(() => {
+    apiGetCurrentUser()
+      .then((me) =>
+        apiListPlatformCredentials(me?.id ?? undefined).then((list) => {
+          const map = Object.fromEntries(
+            (list || []).map((p) => [p.platform, p.is_connected]),
+          );
+          setConnectedMap(map);
+        }),
+      )
+      .catch(() => {});
+  }, []);
 
   useEffect(() => {
     function handleOutside(e) {
@@ -596,35 +610,57 @@ export default function CreateBlogPage() {
             required
           />
           <div className="flex flex-wrap gap-3">
-            {Object.entries(platformIcons).map(([platform, icon]) => (
-              <label
-                key={platform}
-                className={`flex flex-1 min-w-[140px] max-sm:min-w-full cursor-pointer select-none items-center gap-3 rounded-lg border p-2.5 transition ${
-                  selectedPlatforms.includes(platform)
-                    ? "border-brand-300 bg-brand-50"
-                    : "border-neutral-200 bg-white hover:bg-neutral-50"
-                }`}
-              >
-                <input
-                  type="checkbox"
-                  checked={selectedPlatforms.includes(platform)}
-                  onChange={() =>
-                    setSelectedPlatforms((prev) =>
-                      prev.includes(platform)
-                        ? prev.filter((p) => p !== platform)
-                        : [...prev, platform],
-                    )
-                  }
-                  className="h-4 w-4 cursor-pointer rounded border-neutral-300 accent-brand-500"
-                />
-                <span className="flex items-center gap-2.5">
-                  {icon}
-                  <span className="text-sm font-medium text-neutral-700">
-                    {platform}
+            {Object.entries(platformIcons).map(([platform, icon]) => {
+              const platformKey = platform.toLowerCase();
+              const requiresConnection = platformKey === "wordpress" || platformKey === "blogger" || platformKey === "wix";
+              const isEnabledPlatform = !requiresConnection || connectedMap[platformKey];
+              const isMedium = platformKey === "medium";
+              const isDisabled = !isEnabledPlatform || isMedium;
+              return (
+                <label
+                  key={platform}
+                  className={`flex flex-1 min-w-[140px] max-sm:min-w-full select-none items-center gap-3 rounded-lg border p-2.5 transition ${
+                    isDisabled
+                      ? "cursor-not-allowed border-neutral-200 bg-neutral-100 opacity-60"
+                      : selectedPlatforms.includes(platform)
+                        ? "cursor-pointer border-brand-300 bg-brand-50"
+                        : "cursor-pointer border-neutral-200 bg-white hover:bg-neutral-50"
+                  }`}
+                >
+                  <input
+                    type="checkbox"
+                    disabled={isDisabled}
+                    checked={selectedPlatforms.includes(platform)}
+                    onChange={() =>
+                      setSelectedPlatforms((prev) =>
+                        prev.includes(platform)
+                          ? prev.filter((p) => p !== platform)
+                          : [...prev, platform],
+                      )
+                    }
+                    className="h-4 w-4 cursor-pointer rounded border-neutral-300 accent-brand-500 disabled:cursor-not-allowed"
+                  />
+                  <span className="flex flex-col items-start justify-center">
+                    <span className="flex items-center gap-2.5">
+                      {icon}
+                      <span className="text-sm font-medium text-neutral-700">
+                        {platform}
+                      </span>
+                    </span>
+                    {isMedium && (
+                      <span className="mt-1.5 text-[11px] leading-tight text-neutral-400">
+                        Unavailable — API discontinued in 2023
+                      </span>
+                    )}
+                    {requiresConnection && !isEnabledPlatform && (
+                      <span className="mt-1.5 text-[11px] leading-tight text-neutral-400">
+                        Connect {platform} in Integrations first
+                      </span>
+                    )}
                   </span>
-                </span>
-              </label>
-            ))}
+                </label>
+              );
+            })}
           </div>
         </div>
 

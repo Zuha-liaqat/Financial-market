@@ -920,6 +920,20 @@ export default function PostPreviewModal({ item, onClose, onPublished }) {
           </div>
         )}
 
+        {item.publishedUrl && (
+          <div className="mt-3 rounded-lg border border-emerald-200 bg-emerald-50 px-3 py-2 text-xs text-emerald-700">
+            <span className="font-medium">Published:</span>{" "}
+            <a
+              href={item.publishedUrl}
+              target="_blank"
+              rel="noreferrer"
+              className="underline hover:text-emerald-800"
+            >
+              {item.publishedUrl}
+            </a>
+          </div>
+        )}
+
         {item.contentType !== 'blog' && (
           <div className="mt-4 flex items-center justify-between gap-4 border-t border-neutral-200 pt-4">
             <p className="text-xs text-neutral-500">

@@ -1,7 +1,18 @@
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import { Outlet } from 'react-router-dom'
 import Sidebar from '../components/Sidebar'
 import Topbar from '../components/Topbar'
+import { SuccessToast } from '../components/Toast'
+import { subscribeGlobalToast } from '../lib/toastBus'
+
+function GlobalToast() {
+  const [message, setMessage] = useState(null)
+
+  useEffect(() => subscribeGlobalToast(setMessage), [])
+
+  if (!message) return null
+  return <SuccessToast message={message} onClose={() => setMessage(null)} />
+}
 
 export default function DashboardLayout() {
   const [sidebarOpen, setSidebarOpen] = useState(false)
@@ -15,6 +26,7 @@ export default function DashboardLayout() {
           <Outlet />
         </main>
       </div>
+      <GlobalToast />
     </div>
   )
 }

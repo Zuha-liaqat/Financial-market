@@ -107,6 +107,25 @@ function formatSize(sizeKb) {
     : `${sizeKb.toFixed(2)} KB`;
 }
 
+function AssetCardSkeleton() {
+  return (
+    <div className="overflow-hidden rounded-lg border border-neutral-200 bg-white">
+      <div className="h-40 w-full animate-pulse bg-neutral-100" />
+      <div className="space-y-2 p-3">
+        <div className="h-4 w-3/4 animate-pulse rounded bg-neutral-200" />
+        <div className="flex items-center gap-3">
+          <div className="h-3 w-16 animate-pulse rounded bg-neutral-100" />
+          <div className="h-3 w-12 animate-pulse rounded bg-neutral-100" />
+        </div>
+        <div className="flex items-center justify-between pt-1">
+          <div className="h-2.5 w-20 animate-pulse rounded bg-neutral-100" />
+          <div className="h-4 w-4 animate-pulse rounded bg-neutral-100" />
+        </div>
+      </div>
+    </div>
+  );
+}
+
 export default function LibraryPage() {
   const [activeType, setActiveType] = useState("all");
   const [activeCategory, setActiveCategory] = useState(null);
@@ -285,13 +304,15 @@ export default function LibraryPage() {
       {/* Header row */}
       <div className="flex flex-wrap items-center justify-between gap-4">
         <div>
-          <p className="text-sm text-neutral-500">
-            {status === "ready"
-              ? activeType === "all" && !activeCategory
+          {status === "ready" ? (
+            <p className="text-sm text-neutral-500">
+              {activeType === "all" && !activeCategory
                 ? `Showing ${filteredItems.length} total asset${filteredItems.length === 1 ? "" : "s"} for Financial Market`
-                : `Showing ${filteredItems.length} of ${items.length} assets for Financial Market`
-              : "Loading assets for Financial Market…"}
-          </p>
+                : `Showing ${filteredItems.length} of ${items.length} assets for Financial Market`}
+            </p>
+          ) : (
+            <div className="h-4 w-56 animate-pulse rounded bg-neutral-200" />
+          )}
         </div>
         <div className="flex items-center gap-2">
           <button
@@ -325,17 +346,60 @@ export default function LibraryPage() {
       {status === "loading" && (
         <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
           {Array.from({ length: 6 }).map((_, i) => (
-            <div
-              key={i}
-              className="h-64 animate-pulse rounded-lg border border-neutral-200 bg-neutral-100"
-            />
+            <AssetCardSkeleton key={i} />
           ))}
         </div>
       )}
 
       {status === "ready" && filteredItems.length === 0 && (
-        <div className="rounded-lg border border-dashed border-neutral-300 p-10 text-center text-sm text-neutral-400">
-          No assets match the selected filters.
+        <div className="rounded-lg border border-dashed border-neutral-300 bg-white p-12">
+          <div className="flex flex-col items-center text-center">
+            <div className="mb-4 flex h-12 w-12 items-center justify-center rounded-full bg-neutral-100">
+              <svg
+                className="h-6 w-6 text-neutral-400"
+                fill="none"
+                viewBox="0 0 24 24"
+                stroke="currentColor"
+              >
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  strokeWidth={1.5}
+                  d="M2.25 15.75l5.159-5.159a2.25 2.25 0 013.182 0l5.159 5.159m-1.5-1.5l1.409-1.409a2.25 2.25 0 013.182 0l2.909 2.909M3 8.25V15a2.25 2.25 0 002.25 2.25h13.5A2.25 2.25 0 0021 15V8.25A2.25 2.25 0 0018.75 6H5.25A2.25 2.25 0 003 8.25z"
+                />
+              </svg>
+            </div>
+            {items.length === 0 ? (
+              <>
+                <h3 className="text-lg font-bold text-black">
+                  Your library is empty
+                </h3>
+                <p className="mt-2 max-w-md text-sm text-neutral-500">
+                  Upload photos, videos, or articles to build a reusable
+                  asset library for your posts.
+                </p>
+              </>
+            ) : (
+              <>
+                <h3 className="text-lg font-bold text-black">
+                  No assets match your filters
+                </h3>
+                <p className="mt-2 max-w-md text-sm text-neutral-500">
+                  Try a different media type or category, or clear your
+                  filters to see everything.
+                </p>
+                <button
+                  onClick={() => {
+                    setActiveType("all");
+                    setActiveCategory(null);
+                  }}
+                  className="mt-5 rounded-lg px-5 py-3 text-sm font-semibold text-brand-600 ring-1 ring-brand-200 transition hover:bg-brand-50"
+                >
+                  Clear filters
+                </button>
+              </>
+            )}
+          </div>
         </div>
       )}
 

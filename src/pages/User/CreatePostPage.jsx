@@ -1,7 +1,17 @@
 import { useState, useRef, useEffect } from "react";
 import { addNotification } from "../../data/notifications";
 import { apiGeneratePost } from "../../lib/api";
-import { SuccessToast } from "../../components/Toast";
+import { showGlobalToast } from "../../lib/toastBus";
+
+const DRAFT_KEY = "create_post_draft";
+
+function loadDraft() {
+  try {
+    return JSON.parse(localStorage.getItem(DRAFT_KEY) || "null");
+  } catch {
+    return null;
+  }
+}
 
 const toneOptions = [
   "Professional",
@@ -204,19 +214,21 @@ const inputClass =
 export default function CreatePostPage() {
   const fileInputRef = useRef(null);
   const dropdownRef = useRef(null);
-  const [prompt, setPrompt] = useState("");
-  const [tone, setTone] = useState("Professional");
-  const [language, setLanguage] = useState("EN-US");
-  const [referenceUrl, setReferenceUrl] = useState("");
+  const draft = loadDraft();
+  const [prompt, setPrompt] = useState(draft?.prompt ?? "");
+  const [tone, setTone] = useState(draft?.tone ?? "Professional");
+  const [language, setLanguage] = useState(draft?.language ?? "EN-US");
+  const [referenceUrl, setReferenceUrl] = useState(draft?.referenceUrl ?? "");
   const [urlDraft, setUrlDraft] = useState("");
-  const [scheduleDate, setScheduleDate] = useState("");
-  const [scheduleTime, setScheduleTime] = useState("");
-  const [selectedPlatforms, setSelectedPlatforms] = useState([]);
-  const [tags, setTags] = useState(["#RoboBus"]);
+  const [scheduleDate, setScheduleDate] = useState(draft?.scheduleDate ?? "");
+  const [scheduleTime, setScheduleTime] = useState(draft?.scheduleTime ?? "");
+  const [selectedPlatforms, setSelectedPlatforms] = useState(
+    draft?.selectedPlatforms ?? [],
+  );
+  const [tags, setTags] = useState(draft?.tags ?? ["#RoboBus"]);
   const [newTag, setNewTag] = useState("");
   const [isGenerating, setIsGenerating] = useState(false);
   const [generateError, setGenerateError] = useState(null);
-  const [generateSuccess, setGenerateSuccess] = useState(null);
   const [showToneDropdown, setShowToneDropdown] = useState(false);
   const [showLanguageDropdown, setShowLanguageDropdown] = useState(false);
   const [showUrlDialog, setShowUrlDialog] = useState(false);
@@ -244,6 +256,31 @@ export default function CreatePostPage() {
       document.removeEventListener("keydown", handleEscape);
     };
   }, []);
+
+  useEffect(() => {
+    localStorage.setItem(
+      DRAFT_KEY,
+      JSON.stringify({
+        prompt,
+        tone,
+        language,
+        referenceUrl,
+        scheduleDate,
+        scheduleTime,
+        selectedPlatforms,
+        tags,
+      }),
+    );
+  }, [
+    prompt,
+    tone,
+    language,
+    referenceUrl,
+    scheduleDate,
+    scheduleTime,
+    selectedPlatforms,
+    tags,
+  ]);
 
   function addTag(tag) {
     const clean = tag.trim().replace(/^#*/, "#");
@@ -343,7 +380,8 @@ export default function CreatePostPage() {
       });
 
       setIsGenerating(false);
-      setGenerateSuccess(
+      localStorage.removeItem(DRAFT_KEY);
+      showGlobalToast(
         count > 1
           ? `${count} posts created successfully!`
           : "Post created successfully!",
@@ -360,13 +398,6 @@ export default function CreatePostPage() {
         <div className="rounded-lg border border-red-200 bg-red-50 px-4 py-2.5 text-sm text-red-600">
           {generateError}
         </div>
-      )}
-
-      {generateSuccess && (
-        <SuccessToast
-          message={generateSuccess}
-          onClose={() => setGenerateSuccess(null)}
-        />
       )}
 
       {isGenerating && (

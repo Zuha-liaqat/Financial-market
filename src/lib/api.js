@@ -573,6 +573,54 @@ export async function apiGeneratePlan(
   return body
 }
 
+export async function apiGetThemeOptions() {
+  const res = await authorizedRequest('/api/themes/options')
+  const body = await res.json().catch(() => null)
+  if (!res.ok) {
+    throw new Error(extractErrorMessage(body, 'Failed to load theme options'))
+  }
+  return body
+}
+
+export async function apiGetBrandProfile(companyId) {
+  const query = companyId ? `?company_id=${companyId}` : ''
+  const res = await authorizedRequest(`/api/themes${query}`)
+  const body = await res.json().catch(() => null)
+  if (!res.ok) {
+    throw new Error(extractErrorMessage(body, 'Failed to load brand profile'))
+  }
+  return body
+}
+
+export async function apiSaveBrandProfile(payload, companyId) {
+  const query = companyId ? `?company_id=${companyId}` : ''
+  const res = await authorizedRequest(`/api/themes${query}`, {
+    method: 'PUT',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(payload),
+  })
+  const body = await res.json().catch(() => null)
+  if (!res.ok) {
+    throw new Error(extractErrorMessage(body, 'Failed to save brand profile'))
+  }
+  return body
+}
+
+export async function apiUploadBrandLogo(file, companyId) {
+  const query = companyId ? `?company_id=${companyId}` : ''
+  const formData = new FormData()
+  formData.append('logo', file)
+  const res = await authorizedRequest(`/api/themes/logo${query}`, {
+    method: 'POST',
+    body: formData,
+  })
+  const body = await res.json().catch(() => null)
+  if (!res.ok) {
+    throw new Error(extractErrorMessage(body, 'Failed to upload logo'))
+  }
+  return body
+}
+
 export async function apiGetProfile() {
   const res = await authorizedRequest('/api/settings/profile')
   const body = await res.json().catch(() => null)

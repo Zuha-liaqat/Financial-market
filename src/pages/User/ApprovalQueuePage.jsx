@@ -1179,8 +1179,46 @@ export default function ApprovalQueuePage() {
         ))}
 
       {status === "ready" && items.length === 0 && (
-        <div className="rounded-lg border border-dashed border-neutral-300 p-10 text-center text-sm text-neutral-400">
-          No posts or blogs waiting for review.
+        <div className="rounded-lg border border-dashed border-neutral-300 bg-white p-12">
+          <div className="flex flex-col items-center text-center">
+            <div className="mb-4 flex h-12 w-12 items-center justify-center rounded-full bg-neutral-100">
+              <svg
+                className="h-6 w-6 text-neutral-400"
+                fill="none"
+                viewBox="0 0 24 24"
+                stroke="currentColor"
+              >
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  strokeWidth={1.5}
+                  d="M9 12.75l2.25 2.25 4.5-6.75M21 12a9 9 0 11-18 0 9 9 0 0118 0z"
+                />
+              </svg>
+            </div>
+            <p className="mt-2 max-w-md text-sm text-neutral-500">
+              There are no posts or blogs waiting for review right now.
+            </p>
+            <button
+              onClick={() => navigate("/create-post")}
+              className="mt-5 flex items-center gap-2 rounded-lg bg-brand-500 px-5 py-3 text-sm font-semibold text-white shadow-sm transition hover:bg-brand-600"
+            >
+              <svg
+                className="h-4 w-4"
+                fill="none"
+                viewBox="0 0 24 24"
+                stroke="currentColor"
+              >
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  strokeWidth={2}
+                  d="M12 4.5v15m7.5-7.5h-15"
+                />
+              </svg>
+              Create a Post
+            </button>
+          </div>
         </div>
       )}
 

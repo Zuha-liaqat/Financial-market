@@ -287,6 +287,42 @@ function PostImages({ item, initials, platform, className = '' }) {
     )
   }
 
+  if (platform === 'Facebook') {
+    if (images.length === 1) {
+      return (
+        <div className={`relative overflow-hidden bg-white ${className}`}>
+          <img src={images[0].dataUri} alt={images[0].name} className="h-full w-full object-contain" />
+        </div>
+      )
+    }
+    if (images.length === 2) {
+      return (
+        <div className={`relative flex overflow-hidden bg-white gap-0.5 ${className}`}>
+          <img src={images[0].dataUri} alt={images[0].name} className="h-full w-1/2 object-contain" />
+          <img src={images[1].dataUri} alt={images[1].name} className="h-full w-1/2 object-contain" />
+        </div>
+      )
+    }
+    if (images.length === 3) {
+      return (
+        <div className={`relative flex overflow-hidden bg-white gap-0.5 ${className}`}>
+          <img src={images[0].dataUri} alt={images[0].name} className="h-full w-1/2 object-contain" />
+          <div className="flex h-full w-1/2 flex-col gap-0.5">
+            <img src={images[1].dataUri} alt={images[1].name} className="h-full w-full object-contain" />
+            <img src={images[2].dataUri} alt={images[2].name} className="h-full w-full object-contain" />
+          </div>
+        </div>
+      )
+    }
+    return (
+      <div className={`relative grid grid-cols-2 overflow-hidden bg-white gap-0.5 ${className}`}>
+        {images.slice(0, 4).map((img, i) => (
+          <img key={i} src={img.dataUri} alt={img.name} className="h-full w-full object-contain" />
+        ))}
+      </div>
+    )
+  }
+
   return <PostImage item={item} initials={initials} className={className} />
 }
 
@@ -618,6 +654,150 @@ function LinkedInWeb({ item, initials }) {
   )
 }
 
+function FacebookMobile({ item, initials }) {
+  return (
+    <div className="min-h-full bg-white">
+      <StatusBar />
+      <div className="flex items-center justify-between px-4 py-1.5">
+        <span className="text-lg font-bold tracking-tight text-[#1877F2]">facebook</span>
+        <div className="flex items-center gap-4 text-neutral-700">
+          <svg className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.75} d="M21 21l-4.35-4.35M18 10.5a7.5 7.5 0 11-15 0 7.5 7.5 0 0115 0z" />
+          </svg>
+          <MessengerIcon className="h-5 w-5" />
+        </div>
+      </div>
+
+      <div className="border-t border-neutral-100 bg-white">
+        <div className="flex items-center gap-2 px-3 pt-3">
+          <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-[#1877F2] text-xs font-bold text-white">
+            {initials}
+          </div>
+          <div className="min-w-0">
+            <div className="flex items-center gap-1">
+              <span className="text-xs font-semibold text-black">Financial Market</span>
+              <VerifiedBadge className="h-3.5 w-3.5" />
+            </div>
+            <p className="text-[10px] text-neutral-500">2h · Edited</p>
+          </div>
+          <DotsIcon className="ml-auto h-5 w-5 text-neutral-500" />
+        </div>
+
+        <p className="px-3 pt-2.5 text-[12px] font-bold leading-relaxed text-black">{item.title}</p>
+        <p className="whitespace-pre-line px-3 pt-1 text-[11px] leading-relaxed text-neutral-800">
+          <TruncatedCaption
+            text={item.caption}
+            hashtags={item.hashtags.join(' ')}
+            hashtagClass="text-[#1877F2]"
+            limit={150}
+          />
+        </p>
+
+        <div className="mt-2">
+          <PostImages item={item} initials={initials} platform="Facebook" textSize="text-3xl" className="h-48" />
+        </div>
+
+        <div className="flex items-center justify-between px-3 py-1.5 text-[10px] text-neutral-500">
+          <span className="flex items-center gap-1">
+            <span className="flex h-4 w-4 items-center justify-center rounded-full bg-[#1877F2] text-white">
+              <ThumbIcon className="h-2.5 w-2.5" />
+            </span>
+            312
+          </span>
+          <span>24 comments · 12 shares</span>
+        </div>
+
+        <div className="grid grid-cols-3 border-t border-neutral-100 text-[10px] font-semibold text-neutral-600">
+          <span className="flex items-center justify-center gap-1.5 py-2">
+            <ThumbIcon className="h-4 w-4" /> Like
+          </span>
+          <span className="flex items-center justify-center gap-1.5 py-2">
+            <CommentIcon className="h-4 w-4" /> Comment
+          </span>
+          <span className="flex items-center justify-center gap-1.5 py-2">
+            <ShareIcon className="h-4 w-4" /> Share
+          </span>
+        </div>
+      </div>
+    </div>
+  )
+}
+
+function FacebookWeb({ item, initials }) {
+  return (
+    <div className="flex bg-neutral-50">
+      <div className="flex flex-1 items-start gap-5 p-4">
+        <div className="min-w-0 flex-1">
+          <div className="rounded-md border border-neutral-200 bg-white shadow-sm">
+            <div className="flex items-center gap-2 px-4 pt-4">
+              <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-full bg-[#1877F2] text-sm font-bold text-white">
+                {initials}
+              </div>
+              <div className="min-w-0">
+                <div className="flex items-center gap-1">
+                  <span className="text-sm font-semibold text-black">Financial Market</span>
+                  <VerifiedBadge className="h-4 w-4" />
+                </div>
+                <p className="text-[11px] text-neutral-500">2h · Edited</p>
+              </div>
+              <DotsIcon className="ml-auto h-5 w-5 text-neutral-500" />
+            </div>
+
+            <p className="px-4 pt-3 text-sm font-bold leading-relaxed text-black">{item.title}</p>
+            <p className="whitespace-pre-line px-4 pt-1 text-[13px] leading-relaxed text-neutral-800">
+              <TruncatedCaption
+                text={item.caption}
+                hashtags={item.hashtags.join(' ')}
+                hashtagClass="text-[#1877F2]"
+                limit={200}
+              />
+            </p>
+
+            <div className="mt-3">
+              <PostImages item={item} initials={initials} platform="Facebook" textSize="text-4xl" className="h-44" />
+            </div>
+
+            <div className="flex items-center justify-between px-4 py-2 text-[11px] text-neutral-500">
+              <span className="flex items-center gap-1">
+                <span className="flex h-5 w-5 items-center justify-center rounded-full bg-[#1877F2] text-white">
+                  <ThumbIcon className="h-3 w-3" />
+                </span>
+                312
+              </span>
+              <span>24 comments · 12 shares</span>
+            </div>
+
+            <div className="grid grid-cols-3 border-t border-neutral-100 text-[11px] font-semibold text-neutral-600">
+              <span className="flex items-center justify-center gap-1.5 py-2.5">
+                <ThumbIcon className="h-4 w-4" /> Like
+              </span>
+              <span className="flex items-center justify-center gap-1.5 py-2.5">
+                <CommentIcon className="h-4 w-4" /> Comment
+              </span>
+              <span className="flex items-center justify-center gap-1.5 py-2.5">
+                <ShareIcon className="h-4 w-4" /> Share
+              </span>
+            </div>
+          </div>
+        </div>
+
+        <div className="hidden w-52 shrink-0 space-y-4 md:block">
+          <div className="rounded-md border border-neutral-200 bg-white p-3 shadow-sm">
+            <p className="text-[11px] font-semibold text-neutral-500">Financial Market</p>
+            <div className="mt-2 h-8 rounded bg-neutral-200" />
+            <div className="mt-2 h-2 w-3/4 rounded bg-neutral-200" />
+            <div className="mt-3 h-6 rounded bg-[#1877F2] opacity-90" />
+          </div>
+          <div className="rounded-md border border-neutral-200 bg-white p-3 shadow-sm">
+            <p className="text-[11px] font-semibold text-neutral-500">Hashtags</p>
+            <p className="mt-2 text-[11px] font-medium text-[#1877F2]">{item.hashtags.slice(0, 3).join(' ')}</p>
+          </div>
+        </div>
+      </div>
+    </div>
+  )
+}
+
 function TwitterMobile({ item, initials }) {
   return (
     <div className="min-h-full bg-white text-black">
@@ -769,14 +949,14 @@ function BrowserFrame({ children, url }) {
 const platforms = [
   {
     key: 'LinkedIn', label: 'LinkedIn', activeColor: 'text-[#0A66C2]', Mobile: LinkedInMobile, Web: LinkedInWeb, url: 'linkedin.com/feed', icon: (
-      <svg className="h-3.5 w-3.5 shrink-0" viewBox="0 0 24 24" fill="currentColor">
+      <svg className="h-5 w-5 shrink-0" viewBox="0 0 24 24" fill="currentColor">
         <path d="M20.447 20.452h-3.554v-5.569c0-1.328-.027-3.037-1.852-3.037-1.853 0-2.136 1.445-2.136 2.939v5.667H9.351V9h3.414v1.561h.046c.477-.9 1.637-1.85 3.37-1.85 3.601 0 4.267 2.37 4.267 5.455v6.286zM5.337 7.433c-1.144 0-2.063-.926-2.063-2.065 0-1.138.92-2.063 2.063-2.063 1.14 0 2.064.925 2.064 2.063 0 1.139-.925 2.065-2.064 2.065zm1.782 13.019H3.555V9h3.564v11.452zM22.225 0H1.771C.792 0 0 .774 0 1.729v20.542C0 23.227.792 24 1.771 24h20.451C23.2 24 24 23.227 24 22.271V1.729C24 .774 23.2 0 22.222 0h.003z" />
       </svg>
     )
   },
   {
     key: 'Instagram', label: 'Instagram', activeColor: 'text-[#E1306C]', Mobile: InstagramMobile, Web: InstagramWeb, url: 'instagram.com', icon: (
-      <svg className="h-3.5 w-3.5 shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+      <svg className="h-5 w-5 shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
         <rect x="4" y="4" width="16" height="16" rx="4" />
         <circle cx="12" cy="12" r="3.5" />
         <circle cx="17.5" cy="6.5" r="1.2" fill="currentColor" stroke="none" />
@@ -785,8 +965,15 @@ const platforms = [
   },
   {
     key: 'Twitter', label: 'X / Twitter', activeColor: 'text-black', Mobile: TwitterMobile, Web: TwitterWeb, url: 'x.com/home', icon: (
-      <svg className="h-3.5 w-3.5 shrink-0" viewBox="0 0 24 24" fill="currentColor">
+      <svg className="h-5 w-5 shrink-0" viewBox="0 0 24 24" fill="currentColor">
         <path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-5.214-6.817L4.99 21.75H1.68l7.73-8.835L1.254 2.25H8.08l4.713 6.231zm-1.161 17.52h1.833L7.084 4.126H5.117z" />
+      </svg>
+    )
+  },
+  {
+    key: 'Facebook', label: 'Facebook', activeColor: 'text-[#1877F2]', Mobile: FacebookMobile, Web: FacebookWeb, url: 'facebook.com', icon: (
+      <svg className="h-5 w-5 shrink-0" viewBox="0 0 24 24" fill="currentColor">
+        <path d="M22 12c0-5.523-4.477-10-10-10S2 6.477 2 12c0 4.991 3.657 9.128 8.438 9.878v-6.987h-2.54V12h2.54V9.797c0-2.506 1.492-3.89 3.777-3.89 1.094 0 2.238.195 2.238.195v2.46h-1.26c-1.243 0-1.63.771-1.63 1.562V12h2.773l-.443 2.89h-2.33v6.988C18.343 21.128 22 16.991 22 12z" />
       </svg>
     )
   },
@@ -840,7 +1027,9 @@ export default function PostPreviewModal({ item, onClose, onPublished }) {
                 key={p.key}
                 disabled={!enabled}
                 onClick={() => enabled && setTab(p.key)}
-                className={`flex flex-1 items-center justify-center gap-1.5 rounded-lg px-3 py-2.5 text-xs font-semibold ring-1 transition-all ${
+                title={p.label}
+                aria-label={p.label}
+                className={`flex flex-1 items-center justify-center rounded-lg px-3 py-2.5 ring-1 transition-all ${
                   !enabled
                     ? 'cursor-not-allowed text-neutral-300'
                     : tab === p.key
@@ -849,7 +1038,6 @@ export default function PostPreviewModal({ item, onClose, onPublished }) {
                 }`}
               >
                 {p.icon}
-                {p.label}
               </button>
             )
           })}

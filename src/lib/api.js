@@ -562,6 +562,19 @@ export async function apiStartSubscriptionCheckout({ plan_code, billing_period =
   return body
 }
 
+// Confirms a finished Stripe checkout straight away so the plan is active
+// without waiting for Stripe's webhook.
+export async function apiVerifyPaymentSession(sessionId) {
+  const res = await authorizedRequest(`/api/payments/verify-session/${encodeURIComponent(sessionId)}`, {
+    method: 'POST',
+  })
+  const body = await res.json().catch(() => null)
+  if (!res.ok) {
+    throw new Error(extractErrorMessage(body, 'Failed to verify payment'))
+  }
+  return body
+}
+
 export async function apiGetPlanner({ period = 'week', start_date, company_id } = {}) {
   const params = new URLSearchParams()
   params.set('period', period)

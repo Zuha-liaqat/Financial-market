@@ -1,22 +1,27 @@
 import { useEffect, useMemo, useRef, useState } from 'react'
 import { createPortal } from 'react-dom'
 import ConfirmDialog from '../../components/ConfirmDialog'
-import { addCompanies, avatarColors, deleteCompany, getAllCompanies, updateCompany } from '../../data/companies'
+import { avatarColors } from '../../data/companies'
 import { apiDeleteUser, apiListUsers } from '../../lib/api'
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '../../components/ui/select'
 
 const statusStyles = {
   Active: 'bg-emerald-50 text-emerald-600 ring-1 ring-emerald-200',
-  Trial: 'bg-amber-50 text-amber-600 ring-1 ring-amber-200',
-  Suspended: 'bg-red-50 text-red-600 ring-1 ring-red-200',
+  Inactive: 'bg-neutral-100 text-neutral-500 ring-1 ring-neutral-200',
 }
 
 const statusDotColor = {
   Active: 'bg-emerald-500',
-  Trial: 'bg-amber-500',
-  Suspended: 'bg-red-500',
+  Inactive: 'bg-neutral-400',
+}
+
+// "Pro Plan (Monthly)" -> "Pro", used to group companies in the plan filter.
+function planGroup(planName) {
+  return (planName || 'Free').replace(/\s*plan\b.*$/i, '').trim() || 'Free'
 }
 
 function formatDate(isoString) {
+  if (!isoString) return '—'
   return new Date(isoString).toLocaleDateString('en-US', {
     month: 'short',
     day: 'numeric',
@@ -160,77 +165,52 @@ export default function CompaniesPage() {
   const [companies, setCompanies] = useState([])
   const [search, setSearch] = useState('')
   const [statusFilter, setStatusFilter] = useState('all')
+  const [planFilter, setPlanFilter] = useState('all')
   const [deleteTarget, setDeleteTarget] = useState(null)
   const [deleting, setDeleting] = useState(false)
   const [deleteError, setDeleteError] = useState('')
   const [page, setPage] = useState(1)
 
-  const loadCompanies = () => setCompanies(getAllCompanies())
+  const [loadState, setLoadState] = useState('loading')
+  const [loadError, setLoadError] = useState('')
 
+  // The table shows exactly what /api/company returns (super admins excluded).
   useEffect(() => {
-    loadCompanies()
-    syncCompaniesFromApi()
-  }, [])
-
-  async function syncCompaniesFromApi() {
-    try {
-      const users = await apiListUsers()
-      const existing = getAllCompanies()
-      const existingByApiId = new Map(existing.filter((c) => c.apiUserId).map((c) => [c.apiUserId, c]))
-      const existingEmails = new Set(existing.map((c) => c.email).filter(Boolean))
-
-      const usersToAdd = (users || []).filter(
-        (u) => !u.is_superuser && u.role !== 'superadmin' && !existingByApiId.has(u.id) && !existingEmails.has(u.email),
-      )
-
-      let idNum = existing.reduce((max, c) => {
-        const n = parseInt(String(c.id).replace('CMP-', ''), 10)
-        return Number.isNaN(n) ? max : Math.max(max, n)
-      }, 1000)
-
-      const newCompanies = usersToAdd.map((u, idx) => {
-        idNum += 1
-        return {
-          id: `CMP-${idNum}`,
-          name: u.name || u.email,
-          plan: u.plan?.plan_name || 'Free',
-          status: u.is_active ? 'Active' : 'Suspended',
-          role: u.role || 'company',
-          joinedDate: u.created_at || new Date().toISOString(),
-          avatarColor: avatarColors[(existing.length + idx) % avatarColors.length],
-          billingHistory: [],
-          email: u.email,
-          apiUserId: u.id,
-        }
+    let cancelled = false
+    apiListUsers()
+      .then((users) => {
+        if (cancelled) return
+        const list = (users || [])
+          .filter((u) => !u.is_superuser && u.role !== 'superadmin')
+          .map((u, idx) => ({
+            id: u.id,
+            name: u.name || u.email,
+            email: u.email,
+            plan: u.plan?.plan_name || 'Free',
+            status: u.is_active ? 'Active' : 'Inactive',
+            role: u.role || 'company',
+            joinedDate: u.created_at,
+            avatarColor: avatarColors[idx % avatarColors.length],
+          }))
+        setCompanies(list)
+        setLoadState('ready')
       })
-
-      if (newCompanies.length) addCompanies(newCompanies)
-
-      for (const u of users || []) {
-        const match = existingByApiId.get(u.id)
-        if (!match) continue
-        const latestPlan = u.plan?.plan_name || 'Free'
-        const latestStatus = u.is_active ? 'Active' : 'Suspended'
-        if (match.plan !== latestPlan || match.status !== latestStatus) {
-          updateCompany(match.id, { plan: latestPlan, status: latestStatus })
-        }
-      }
-
-      loadCompanies()
-    } catch (err) {
-      console.error('Failed to sync companies from API', err)
+      .catch((err) => {
+        if (cancelled) return
+        setLoadError(err.message || 'Failed to load companies')
+        setLoadState('error')
+      })
+    return () => {
+      cancelled = true
     }
-  }
+  }, [])
 
   async function confirmDelete() {
     setDeleting(true)
     setDeleteError('')
     try {
-      if (deleteTarget.apiUserId) {
-        await apiDeleteUser(deleteTarget.apiUserId)
-      }
-      deleteCompany(deleteTarget.id)
-      loadCompanies()
+      await apiDeleteUser(deleteTarget.id)
+      setCompanies((list) => list.filter((c) => c.id !== deleteTarget.id))
       setDeleteTarget(null)
     } catch (err) {
       setDeleteError(err.message || 'Failed to delete user')
@@ -243,15 +223,16 @@ export default function CompaniesPage() {
     return companies.filter((c) => {
       const matchesSearch = c.name.toLowerCase().includes(search.trim().toLowerCase())
       const matchesStatus = statusFilter === 'all' || c.status === statusFilter
-      return matchesSearch && matchesStatus
+      const matchesPlan = planFilter === 'all' || planGroup(c.plan) === planFilter
+      return matchesSearch && matchesStatus && matchesPlan
     })
-  }, [companies, search, statusFilter])
+  }, [companies, search, statusFilter, planFilter])
 
   const totalPages = Math.max(1, Math.ceil(filtered.length / PAGE_SIZE))
 
   useEffect(() => {
     setPage(1)
-  }, [search, statusFilter])
+  }, [search, statusFilter, planFilter])
 
   useEffect(() => {
     setPage((p) => Math.min(p, totalPages))
@@ -262,26 +243,15 @@ export default function CompaniesPage() {
     [filtered, page],
   )
 
-  const statusOptions = ['all', 'Active', 'Trial', 'Suspended']
-  const statusCountColor = {
-    all: 'bg-neutral-100 text-neutral-600',
-    Active: 'bg-emerald-100 text-emerald-700',
-    Trial: 'bg-amber-100 text-amber-700',
-    Suspended: 'bg-red-100 text-red-700',
-  }
-  const statusCounts = {
-    all: companies.length,
-    Active: companies.filter((c) => c.status === 'Active').length,
-    Trial: companies.filter((c) => c.status === 'Trial').length,
-    Suspended: companies.filter((c) => c.status === 'Suspended').length,
-  }
+  const activeCount = companies.filter((c) => c.status === 'Active').length
+  const planOptions = [...new Set(companies.map((c) => planGroup(c.plan)))].sort()
 
   return (
     <div className="space-y-4">
-      <div className="grid grid-cols-2 gap-4 sm:grid-cols-4">
+      <div className="grid grid-cols-2 gap-4">
         <StatTile
           label="Total Companies"
-          value={statusCounts.all}
+          value={companies.length}
           iconBg="bg-brand-100 text-brand-700"
           icon={
             <svg className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -291,31 +261,11 @@ export default function CompaniesPage() {
         />
         <StatTile
           label="Active"
-          value={statusCounts.Active}
+          value={activeCount}
           iconBg="bg-emerald-100 text-emerald-700"
           icon={
             <svg className="h-5 w-5" fill="currentColor" viewBox="0 0 24 24">
               <path d="M13.5 2.25L3.75 13.5h6.75l-1.5 8.25 9.75-11.25h-6.75l1.5-8.25z" />
-            </svg>
-          }
-        />
-        <StatTile
-          label="Trial"
-          value={statusCounts.Trial}
-          iconBg="bg-amber-100 text-amber-700"
-          icon={
-            <svg className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.75} d="M12 6v6l4 2m6-2a9 9 0 11-18 0 9 9 0 0118 0z" />
-            </svg>
-          }
-        />
-        <StatTile
-          label="Suspended"
-          value={statusCounts.Suspended}
-          iconBg="bg-red-100 text-red-700"
-          icon={
-            <svg className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.75} d="M18.364 18.364A9 9 0 005.636 5.636m12.728 12.728A9 9 0 015.636 5.636m12.728 12.728L5.636 5.636" />
             </svg>
           }
         />
@@ -340,29 +290,30 @@ export default function CompaniesPage() {
           />
         </div>
 
-        <div className="inline-flex flex-wrap items-center gap-1 rounded-full bg-neutral-100 p-1">
-          {statusOptions.map((s) => {
-            const active = statusFilter === s
-            return (
-              <button
-                key={s}
-                onClick={() => setStatusFilter(s)}
-                className={`flex items-center gap-2 rounded-full px-4 py-2 text-sm font-semibold transition-all duration-200 ${
-                  active ? 'bg-brand-600 text-white shadow-md shadow-brand-200' : 'text-neutral-500 hover:text-neutral-800'
-                }`}
-              >
-                {s === 'all' ? 'All' : s}
-                <span
-                  className={`rounded-full px-1.5 py-0.5 text-xs font-bold tabular-nums ${
-                    active ? 'bg-white/20 text-white' : statusCountColor[s]
-                  }`}
-                >
-                  {statusCounts[s]}
-                </span>
-              </button>
-            )
-          })}
-        </div>
+        <Select value={statusFilter} onValueChange={setStatusFilter}>
+          <SelectTrigger className="w-40 bg-white py-2">
+            <SelectValue />
+          </SelectTrigger>
+          <SelectContent>
+            <SelectItem value="all">All statuses</SelectItem>
+            <SelectItem value="Active">Active</SelectItem>
+            <SelectItem value="Inactive">Inactive</SelectItem>
+          </SelectContent>
+        </Select>
+
+        <Select value={planFilter} onValueChange={setPlanFilter}>
+          <SelectTrigger className="w-40 bg-white py-2">
+            <SelectValue />
+          </SelectTrigger>
+          <SelectContent>
+            <SelectItem value="all">All plans</SelectItem>
+            {planOptions.map((p) => (
+              <SelectItem key={p} value={p}>
+                {p}
+              </SelectItem>
+            ))}
+          </SelectContent>
+        </Select>
         </div>
       </div>
 
@@ -419,8 +370,16 @@ export default function CompaniesPage() {
           </table>
         </div>
 
-        {filtered.length === 0 && (
-          <div className="p-10 text-center text-sm text-neutral-400">No companies match your filters.</div>
+        {loadState === 'loading' && (
+          <div className="p-10 text-center text-sm text-neutral-400">Loading companies…</div>
+        )}
+        {loadState === 'error' && (
+          <div className="p-10 text-center text-sm font-medium text-red-600">{loadError}</div>
+        )}
+        {loadState === 'ready' && filtered.length === 0 && (
+          <div className="p-10 text-center text-sm text-neutral-400">
+            {companies.length === 0 ? 'No companies yet.' : 'No companies match your filters.'}
+          </div>
         )}
 
         {filtered.length > 0 && (

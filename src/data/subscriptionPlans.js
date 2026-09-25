@@ -58,8 +58,8 @@ export const defaultSubscriptionPlans = [
     ],
   },
   {
-    id: 'top-tier',
-    code: 'top-tier',
+    id: 'top_tier',
+    code: 'top_tier',
     badge: 'PREMIUM',
     name: 'Top Tier',
     price: 299,
@@ -78,6 +78,32 @@ export const defaultSubscriptionPlans = [
     ],
   },
 ]
+
+// Stripe fills in {CHECKOUT_SESSION_ID} on the success URL. The id from the
+// checkout response is also kept as a fallback in case it isn't filled in.
+export const STRIPE_SESSION_PLACEHOLDER = '{CHECKOUT_SESSION_ID}'
+const PENDING_SESSION_KEY = 'pending_checkout_session_id'
+
+export function rememberCheckoutSession(sessionId) {
+  try {
+    if (sessionId) sessionStorage.setItem(PENDING_SESSION_KEY, sessionId)
+  } catch {
+    // storage unavailable — the success URL still carries the id
+  }
+}
+
+// Returns the session id to verify (URL value first, then the stored one) and clears the stored one.
+export function takeCheckoutSession(fromUrl) {
+  let stored = null
+  try {
+    stored = sessionStorage.getItem(PENDING_SESSION_KEY)
+    sessionStorage.removeItem(PENDING_SESSION_KEY)
+  } catch {
+    // ignore
+  }
+  if (fromUrl && fromUrl !== STRIPE_SESSION_PLACEHOLDER) return fromUrl
+  return stored
+}
 
 // Converts a plan from the subscriptions API into the shape the plan cards use.
 export function normalizePlan(plan) {

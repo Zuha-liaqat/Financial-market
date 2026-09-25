@@ -34,6 +34,11 @@ function PlanCardSkeleton() {
   )
 }
 
+// Top Tier has no post/business limits, so those numbers aren't shown or editable.
+function hasUsageLimits(plan) {
+  return plan.name !== 'Top Tier'
+}
+
 const inputClass =
   'w-full rounded-lg border border-neutral-200 px-3 py-2 text-sm text-black outline-none transition focus:border-brand-400 focus:ring-2 focus:ring-brand-500/20'
 
@@ -169,30 +174,32 @@ function EditPlanModal({ plan, onClose, onSaved }) {
             />
           </label>
 
-          <div className="grid grid-cols-2 gap-3">
-            <label className="block">
-              <span className="mb-1 block text-xs font-medium text-neutral-600">Posts per month</span>
-              <input
-                type="number"
-                min="0"
-                step="1"
-                value={postsPerMonth}
-                onChange={(e) => setPostsPerMonth(e.target.value)}
-                className={inputClass}
-              />
-            </label>
-            <label className="block">
-              <span className="mb-1 block text-xs font-medium text-neutral-600">Businesses</span>
-              <input
-                type="number"
-                min="0"
-                step="1"
-                value={businesses}
-                onChange={(e) => setBusinesses(e.target.value)}
-                className={inputClass}
-              />
-            </label>
-          </div>
+          {hasUsageLimits(plan) && (
+            <div className="grid grid-cols-2 gap-3">
+              <label className="block">
+                <span className="mb-1 block text-xs font-medium text-neutral-600">Posts per month</span>
+                <input
+                  type="number"
+                  min="0"
+                  step="1"
+                  value={postsPerMonth}
+                  onChange={(e) => setPostsPerMonth(e.target.value)}
+                  className={inputClass}
+                />
+              </label>
+              <label className="block">
+                <span className="mb-1 block text-xs font-medium text-neutral-600">Businesses</span>
+                <input
+                  type="number"
+                  min="0"
+                  step="1"
+                  value={businesses}
+                  onChange={(e) => setBusinesses(e.target.value)}
+                  className={inputClass}
+                />
+              </label>
+            </div>
+          )}
 
           <label className="flex items-center gap-2 text-sm text-neutral-700">
             <input
@@ -308,16 +315,9 @@ export default function ManageSubscriptionsPage() {
 
   return (
     <div>
-      <div>
-        <h1 className="text-2xl font-bold text-black">Subscriptions</h1>
-        <p className="mt-1 text-sm text-neutral-500">
-          Manage plan pricing, descriptions and features shown to users.
-        </p>
-      </div>
-
       {status === 'error' && <p className="mt-16 text-center text-sm font-medium text-red-600">{error}</p>}
 
-      <div className="mt-6 grid grid-cols-1 gap-5 sm:grid-cols-2 xl:grid-cols-4">
+      <div className="grid grid-cols-1 gap-5 sm:grid-cols-2 xl:grid-cols-4">
         {status === 'loading' && Array.from({ length: 4 }).map((_, i) => <PlanCardSkeleton key={i} />)}
         {plans.map((plan) => {
           const { icon: Icon, wrap } = planIcons[plan.name] || planIcons.Free
@@ -350,10 +350,12 @@ export default function ManageSubscriptionsPage() {
                 <span className="font-semibold text-neutral-700">${plan.yearlyPrice}</span> /year
               </p>
               <p className="mt-2 text-xs text-neutral-500">{plan.description}</p>
-              <p className="mt-2 text-xs text-neutral-500">
-                <span className="font-semibold text-neutral-700">{plan.postsPerMonth}</span> posts/month ·{' '}
-                <span className="font-semibold text-neutral-700">{plan.businesses}</span> businesses
-              </p>
+              {hasUsageLimits(plan) && (
+                <p className="mt-2 text-xs text-neutral-500">
+                  <span className="font-semibold text-neutral-700">{plan.postsPerMonth}</span> posts/month ·{' '}
+                  <span className="font-semibold text-neutral-700">{plan.businesses}</span> businesses
+                </p>
+              )}
 
               <ul className="mt-4 flex-1 space-y-2.5">
                 {plan.features.map((f, i) => (

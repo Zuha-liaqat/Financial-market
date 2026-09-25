@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import { useNavigate, useSearchParams } from "react-router-dom";
-import { apiGetDashboard } from "../../lib/api";
+import { apiGetDashboard, apiVerifyPaymentSession } from "../../lib/api";
+import { takeCheckoutSession } from "../../data/subscriptionPlans";
 import {
   platformDisplay,
   formatRelativeTime,
@@ -252,7 +253,12 @@ export default function DashboardPage() {
     const signupPlanStatus = searchParams.get("signup_plan");
     if (!signupPlanStatus) return;
 
-    // The backend records the plan from the checkout itself; just clean the URL.
+    // Coming back from the signup checkout: confirm the payment so the plan
+    // activates right away.
+    if (signupPlanStatus === "success") {
+      const sessionId = takeCheckoutSession(searchParams.get("session_id"));
+      if (sessionId) apiVerifyPaymentSession(sessionId).catch(() => {});
+    }
     setSearchParams({}, { replace: true });
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);

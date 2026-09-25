@@ -27,6 +27,7 @@ const pageTitles = [
   { match: '/notifications', label: 'Notifications' },
   { match: '/super-admin/companies', label: 'Companies' },
   { match: '/super-admin/subscriptions', label: 'Subscriptions' },
+  { match: '/super-admin/plans', label: 'Subscriptions' },
   { match: '/documentation', label: 'Documentation' },
   { match: '/settings', label: 'Settings' },
 ]

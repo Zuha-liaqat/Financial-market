@@ -6,6 +6,10 @@ import {
   apiSignup,
   apiStartSubscriptionCheckout,
 } from "../../lib/api";
+import {
+  rememberCheckoutSession,
+  STRIPE_SESSION_PLACEHOLDER,
+} from "../../data/subscriptionPlans";
 import { setCurrentUserEmail, setSuperAdminStatus } from "../../data/auth";
 import { trackEvent } from "../../lib/analytics";
 import { ErrorToast, SuccessToast } from "../../components/Toast";
@@ -77,13 +81,14 @@ export default function SignupPage() {
 
       if (selectedPlan && amount > 0) {
         try {
-          const { checkout_url } = await apiStartSubscriptionCheckout({
+          const { checkout_url, session_id } = await apiStartSubscriptionCheckout({
             plan_code: selectedPlan.code,
             billing_period: billingCycle,
-            success_url: `${window.location.origin}/dashboard?signup_plan=success&plan=${selectedPlan.code}`,
+            success_url: `${window.location.origin}/dashboard?signup_plan=success&plan=${selectedPlan.code}&session_id=${STRIPE_SESSION_PLACEHOLDER}`,
             cancel_url: `${window.location.origin}/dashboard?signup_plan=cancelled&plan=${selectedPlan.code}`,
           });
           if (checkout_url) {
+            rememberCheckoutSession(session_id);
             window.location.href = checkout_url;
             return;
           }

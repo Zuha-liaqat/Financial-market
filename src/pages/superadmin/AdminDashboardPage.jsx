@@ -8,11 +8,11 @@ import { ErrorToast } from '../../components/Toast'
 
 const RECENT_LIMIT = 5
 const WEEK_MS = 7 * 24 * 60 * 60 * 1000
-const FAILED_PLAN_STATUSES = new Set(['failed', 'cancelled', 'canceled', 'expired'])
+const PAID_PLAN_STATUSES = new Set(['succeeded', 'active', 'paid'])
 
 const statusStyles = {
   Active: 'bg-emerald-50 text-emerald-600 ring-1 ring-emerald-200',
-  Suspended: 'bg-red-50 text-red-600 ring-1 ring-red-200',
+  Inactive: 'bg-neutral-100 text-neutral-500 ring-1 ring-neutral-200',
 }
 
 function getInitials(name) {
@@ -32,16 +32,17 @@ function UpArrow() {
   )
 }
 
-// Monthly value of a company's plan, using the prices saved in the admin plans screen.
-function monthlyRevenueFor(user, plans) {
+function isPaidPlan(plan) {
+  return Boolean(plan) && plan.plan_code !== 'free' && PAID_PLAN_STATUSES.has(String(plan.status).toLowerCase())
+}
+
+// Monthly value of what the company actually paid; yearly payments are spread over 12 months.
+function monthlyRevenueFor(user) {
   const plan = user.plan
-  if (!plan || FAILED_PLAN_STATUSES.has(String(plan.status).toLowerCase())) return 0
-  const label = (plan.plan_name || plan.product_name || '').toLowerCase()
-  const match = plans.find((p) => label.startsWith(p.name.toLowerCase()))
-  if (!match) return 0
-  return String(plan.billing_period).toLowerCase() === 'yearly'
-    ? match.yearly_price / 12
-    : match.monthly_price
+  if (!isPaidPlan(plan)) return 0
+  const amount = Number(plan.amount) || 0
+  const label = `${plan.plan_name || ''} ${plan.product_name || ''}`.toLowerCase()
+  return label.includes('yearly') ? amount / 12 : amount
 }
 
 function StatSkeleton() {
@@ -108,11 +109,10 @@ export default function AdminDashboardPage() {
   const weekAgo = Date.now() - WEEK_MS
   const joinedThisWeek = companies.filter((c) => c.created_at && new Date(c.created_at).getTime() >= weekAgo).length
   const activeCount = companies.filter((c) => c.is_active).length
-  const suspendedCount = companies.length - activeCount
   const revenue = Math.round(
-    companies.filter((c) => c.is_active).reduce((sum, c) => sum + monthlyRevenueFor(c, plans), 0),
+    companies.filter((c) => c.is_active).reduce((sum, c) => sum + monthlyRevenueFor(c), 0),
   )
-  const payingCount = companies.filter((c) => c.is_active && monthlyRevenueFor(c, plans) > 0).length
+  const payingCount = companies.filter((c) => c.is_active && isPaidPlan(c.plan)).length
   const recent = [...companies]
     .sort((a, b) => new Date(b.created_at || 0) - new Date(a.created_at || 0))
     .slice(0, RECENT_LIMIT)
@@ -140,8 +140,8 @@ export default function AdminDashboardPage() {
     {
       label: 'Active Companies',
       value: activeCount,
-      detail: suspendedCount ? `${suspendedCount} suspended` : 'None suspended',
-      detailColor: suspendedCount ? 'text-red-500' : 'text-neutral-400',
+      detail: `Of ${companies.length} compan${companies.length === 1 ? 'y' : 'ies'}`,
+      detailColor: 'text-neutral-400',
     },
     {
       label: 'Paid Plans',
@@ -203,7 +203,7 @@ export default function AdminDashboardPage() {
               )}
               {recent.map((c, i) => {
                 const name = c.name || c.email || 'Unnamed'
-                const companyStatus = c.is_active ? 'Active' : 'Suspended'
+                const companyStatus = c.is_active ? 'Active' : 'Inactive'
                 return (
                   <tr key={c.id} className="border-b border-neutral-100 last:border-0">
                     <td className="px-4 py-3.5">
@@ -216,7 +216,9 @@ export default function AdminDashboardPage() {
                         <p className="truncate font-medium text-black">{name}</p>
                       </div>
                     </td>
-                    <td className="px-3 py-3.5 text-neutral-600">{c.plan?.plan_name || 'Free'}</td>
+                    <td className="px-3 py-3.5 text-neutral-600">
+                      {plans.find((p) => p.code === c.plan?.plan_code)?.name || c.plan?.plan_name || 'Free'}
+                    </td>
                     <td className="whitespace-nowrap px-3 py-3.5 text-neutral-500">
                       {formatRelativeTime(c.created_at) || '—'}
                     </td>

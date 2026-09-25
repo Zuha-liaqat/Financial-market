@@ -10,10 +10,16 @@ import {
   CheckCircle2,
   XCircle,
 } from "lucide-react";
-import { normalizePlan } from "../../data/subscriptionPlans";
+import {
+  normalizePlan,
+  rememberCheckoutSession,
+  STRIPE_SESSION_PLACEHOLDER,
+  takeCheckoutSession,
+} from "../../data/subscriptionPlans";
 import {
   apiGetSubscriptionPlans,
   apiStartSubscriptionCheckout,
+  apiVerifyPaymentSession,
 } from "../../lib/api";
 
 function StatusModal({ status, planName, onClose }) {
@@ -118,6 +124,10 @@ function PlanCardSkeleton() {
   );
 }
 
+function isFreePlan(plan) {
+  return plan.price <= 0 && plan.yearlyPrice <= 0;
+}
+
 export default function SubscriptionsPage() {
   const [searchParams, setSearchParams] = useSearchParams();
   const [cycle, setCycle] = useState("monthly");
@@ -143,47 +153,64 @@ export default function SubscriptionsPage() {
   useEffect(() => {
     const checkout = searchParams.get("checkout");
     const planCode = searchParams.get("plan");
+    const sessionId =
+      checkout === "success"
+        ? takeCheckoutSession(searchParams.get("session_id"))
+        : null;
     if (checkout) setSearchParams({}, { replace: true });
 
-    loadPlans()
-      .then((list) => {
-        setLoadState("ready");
-        if (!checkout || !planCode) return;
-        const planName =
-          list.find((p) => p.code === planCode)?.name || "selected";
-        if (checkout === "success") {
-          setStatusModal({ status: "success", planName });
-        } else if (checkout === "cancelled") {
-          setStatusModal({ status: "fail", planName });
+    async function init() {
+      // Confirm the payment first so the plan list already shows the new plan.
+      let verifyFailed = false;
+      if (sessionId) {
+        try {
+          await apiVerifyPaymentSession(sessionId);
+        } catch {
+          verifyFailed = true;
         }
-      })
-      .catch((err) => {
-        setLoadError(err.message || "Failed to load plans");
-        setLoadState("error");
-      });
+      }
+
+      const list = await loadPlans();
+      setLoadState("ready");
+      if (!checkout || !planCode) return;
+      const planName =
+        list.find((p) => p.code === planCode)?.name || "selected";
+      if (checkout === "success" && !verifyFailed) {
+        setStatusModal({ status: "success", planName });
+      } else if (checkout === "success") {
+        setCheckoutError(
+          "We couldn't confirm your payment yet. Your plan will update once Stripe confirms it.",
+        );
+      } else if (checkout === "cancelled") {
+        setStatusModal({ status: "fail", planName });
+      }
+    }
+
+    init().catch((err) => {
+      setLoadError(err.message || "Failed to load plans");
+      setLoadState("error");
+    });
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   async function handleGetStarted(plan) {
-    if (plan.code === activePlanCode) return;
+    // Checkout only exists for paid plans.
+    if (plan.code === activePlanCode || isFreePlan(plan)) return;
 
     setCheckoutError("");
     setLoadingPlanCode(plan.code);
     try {
       const basePath = `${window.location.origin}/super-admin/subscriptions`;
-      const { checkout_url } = await apiStartSubscriptionCheckout({
+      const { checkout_url, session_id } = await apiStartSubscriptionCheckout({
         plan_code: plan.code,
         billing_period: cycle,
-        success_url: `${basePath}?checkout=success&plan=${plan.code}`,
+        success_url: `${basePath}?checkout=success&plan=${plan.code}&session_id=${STRIPE_SESSION_PLACEHOLDER}`,
         cancel_url: `${basePath}?checkout=cancelled&plan=${plan.code}`,
       });
-      if (checkout_url) {
-        window.location.href = checkout_url;
-        return;
-      }
-      // No payment needed (e.g. the Free plan) — the switch is already saved.
-      await loadPlans();
-      setStatusModal({ status: "success", planName: plan.name });
+      if (!checkout_url) throw new Error("Checkout did not return a payment link");
+      rememberCheckoutSession(session_id);
+      window.location.href = checkout_url;
+      return;
     } catch (err) {
       setCheckoutError(err.message || "Failed to start checkout");
     }
@@ -330,7 +357,9 @@ export default function SubscriptionsPage() {
               <button
                 type="button"
                 onClick={() => handleGetStarted(plan)}
-                disabled={loadingPlanCode === plan.code || isActive}
+                disabled={
+                  loadingPlanCode === plan.code || isActive || isFreePlan(plan)
+                }
                 className={`mt-6 flex items-center justify-center gap-2 rounded-lg py-2.5 text-sm font-semibold transition active:scale-95 disabled:cursor-not-allowed disabled:active:scale-100 ${
                   isActive
                     ? "border border-emerald-300 bg-emerald-50 text-emerald-600"
@@ -345,7 +374,9 @@ export default function SubscriptionsPage() {
                   ? "Current Plan"
                   : loadingPlanCode === plan.code
                     ? "Redirecting…"
-                    : "Get Started"}
+                    : isFreePlan(plan)
+                      ? "Free Plan"
+                      : "Get Started"}
               </button>
             </div>
           );

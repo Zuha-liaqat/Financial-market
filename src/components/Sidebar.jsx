@@ -6,6 +6,7 @@ import { isSuperAdmin, logout as clearSuperAdmin } from '../data/auth'
 const navItems = [
   { to: '/dashboard', label: 'Dashboard', icon: 'grid' },
   { to: '/super-admin/companies', label: 'Companies', icon: 'building', superAdminOnly: true },
+  { to: '/super-admin/plans', label: 'Subscriptions', icon: 'card', superAdminOnly: true },
   { to: '/themes', label: 'Themes/Brands', icon: 'palette', hideForSuperAdmin: true },
   { to: '/create-post', label: 'Create Post', icon: 'plus', hideForSuperAdmin: true },
   { to: '/create-blog', label: 'Create Blog', icon: 'pencil', hideForSuperAdmin: true },

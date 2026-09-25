@@ -10,13 +10,11 @@ import {
   CheckCircle2,
   XCircle,
 } from "lucide-react";
+import { normalizePlan } from "../../data/subscriptionPlans";
 import {
-  subscriptionPlans,
-  getActivePlanId,
-  setActivePlanId,
-  resolveActivePlanIdFromUser,
-} from "../../data/subscriptionPlans";
-import { apiCreateCheckoutSession, apiGetCurrentUser } from "../../lib/api";
+  apiGetSubscriptionPlans,
+  apiStartSubscriptionCheckout,
+} from "../../lib/api";
 
 function StatusModal({ status, planName, onClose }) {
   const success = status === "success";
@@ -63,7 +61,7 @@ const planTheme = {
     icon: Feather,
     iconWrap: "bg-neutral-100 text-neutral-500",
     glow: "",
-    badge: null,
+    badgeClass: "bg-neutral-900 text-white",
     button: "border border-neutral-200 text-neutral-600 hover:bg-neutral-50",
     card: "border-neutral-200",
     checkBg: "bg-neutral-100 text-neutral-500",
@@ -72,7 +70,7 @@ const planTheme = {
     icon: Rocket,
     iconWrap: "bg-brand-100 text-brand-600",
     glow: "hover:shadow-brand-500/10",
-    badge: null,
+    badgeClass: "bg-brand-500 text-white",
     button: "border border-brand-200 text-brand-600 hover:bg-brand-50",
     card: "border-neutral-200",
     checkBg: "bg-brand-100 text-brand-600",
@@ -82,10 +80,7 @@ const planTheme = {
     iconWrap:
       "bg-gradient-to-br from-violet-500 to-fuchsia-500 text-white shadow-md shadow-violet-500/30",
     glow: "hover:shadow-violet-500/20",
-    badge: {
-      label: "★ MOST POPULAR",
-      className: "bg-gradient-to-r from-violet-500 to-fuchsia-500 text-white",
-    },
+    badgeClass: "bg-gradient-to-r from-violet-500 to-fuchsia-500 text-white",
     button:
       "bg-gradient-to-r from-violet-500 to-fuchsia-500 text-white hover:brightness-110",
     card: "border-violet-300 ring-2 ring-violet-500/20 scale-[1.03] shadow-lg shadow-violet-500/10",
@@ -95,7 +90,7 @@ const planTheme = {
     icon: Gem,
     iconWrap: "bg-neutral-900 text-white",
     glow: "hover:shadow-neutral-900/10",
-    badge: { label: "PREMIUM", className: "bg-neutral-900 text-white" },
+    badgeClass: "bg-neutral-900 text-white",
     button:
       "border border-neutral-300 text-neutral-800 hover:bg-neutral-900 hover:text-white",
     card: "border-neutral-200",
@@ -103,76 +98,96 @@ const planTheme = {
   },
 };
 
+function PlanCardSkeleton() {
+  return (
+    <div className="flex flex-col rounded-2xl border border-neutral-200 bg-white p-5 shadow-sm">
+      <div className="h-11 w-11 animate-pulse rounded-xl bg-neutral-200" />
+      <div className="mt-4 h-5 w-20 animate-pulse rounded bg-neutral-200" />
+      <div className="mt-3 h-8 w-24 animate-pulse rounded bg-neutral-200" />
+      <div className="mt-3 h-3 w-3/4 animate-pulse rounded bg-neutral-200" />
+      <div className="mt-5 space-y-3">
+        {Array.from({ length: 7 }).map((_, i) => (
+          <div key={i} className="flex items-center gap-2.5">
+            <div className="h-5 w-5 shrink-0 animate-pulse rounded-full bg-neutral-200" />
+            <div className="h-3.5 w-full animate-pulse rounded bg-neutral-200" />
+          </div>
+        ))}
+      </div>
+      <div className="mt-6 h-10 w-full animate-pulse rounded-lg bg-neutral-200" />
+    </div>
+  );
+}
+
 export default function SubscriptionsPage() {
   const [searchParams, setSearchParams] = useSearchParams();
   const [cycle, setCycle] = useState("monthly");
-  const [loadingPlanId, setLoadingPlanId] = useState(null);
+  const [loadingPlanCode, setLoadingPlanCode] = useState(null);
   const [checkoutError, setCheckoutError] = useState("");
-  const [activePlanId, setActivePlanIdState] = useState(() =>
-    getActivePlanId(),
-  );
+  const [plans, setPlans] = useState([]);
+  const [activePlanCode, setActivePlanCode] = useState(null);
+  const [loadState, setLoadState] = useState("loading");
+  const [loadError, setLoadError] = useState("");
   const [statusModal, setStatusModal] = useState(null);
   const isYearly = cycle === "yearly";
 
+  async function loadPlans() {
+    const data = await apiGetSubscriptionPlans();
+    const list = (data?.plans || []).map(normalizePlan);
+    setPlans(list);
+    setActivePlanCode(
+      data?.current_plan_code || list.find((p) => p.isCurrent)?.code || null,
+    );
+    return list;
+  }
+
   useEffect(() => {
     const checkout = searchParams.get("checkout");
-    const planId = searchParams.get("plan");
-    if (!checkout || !planId) return;
+    const planCode = searchParams.get("plan");
+    if (checkout) setSearchParams({}, { replace: true });
 
-    const plan = subscriptionPlans.find((p) => p.id === planId);
-    const planName = plan?.name || "selected";
-
-    if (checkout === "success") {
-      setActivePlanId(planId);
-      setActivePlanIdState(planId);
-      setStatusModal({ status: "success", planName });
-    } else if (checkout === "cancelled") {
-      setStatusModal({ status: "fail", planName });
-    }
-
-    setSearchParams({}, { replace: true });
+    loadPlans()
+      .then((list) => {
+        setLoadState("ready");
+        if (!checkout || !planCode) return;
+        const planName =
+          list.find((p) => p.code === planCode)?.name || "selected";
+        if (checkout === "success") {
+          setStatusModal({ status: "success", planName });
+        } else if (checkout === "cancelled") {
+          setStatusModal({ status: "fail", planName });
+        }
+      })
+      .catch((err) => {
+        setLoadError(err.message || "Failed to load plans");
+        setLoadState("error");
+      });
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
-  useEffect(() => {
-    apiGetCurrentUser()
-      .then((me) => {
-        const resolved = resolveActivePlanIdFromUser(me);
-        if (resolved === undefined) return;
-        setActivePlanIdState(resolved);
-        setActivePlanId(resolved || "");
-      })
-      .catch(() => {});
-  }, []);
-
   async function handleGetStarted(plan) {
-    if (plan.id === activePlanId) return;
-
-    const amount = isYearly ? plan.yearlyPrice : plan.price;
-
-    if (amount <= 0) {
-      setActivePlanId(plan.id);
-      setActivePlanIdState(plan.id);
-      setStatusModal({ status: "success", planName: plan.name });
-      return;
-    }
+    if (plan.code === activePlanCode) return;
 
     setCheckoutError("");
-    setLoadingPlanId(plan.id);
+    setLoadingPlanCode(plan.code);
     try {
       const basePath = `${window.location.origin}/super-admin/subscriptions`;
-      const checkoutUrl = await apiCreateCheckoutSession({
-        amount,
-        currency: "usd",
-        product_name: `${plan.name} Plan (${isYearly ? "Yearly" : "Monthly"})`,
-        success_url: `${basePath}?checkout=success&plan=${plan.id}`,
-        cancel_url: `${basePath}?checkout=cancelled&plan=${plan.id}`,
+      const { checkout_url } = await apiStartSubscriptionCheckout({
+        plan_code: plan.code,
+        billing_period: cycle,
+        success_url: `${basePath}?checkout=success&plan=${plan.code}`,
+        cancel_url: `${basePath}?checkout=cancelled&plan=${plan.code}`,
       });
-      window.location.href = checkoutUrl;
+      if (checkout_url) {
+        window.location.href = checkout_url;
+        return;
+      }
+      // No payment needed (e.g. the Free plan) — the switch is already saved.
+      await loadPlans();
+      setStatusModal({ status: "success", planName: plan.name });
     } catch (err) {
       setCheckoutError(err.message || "Failed to start checkout");
-      setLoadingPlanId(null);
     }
+    setLoadingPlanCode(null);
   }
 
   return (
@@ -222,13 +237,22 @@ export default function SubscriptionsPage() {
         </div>
       </div>
 
+      {loadState === "error" && (
+        <p className="mt-16 text-center text-sm font-medium text-red-600">
+          {loadError}
+        </p>
+      )}
+
       <div className="mt-10 grid grid-cols-1 gap-5 sm:grid-cols-2 lg:grid-cols-4">
-        {subscriptionPlans.map((plan) => {
-          const theme = planTheme[plan.name];
+        {loadState === "loading" &&
+          Array.from({ length: 4 }).map((_, i) => <PlanCardSkeleton key={i} />)}
+        {plans.map((plan) => {
+          const theme = planTheme[plan.name] || planTheme.Free;
           const Icon = theme.icon;
           const yearlyMonthlyEquivalent =
-            plan.yearlyPrice === 0 ? 0 : Math.round(plan.yearlyPrice / 12);
-          const isActive = plan.id === activePlanId;
+            plan.yearlyPricePerMonth ||
+            (plan.yearlyPrice === 0 ? 0 : Math.round(plan.yearlyPrice / 12));
+          const isActive = plan.code === activePlanCode;
 
           return (
             <div
@@ -245,11 +269,11 @@ export default function SubscriptionsPage() {
                   ACTIVE PLAN
                 </span>
               ) : (
-                theme.badge && (
+                plan.badge && (
                   <span
-                    className={`absolute -top-3 left-1/2 -translate-x-1/2 whitespace-nowrap rounded-full px-3 py-1 text-[10px] font-bold tracking-wide shadow-sm ${theme.badge.className}`}
+                    className={`absolute -top-3 left-1/2 -translate-x-1/2 whitespace-nowrap rounded-full px-3 py-1 text-[10px] font-bold tracking-wide shadow-sm ${theme.badgeClass}`}
                   >
-                    {theme.badge.label}
+                    {plan.badge}
                   </span>
                 )
               )}
@@ -306,20 +330,20 @@ export default function SubscriptionsPage() {
               <button
                 type="button"
                 onClick={() => handleGetStarted(plan)}
-                disabled={loadingPlanId === plan.id || isActive}
+                disabled={loadingPlanCode === plan.code || isActive}
                 className={`mt-6 flex items-center justify-center gap-2 rounded-lg py-2.5 text-sm font-semibold transition active:scale-95 disabled:cursor-not-allowed disabled:active:scale-100 ${
                   isActive
                     ? "border border-emerald-300 bg-emerald-50 text-emerald-600"
                     : `disabled:opacity-60 ${theme.button}`
                 }`}
               >
-                {loadingPlanId === plan.id && (
+                {loadingPlanCode === plan.code && (
                   <Loader2 className="h-4 w-4 animate-spin" />
                 )}
                 {isActive && <CheckCircle2 className="h-4 w-4" />}
                 {isActive
                   ? "Current Plan"
-                  : loadingPlanId === plan.id
+                  : loadingPlanCode === plan.code
                     ? "Redirecting…"
                     : "Get Started"}
               </button>

@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import { Link } from 'react-router-dom'
 import MarketingLogo from './MarketingLogo'
 import { MODULES, moduleIcon } from './navData'
@@ -6,6 +6,25 @@ import { trackEvent } from '../../lib/analytics'
 
 export default function MarketingHeader({ active = 'home' }) {
   const [mobileOpen, setMobileOpen] = useState(false)
+  const [productOpen, setProductOpen] = useState(false)
+  const productRef = useRef(null)
+
+  // Close the Product menu on a click outside it or on Escape.
+  useEffect(() => {
+    if (!productOpen) return
+    function handleOutside(e) {
+      if (productRef.current && !productRef.current.contains(e.target)) setProductOpen(false)
+    }
+    function handleKey(e) {
+      if (e.key === 'Escape') setProductOpen(false)
+    }
+    document.addEventListener('mousedown', handleOutside)
+    document.addEventListener('keydown', handleKey)
+    return () => {
+      document.removeEventListener('mousedown', handleOutside)
+      document.removeEventListener('keydown', handleKey)
+    }
+  }, [productOpen])
 
   return (
     <header>
@@ -18,13 +37,21 @@ export default function MarketingHeader({ active = 'home' }) {
           <Link to="/" className={active === 'home' ? 'active' : ''}>
             Home
           </Link>
-          <div className="has-drop">
-            <a href="#" onClick={(e) => e.preventDefault()} className={active === 'product' ? 'active' : ''}>
+          <div ref={productRef} className={`has-drop${productOpen ? ' open' : ''}`}>
+            <a
+              href="#"
+              onClick={(e) => {
+                e.preventDefault()
+                setProductOpen((v) => !v)
+              }}
+              aria-expanded={productOpen}
+              className={active === 'product' ? 'active' : ''}
+            >
               Product ▾
             </a>
             <div className="dropdown">
               {MODULES.map((m) => (
-                <Link key={m.slug} to={`/product/${m.slug}`}>
+                <Link key={m.slug} to={`/product/${m.slug}`} onClick={() => setProductOpen(false)}>
                   <span className="dico" style={{ background: `color-mix(in srgb, ${m.color} 14%, white)` }}>
                     {moduleIcon(m.icon, m.color)}
                   </span>

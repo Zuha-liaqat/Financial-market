@@ -60,18 +60,6 @@ function getPageNumbers(page, totalPages) {
   return withGaps
 }
 
-function StatTile({ icon, iconBg, label, value }) {
-  return (
-    <div className="flex items-center gap-3 rounded-lg border border-neutral-200 bg-white p-4">
-      <span className={`flex h-10 w-10 shrink-0 items-center justify-center rounded-lg ${iconBg}`}>{icon}</span>
-      <div>
-        <p className="text-2xl font-bold text-black">{value}</p>
-        <p className="text-xs text-neutral-400">{label}</p>
-      </div>
-    </div>
-  )
-}
-
 function ActionsMenu({ onDelete }) {
   const [open, setOpen] = useState(false)
   const [coords, setCoords] = useState({ top: 0, left: 0 })
@@ -243,92 +231,67 @@ export default function CompaniesPage() {
     [filtered, page],
   )
 
-  const activeCount = companies.filter((c) => c.status === 'Active').length
   const planOptions = [...new Set(companies.map((c) => planGroup(c.plan)))].sort()
 
   return (
     <div className="space-y-4">
-      <div className="grid grid-cols-2 gap-4">
-        <StatTile
-          label="Total Companies"
-          value={companies.length}
-          iconBg="bg-brand-100 text-brand-700"
-          icon={
-            <svg className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.75} d="M2.25 21h19.5M4.5 3.75h9a.75.75 0 01.75.75V21H4.5V4.5a.75.75 0 01.75-.75zM13.5 9h5.25a.75.75 0 01.75.75V21h-6V9.75A.75.75 0 0113.5 9z" />
-            </svg>
-          }
-        />
-        <StatTile
-          label="Active"
-          value={activeCount}
-          iconBg="bg-emerald-100 text-emerald-700"
-          icon={
-            <svg className="h-5 w-5" fill="currentColor" viewBox="0 0 24 24">
-              <path d="M13.5 2.25L3.75 13.5h6.75l-1.5 8.25 9.75-11.25h-6.75l1.5-8.25z" />
-            </svg>
-          }
-        />
-      </div>
-
-      <div className="flex flex-wrap items-center justify-between gap-3">
-        <div className="flex flex-wrap items-center gap-3">
-        <div className="relative w-56">
-          <svg
-            className="pointer-events-none absolute left-2.5 top-1/2 h-3.5 w-3.5 -translate-y-1/2 text-neutral-400"
-            fill="none"
-            viewBox="0 0 24 24"
-            stroke="currentColor"
-          >
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.75} d="M21 21l-4.35-4.35M17 10.5a6.5 6.5 0 11-13 0 6.5 6.5 0 0113 0z" />
-          </svg>
-          <input
-            value={search}
-            onChange={(e) => setSearch(e.target.value)}
-            placeholder="Search companies..."
-            className="w-full rounded-lg border border-neutral-200 bg-white py-2 pl-8 pr-3 text-sm text-neutral-700 outline-none placeholder:text-neutral-400 focus:border-brand-500 focus:ring-2 focus:ring-brand-500/20"
-          />
-        </div>
-
-        <Select value={statusFilter} onValueChange={setStatusFilter}>
-          <SelectTrigger className="w-40 bg-white py-2">
-            <SelectValue />
-          </SelectTrigger>
-          <SelectContent>
-            <SelectItem value="all">All statuses</SelectItem>
-            <SelectItem value="Active">Active</SelectItem>
-            <SelectItem value="Inactive">Inactive</SelectItem>
-          </SelectContent>
-        </Select>
-
-        <Select value={planFilter} onValueChange={setPlanFilter}>
-          <SelectTrigger className="w-40 bg-white py-2">
-            <SelectValue />
-          </SelectTrigger>
-          <SelectContent>
-            <SelectItem value="all">All plans</SelectItem>
-            {planOptions.map((p) => (
-              <SelectItem key={p} value={p}>
-                {p}
-              </SelectItem>
-            ))}
-          </SelectContent>
-        </Select>
-        </div>
-      </div>
-
       <div className="rounded-lg border border-neutral-200 bg-white shadow-sm">
+        <div className="flex flex-wrap items-center justify-between gap-3 border-b border-neutral-200 px-4 py-3">
+          <div className="flex flex-wrap items-center gap-3">
+          <div className="relative w-56">
+            <svg
+              className="pointer-events-none absolute left-2.5 top-1/2 h-3.5 w-3.5 -translate-y-1/2 text-neutral-400"
+              fill="none"
+              viewBox="0 0 24 24"
+              stroke="currentColor"
+            >
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.75} d="M21 21l-4.35-4.35M17 10.5a6.5 6.5 0 11-13 0 6.5 6.5 0 0113 0z" />
+            </svg>
+            <input
+              value={search}
+              onChange={(e) => setSearch(e.target.value)}
+              placeholder="Search companies..."
+              className="w-full rounded-lg border border-neutral-200 bg-white py-2 pl-8 pr-3 text-sm text-neutral-700 outline-none placeholder:text-neutral-400 focus:border-brand-500 focus:ring-2 focus:ring-brand-500/20"
+            />
+          </div>
+
+          <Select value={statusFilter} onValueChange={setStatusFilter}>
+            <SelectTrigger className="w-40 bg-white py-2">
+              <SelectValue />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="all">All statuses</SelectItem>
+              <SelectItem value="Active">Active</SelectItem>
+              <SelectItem value="Inactive">Inactive</SelectItem>
+            </SelectContent>
+          </Select>
+
+          <Select value={planFilter} onValueChange={setPlanFilter}>
+            <SelectTrigger className="w-40 bg-white py-2">
+              <SelectValue />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="all">All plans</SelectItem>
+              {planOptions.map((p) => (
+                <SelectItem key={p} value={p}>
+                  {p}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+          </div>
+        </div>
         <div className="overflow-x-auto">
           <table className="w-full min-w-[860px] table-fixed text-left text-sm">
             <thead>
               <tr className="border-b border-neutral-200 bg-neutral-50 text-[10px] font-semibold tracking-widest text-neutral-400">
-                <th className="w-[24%] rounded-tl-lg px-4 py-3.5">COMPANY</th>
+                <th className="w-[24%] px-4 py-3.5">COMPANY</th>
                 <th className="w-[18%] px-3 py-3.5">EMAIL</th>
                 <th className="w-[12%] px-3 py-3.5">STATUS</th>
                 <th className="w-[16%] px-3 py-3.5">PLAN</th>
                 <th className="w-[10%] px-3 py-3.5">ROLE</th>
                 <th className="w-[14%] px-3 py-3.5">JOINED</th>
-                <th className="w-16 rounded-tr-lg px-3 py-3.5 text-right">ACTIONS</th>
+                <th className="w-16 px-3 py-3.5 text-right">ACTIONS</th>
               </tr>
             </thead>
             <tbody>

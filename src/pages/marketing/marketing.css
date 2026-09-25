@@ -100,7 +100,7 @@
   padding: 10px; width: 520px; display: grid; grid-template-columns: 1fr 1fr; gap: 2px;
   opacity: 0; visibility: hidden; transition: opacity 0.22s ease, transform 0.22s ease;
 }
-.fm-home .has-drop:hover .dropdown { opacity: 1; visibility: visible; transform: translateX(-50%) translateY(0); }
+.fm-home .has-drop.open .dropdown { opacity: 1; visibility: visible; transform: translateX(-50%) translateY(0); }
 .fm-home .dropdown a {
   display: flex; align-items: center; gap: 11px; padding: 10px 12px; border-radius: 10px;
   font-size: 13.5px; font-weight: 500; color: var(--ink);

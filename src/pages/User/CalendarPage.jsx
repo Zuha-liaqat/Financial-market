@@ -8,7 +8,9 @@ import {
   SelectTrigger,
   SelectValue,
 } from "../../components/ui/select";
-import { apiGetCalendar } from "../../lib/api";
+import { apiGetCalendar, apiRescheduleCalendarItem } from "../../lib/api";
+import { ErrorToast } from "../../components/Toast";
+import { showGlobalToast } from "../../lib/toastBus";
 import { mapCalendarItem } from "../../lib/posts";
 
 const WEEKDAYS = ["MON", "TUE", "WED", "THU", "FRI", "SAT", "SUN"];
@@ -200,6 +202,21 @@ function formatTime24(t) {
   return `${hour12}:${String(m).padStart(2, "0")} ${ampm}`;
 }
 
+// "2:30 PM" -> "14:30"
+function to24h(label) {
+  const hour = parseTimeToHour(label);
+  const h = Math.floor(hour);
+  const m = Math.round((hour - h) * 60);
+  return `${String(h).padStart(2, "0")}:${String(m).padStart(2, "0")}`;
+}
+
+// Only items that came from the calendar API can be moved.
+function isDraggable(ev) {
+  return Boolean(ev.contentType);
+}
+
+const DRAG_MIME = "application/x-calendar-item";
+
 function toISODate(date) {
   const year = date.getFullYear();
   const month = String(date.getMonth() + 1).padStart(2, "0");
@@ -364,9 +381,21 @@ function TimeGrid({
   today,
   selected,
   onSelect,
+  onMove,
   multiDay = false,
 }) {
   const gridRef = useRef(null);
+  const [dropTarget, setDropTarget] = useState(null);
+
+  // Snap the drop point to the nearest half hour in that day column.
+  function slotFromEvent(e) {
+    const rect = e.currentTarget.getBoundingClientRect();
+    const hour = Math.min(
+      END_HOUR - 0.5,
+      Math.max(0, Math.floor(((e.clientY - rect.top) / HOUR_HEIGHT) * 2) / 2),
+    );
+    return START_HOUR + hour;
+  }
 
   useEffect(() => {
     if (gridRef.current) {
@@ -445,7 +474,42 @@ function TimeGrid({
               <div
                 key={d.toISOString()}
                 className="relative border-r border-neutral-100 last:border-r-0"
+                onDragOver={(e) => {
+                  if (!e.dataTransfer.types.includes(DRAG_MIME)) return;
+                  e.preventDefault();
+                  e.dataTransfer.dropEffect = "move";
+                  const hour = slotFromEvent(e);
+                  setDropTarget((t) =>
+                    t && t.key === d.toISOString() && t.hour === hour
+                      ? t
+                      : { key: d.toISOString(), hour },
+                  );
+                }}
+                onDragLeave={(e) => {
+                  if (!e.currentTarget.contains(e.relatedTarget)) setDropTarget(null);
+                }}
+                onDrop={(e) => {
+                  const id = e.dataTransfer.getData(DRAG_MIME);
+                  setDropTarget(null);
+                  if (!id) return;
+                  e.preventDefault();
+                  const hour = slotFromEvent(e);
+                  const h = Math.floor(hour);
+                  const m = hour % 1 ? "30" : "00";
+                  onMove(id, d, `${String(h).padStart(2, "0")}:${m}`);
+                }}
               >
+                {/* Drop preview */}
+                {dropTarget?.key === d.toISOString() && (
+                  <div
+                    className="pointer-events-none absolute left-0.5 right-0.5 z-10 rounded border-2 border-dashed border-brand-400 bg-brand-50/70"
+                    style={{
+                      top: (dropTarget.hour - START_HOUR) * HOUR_HEIGHT,
+                      height: HOUR_HEIGHT / 2,
+                    }}
+                  />
+                )}
+
                 {/* Hour lines */}
                 {HOURS.map((h) => (
                   <div
@@ -474,7 +538,7 @@ function TimeGrid({
                 {dayEvents.map((ev) => {
                   const startHour = parseTimeToHour(ev.time);
                   const endHour =
-                    parseTimeToHour(ev.endTime) || startHour + 0.5;
+                    ev.endTime ? parseTimeToHour(ev.endTime) : startHour + 0.5;
                   const top = (startHour - START_HOUR) * HOUR_HEIGHT;
                   const height = Math.max(
                     (endHour - startHour) * HOUR_HEIGHT,
@@ -484,11 +548,18 @@ function TimeGrid({
                   return (
                     <button
                       key={ev.id}
+                      draggable={isDraggable(ev)}
+                      onDragStart={(e) => {
+                        e.dataTransfer.setData(DRAG_MIME, ev.id);
+                        e.dataTransfer.effectAllowed = "move";
+                      }}
                       onClick={(e) => {
                         e.stopPropagation();
                         onSelect(ev);
                       }}
                       className={`absolute left-0.5 right-0.5 z-20 flex flex-col justify-center overflow-hidden rounded px-1.5 py-1 text-left text-white transition hover:opacity-90 ${
+                        isDraggable(ev) ? "cursor-grab active:cursor-grabbing" : ""
+                      } ${
                         selected?.id === ev.id
                           ? "ring-2 ring-brand-500 ring-offset-1"
                           : ""
@@ -546,7 +617,10 @@ function MonthView({
   selected,
   onSelect,
   onDayClick,
+  onMove,
 }) {
+  const [dropKey, setDropKey] = useState(null);
+
   return (
     <div className="overflow-hidden rounded-lg border border-neutral-200 bg-white">
       <div className="grid grid-cols-7 border-b border-neutral-200 bg-neutral-50">
@@ -571,8 +645,28 @@ function MonthView({
             <div
               key={date.toISOString()}
               onClick={() => onDayClick(date)}
+              onDragOver={(e) => {
+                if (!e.dataTransfer.types.includes(DRAG_MIME)) return;
+                e.preventDefault();
+                e.dataTransfer.dropEffect = "move";
+                setDropKey(date.toISOString());
+              }}
+              onDragLeave={(e) => {
+                if (!e.currentTarget.contains(e.relatedTarget)) setDropKey(null);
+              }}
+              onDrop={(e) => {
+                const id = e.dataTransfer.getData(DRAG_MIME);
+                setDropKey(null);
+                if (!id) return;
+                e.preventDefault();
+                onMove(id, date);
+              }}
               className={`flex min-h-[7rem] flex-col border-b border-r border-neutral-100 p-1.5 transition hover:bg-neutral-50/70 ${
-                inMonth ? "bg-white" : "bg-neutral-50/60"
+                dropKey === date.toISOString()
+                  ? "bg-brand-50 ring-2 ring-inset ring-brand-400"
+                  : inMonth
+                    ? "bg-white"
+                    : "bg-neutral-50/60"
               }`}
             >
               <div className="mb-1 flex items-center justify-between">
@@ -595,11 +689,18 @@ function MonthView({
                   return (
                     <button
                       key={ev.id}
+                      draggable={isDraggable(ev)}
+                      onDragStart={(e) => {
+                        e.dataTransfer.setData(DRAG_MIME, ev.id);
+                        e.dataTransfer.effectAllowed = "move";
+                      }}
                       onClick={(e) => {
                         e.stopPropagation();
                         onSelect(ev);
                       }}
-                      className={`flex w-full cursor-pointer flex-col gap-0.5 text-left font-medium text-white transition hover:opacity-90 ${
+                      className={`flex w-full flex-col gap-0.5 text-left font-medium text-white transition hover:opacity-90 ${
+                        isDraggable(ev) ? "cursor-grab active:cursor-grabbing" : "cursor-pointer"
+                      } ${
                         single
                           ? "rounded pl-1 pr-1.5 py-2 text-[11px]"
                           : "rounded pl-0.5 pr-1 py-0.5 text-[10px]"
@@ -695,7 +796,6 @@ export default function CalendarPage() {
           type: "MOTION",
           title: p.title,
           time: p.scheduleTime ? formatTime24(p.scheduleTime) : "09:00 AM",
-          endTime: "09:30 AM",
           thumbClass:
             p.thumbClass || "bg-gradient-to-br from-brand-200 to-brand-400",
           description: p.caption,
@@ -720,6 +820,46 @@ export default function CalendarPage() {
   const todaysEvent = eventsByDate.find((ev) => isSameDay(ev.date, today));
   const [selected, setSelected] = useState(todaysEvent ?? null);
   const [scheduleDate, setScheduleDate] = useState(null);
+  const [moveError, setMoveError] = useState("");
+
+  // Keep the details panel in sync when the selected item is moved.
+  useEffect(() => {
+    setSelected((s) => (s ? (eventsByDate.find((ev) => ev.id === s.id) ?? s) : s));
+  }, [eventsByDate]);
+
+  // Drop handler: without a time (month view) the item keeps its current time.
+  async function handleMove(id, date, time) {
+    const post = generatedPosts.find((p) => p.id === id);
+    const ev = eventsByDate.find((e) => e.id === id);
+    if (!post || !ev) return;
+
+    const newDate = toISODate(date);
+    const newTime = time || to24h(ev.time);
+    if (post.scheduleDate === newDate && (post.scheduleTime || "").startsWith(newTime)) return;
+
+    const previous = generatedPosts;
+    // Move it right away, then confirm with the server.
+    setGeneratedPosts((list) =>
+      list.map((p) => (p.id === id ? { ...p, scheduleDate: newDate, scheduleTime: newTime } : p)),
+    );
+    setMoveError("");
+    try {
+      const updated = await apiRescheduleCalendarItem(post.contentType, id, {
+        date: newDate,
+        start_time: newTime,
+      });
+      if (updated) {
+        const mapped = mapCalendarItem(updated);
+        setGeneratedPosts((list) => list.map((p) => (p.id === id ? { ...p, ...mapped } : p)));
+      }
+      showGlobalToast(
+        `Moved to ${date.toLocaleDateString("en-US", { month: "short", day: "numeric" })}, ${formatTime24(newTime)}`,
+      );
+    } catch (err) {
+      setGeneratedPosts(previous);
+      setMoveError(err.message || "Failed to move the post");
+    }
+  }
 
   const selectedWithImages = useMemo(() => {
     if (!selected) return null;
@@ -830,6 +970,7 @@ export default function CalendarPage() {
 
   return (
     <div className="flex flex-col gap-6 lg:flex-row">
+      {moveError && <ErrorToast message={moveError} onClose={() => setMoveError("")} />}
       <div className="flex-1 space-y-4">
         {/* Header */}
         <div className="flex flex-wrap items-center justify-between gap-3">
@@ -888,6 +1029,7 @@ export default function CalendarPage() {
             selected={selected}
             onSelect={setSelected}
             onDayClick={setScheduleDate}
+            onMove={handleMove}
           />
         )}
         {view === "week" && (
@@ -897,6 +1039,7 @@ export default function CalendarPage() {
             today={today}
             selected={selected}
             onSelect={setSelected}
+            onMove={handleMove}
             multiDay
           />
         )}
@@ -907,6 +1050,7 @@ export default function CalendarPage() {
             today={today}
             selected={selected}
             onSelect={setSelected}
+            onMove={handleMove}
           />
         )}
       </div>
@@ -961,7 +1105,8 @@ export default function CalendarPage() {
                   month: "short",
                   day: "numeric",
                 })}
-                , {selectedWithImages.time} – {selectedWithImages.endTime}
+                , {selectedWithImages.time}
+                {selectedWithImages.endTime ? ` – ${selectedWithImages.endTime}` : ""}
               </span>
             </p>
             <p className="mt-2.5 text-xs leading-relaxed text-neutral-500">

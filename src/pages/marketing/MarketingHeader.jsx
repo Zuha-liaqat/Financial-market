@@ -113,6 +113,9 @@ export default function MarketingHeader({ active = 'home' }) {
         <Link to="/contact" onClick={() => setMobileOpen(false)}>
           Contact
         </Link>
+        <Link to="/login" onClick={() => setMobileOpen(false)}>
+          Log In
+        </Link>
         <Link
           to="/pricing"
           className="btn btn-primary"

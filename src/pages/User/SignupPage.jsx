@@ -107,7 +107,7 @@ export default function SignupPage() {
   }
 
   return (
-    <div className="flex h-screen overflow-hidden bg-white">
+    <div className="flex min-h-screen bg-white lg:h-screen lg:overflow-hidden">
       {/* Left: background hero */}
       <div className="relative hidden w-1/2 lg:block">
         <img
@@ -120,7 +120,7 @@ export default function SignupPage() {
       </div>
 
       {/* Right: signup form */}
-      <div className="flex w-full items-center justify-center px-6 lg:w-1/2">
+      <div className="flex w-full items-center justify-center px-6 py-10 lg:w-1/2 lg:py-0">
         <div className="w-full max-w-sm">
           <div className="mb-8 flex flex-col items-center text-center">
             <Logo className="h-11 w-full object-contain" />

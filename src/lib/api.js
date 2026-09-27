@@ -303,6 +303,24 @@ export async function apiGetCalendar({ start_date, end_date, content_type, platf
   return body
 }
 
+// Moves a calendar item to a new day/time (drag and drop on the calendar).
+export async function apiRescheduleCalendarItem(contentType, itemId, { date, start_time }, companyId) {
+  const query = companyId ? `?company_id=${companyId}` : ''
+  const res = await authorizedRequest(
+    `/api/calendar/${encodeURIComponent(contentType)}/${encodeURIComponent(itemId)}/schedule${query}`,
+    {
+      method: 'PATCH',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ date, start_time }),
+    },
+  )
+  const body = await res.json().catch(() => null)
+  if (!res.ok) {
+    throw new Error(extractErrorMessage(body, 'Failed to move the post'))
+  }
+  return body
+}
+
 export async function apiGetPost(postId, companyId) {
   const query = companyId ? `?company_id=${companyId}` : ''
   const res = await authorizedRequest(`/api/posts/${postId}${query}`)

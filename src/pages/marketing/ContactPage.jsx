@@ -50,7 +50,7 @@ export default function ContactPage() {
       </section>
 
       <section style={{ paddingTop: 8 }}>
-        <div className="wrap" style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 32, alignItems: 'flex-start' }}>
+        <div className="wrap contact-grid">
           <div className="reveal">
             <form
               onSubmit={handleSubmit}

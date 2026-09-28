@@ -19,7 +19,7 @@ export default function AboutPage() {
   return (
     <MarketingPage active="about">
       <section className="page-banner">
-        <div className="wrap">
+        <div className="wrap banner-center">
           <div className="eyebrow reveal">
             <span className="dot" /> OUR STORY
           </div>

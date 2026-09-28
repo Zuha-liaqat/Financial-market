@@ -5,7 +5,7 @@ import { trackEvent } from '../../lib/analytics'
 export function PageBanner({ eyebrow, title, lead, stats, visual }) {
   return (
     <section className="page-banner">
-      <div className={`wrap${visual ? ' hero-grid' : ''}`} style={{ alignItems: 'flex-start', paddingBottom: 40 }}>
+      <div className="wrap banner-center" style={{ paddingBottom: 40 }}>
         <div>
           <div className="eyebrow reveal">
             <span className="dot" /> {eyebrow}
@@ -41,7 +41,7 @@ export function PageBanner({ eyebrow, title, lead, stats, visual }) {
           )}
         </div>
         {visual && (
-          <div className="reveal reveal-d2" style={{ position: 'relative' }}>
+          <div className="banner-visual reveal reveal-d2">
             {visual}
           </div>
         )}

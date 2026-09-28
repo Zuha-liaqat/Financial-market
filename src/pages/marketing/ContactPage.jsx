@@ -35,7 +35,7 @@ export default function ContactPage() {
   return (
     <MarketingPage active="contact">
       <section className="page-banner">
-        <div className="wrap">
+        <div className="wrap banner-center">
           <div className="eyebrow reveal">
             <span className="dot" /> GET IN TOUCH
           </div>
@@ -51,7 +51,20 @@ export default function ContactPage() {
 
       <section style={{ paddingTop: 8 }}>
         <div className="wrap contact-grid">
-          <div className="reveal">
+          <div className="reveal" style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>
+            {CONTACTS.map((c) => (
+              <div className="lcard" key={c.title}>
+                <div className="licon">
+                  <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#0B4A73" strokeWidth="1.8">
+                    {c.icon}
+                  </svg>
+                </div>
+                <h3>{c.title}</h3>
+                <p>{c.desc}</p>
+              </div>
+            ))}
+          </div>
+          <div className="reveal reveal-d1">
             <form
               onSubmit={handleSubmit}
               style={{
@@ -102,19 +115,6 @@ export default function ContactPage() {
                 </div>
               )}
             </form>
-          </div>
-          <div className="reveal reveal-d1" style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>
-            {CONTACTS.map((c) => (
-              <div className="lcard" key={c.title}>
-                <div className="licon">
-                  <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#0B4A73" strokeWidth="1.8">
-                    {c.icon}
-                  </svg>
-                </div>
-                <h3>{c.title}</h3>
-                <p>{c.desc}</p>
-              </div>
-            ))}
           </div>
         </div>
       </section>

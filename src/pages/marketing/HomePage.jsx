@@ -202,15 +202,15 @@ export default function HomePage() {
             <div className="stats-row reveal reveal-d4">
               <div className="stat">
                 <Counter target={42} suffix="K+" />
-                <div className="lbl">Students taught</div>
+                <div className="lbl">Posts published</div>
               </div>
               <div className="stat">
-                <Counter target={180} suffix="+" />
-                <div className="lbl">Terms explained</div>
+                <Counter target={8} />
+                <div className="lbl">Platforms supported</div>
               </div>
               <div className="stat">
                 <Counter target={4.9} decimals={1} suffix="/5" />
-                <div className="lbl">Learner rating</div>
+                <div className="lbl">User rating</div>
               </div>
             </div>
           </div>

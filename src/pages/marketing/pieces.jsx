@@ -8,7 +8,7 @@ export function PageBanner({ eyebrow, title, lead, stats, visual }) {
       <div className="wrap banner-center" style={{ paddingBottom: 40 }}>
         <div>
           <div className="eyebrow reveal">
-            <span className="dot" /> {eyebrow}
+            {eyebrow}
           </div>
           <h1 className="headline reveal reveal-d1">{title}</h1>
           <p className="lead reveal reveal-d2">{lead}</p>
@@ -18,7 +18,7 @@ export function PageBanner({ eyebrow, title, lead, stats, visual }) {
               className="btn btn-primary btn-arrow"
               onClick={() => trackEvent('cta_click', { cta_label: 'Start Free Trial', cta_location: 'product_banner' })}
             >
-              Start Free Trial
+              Start for Free
               <ArrowRight className="btn-arrow-icon" size={17} strokeWidth={2.5} />
             </Link>
             <Link
@@ -56,7 +56,7 @@ export function FeatureCards({ kicker, title, lead, cards }) {
       <div className="wrap">
         <div className="sec-head reveal">
           <span className="kicker">
-            <span className="dot" /> {kicker}
+            {kicker}
           </span>
           <h2 className="sec-title">{title}</h2>
           {lead && <p>{lead}</p>}
@@ -86,7 +86,7 @@ export function StepsSection({ kicker, title, lead, steps }) {
       <div className="wrap">
         <div className="sec-head reveal">
           <span className="kicker">
-            <span className="dot" /> {kicker}
+            {kicker}
           </span>
           <h2 className="sec-title">{title}</h2>
           {lead && <p>{lead}</p>}
@@ -105,7 +105,7 @@ export function StepsSection({ kicker, title, lead, steps }) {
   )
 }
 
-export function CtaBannerSection({ title, lead, ctaLabel = 'Start Free Trial', to = '/pricing' }) {
+export function CtaBannerSection({ title, lead, ctaLabel = 'Start for Free', to = '/pricing' }) {
   return (
     <section>
       <div className="wrap">

@@ -11,7 +11,7 @@ export default function MarketingFooter() {
             <Link to="/" className="brand">
               <MarketingLogo />
             </Link>
-            <p>Daily, plain-language investing lessons and the content studio that gets them published everywhere&mdash;on time, on brand.</p>
+            <p>The AI-powered content studio that drafts, approves and publishes your posts everywhere, on time and on brand.</p>
           </div>
           <div className="foot-col">
             <h5>Product</h5>
@@ -37,7 +37,7 @@ export default function MarketingFooter() {
           </div>
         </div>
         <div className="foot-bottom">
-          <span>&copy; {new Date().getFullYear()} Financial Market. Educational content only&mdash;not investment advice.</span>
+          <span>&copy; {new Date().getFullYear()} Financial Market. All rights reserved.</span>
         </div>
       </div>
     </footer>

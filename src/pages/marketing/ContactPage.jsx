@@ -37,13 +37,13 @@ export default function ContactPage() {
       <section className="page-banner">
         <div className="wrap banner-center">
           <div className="eyebrow reveal">
-            <span className="dot" /> GET IN TOUCH
+            GET IN TOUCH
           </div>
           <h1 className="headline reveal reveal-d1" style={{ maxWidth: 640 }}>
             Let&apos;s talk about your content.
           </h1>
           <p className="lead reveal reveal-d2" style={{ maxWidth: 520 }}>
-            Questions about plans, a demo request, or feedback on a lesson, send it over and our team will
+            Questions about plans, a demo request, or feedback on the platform, send it over and our team will
             reply within one business day.
           </p>
         </div>

@@ -1000,24 +1000,26 @@ export default function CalendarPage() {
             <h2 className="ml-1 text-xl font-bold text-black">{label}</h2>
           </div>
 
-          <Select value={view} onValueChange={handleViewChange}>
-            <SelectTrigger className="w-32 capitalize">
-              <SelectValue />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="day">Day</SelectItem>
-              <SelectItem value="week">Week</SelectItem>
-              <SelectItem value="month">Month</SelectItem>
-            </SelectContent>
-          </Select>
+          <div className="flex items-center gap-2">
+            <Select value={view} onValueChange={handleViewChange}>
+              <SelectTrigger className="w-32 capitalize">
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="day">Day</SelectItem>
+                <SelectItem value="week">Week</SelectItem>
+                <SelectItem value="month">Month</SelectItem>
+              </SelectContent>
+            </Select>
 
-          <button
-            onClick={() => navigate("/create-post")}
-            className="flex items-center gap-1.5 rounded-md bg-brand-500 px-3 py-2 text-sm font-medium text-white transition hover:bg-brand-600"
-          >
-            <Plus className="h-4 w-4" />
-            Create Post
-          </button>
+            <button
+              onClick={() => navigate("/create-post")}
+              className="flex items-center gap-1.5 rounded-md bg-brand-500 px-3 py-2 text-sm font-medium text-white transition hover:bg-brand-600"
+            >
+              <Plus className="h-4 w-4" />
+              Create Post
+            </button>
+          </div>
         </div>
 
         {view === "month" && (

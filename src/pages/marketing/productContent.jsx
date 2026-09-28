@@ -9,7 +9,7 @@ export const PRODUCT_CONTENT = {
         One command center for <em>every</em> platform.
       </>
     ),
-    lead: "See what's drafted, what's waiting on you, and what's already live, across LinkedIn, Instagram and X, without opening three different apps.",
+    lead: "See what's drafted, what's waiting on your review, what's scheduled and what's already live, across LinkedIn, Instagram, Facebook and X, on one screen.",
     stats: [
       { value: '12', label: 'Drafted this week' },
       { value: '4', label: 'Awaiting review' },
@@ -19,19 +19,19 @@ export const PRODUCT_CONTENT = {
     cardsTitle: 'Everything, at a glance',
     cardsLead: 'The dashboard pulls every workflow below into one screen.',
     cards: [
-      { icon: ICONS.grid, title: 'Live status counts', desc: 'Drafted, scheduled, awaiting review and published, updated the moment anything changes.' },
-      { icon: ICONS.star, title: 'Top-performer surfacing', desc: 'The dashboard automatically highlights your best post of the week, with views, reactions and reposts.' },
+      { icon: ICONS.grid, title: 'Live status counts', desc: 'Drafted this week, awaiting your review, scheduled to post and published this month, side by side.' },
+      { icon: ICONS.bell, title: 'Recent activity', desc: 'A running feed of what was generated, approved and published, so you always know what changed.' },
       { icon: ICONS.calendar, title: 'Coming-up preview', desc: "A rolling look at what's scheduled next, so nothing sneaks past the calendar." },
     ],
-    stepsTitle: 'From login to insight in seconds',
+    stepsTitle: 'From login to overview in seconds',
     stepsLead: 'No configuration required, the dashboard is ready the moment your accounts are connected.',
     steps: [
-      { title: 'Connect your platforms', desc: 'Link LinkedIn, Instagram and X once through Integrations.' },
-      { title: 'Work as usual', desc: 'Draft, review and schedule posts across the other modules.' },
-      { title: 'Check the dashboard', desc: 'Everything you and your team touched shows up here automatically.' },
+      { title: 'Connect your platforms', desc: 'Link LinkedIn, Instagram, Facebook and X through Integrations.' },
+      { title: 'Work as usual', desc: 'Generate, review and schedule posts in the other modules.' },
+      { title: 'Check the dashboard', desc: 'Everything you touched shows up here automatically.' },
     ],
     ctaTitle: 'Ready to see your own numbers?',
-    ctaLead: 'Start a free trial and connect your first platform in under five minutes.',
+    ctaLead: 'Start on the free plan and connect your first platform in minutes.',
   },
 
   'themes-brands': {
@@ -39,32 +39,32 @@ export const PRODUCT_CONTENT = {
     eyebrow: 'PRODUCT: THEMES / BRANDS',
     title: (
       <>
-        Keep every post on-brand, <em>automatically</em>.
+        Teach the AI your <em>brand</em>, once.
       </>
     ),
-    lead: 'Store your logo, palette, fonts and voice once. Every draft, no matter who writes it, inherits the same look and tone.',
+    lead: 'Save your logo, company description, brand tone, target audience and visual style once, so the content AI creates sounds like you.',
     stats: [
       { value: '1', label: 'Setup, once' },
-      { value: '100%', label: 'On-brand posts' },
-      { value: '3+', label: 'Brand kits supported' },
+      { value: '4', label: 'Visual styles' },
+      { value: 'Custom', label: 'Color and font' },
     ],
     cardsKicker: 'THEMES & BRANDS',
-    cardsTitle: 'One brand kit, every platform',
-    cardsLead: 'Set it up once and stop re-checking colors and logos on every post.',
+    cardsTitle: 'One brand profile behind every draft',
+    cardsLead: 'Give the AI the context it needs to write in your voice.',
     cards: [
-      { icon: ICONS.palette, title: 'Locked color palette', desc: 'Define your primary, accent and neutral colors so every graphic pulls from the same set.' },
-      { icon: ICONS.plus, title: 'Reusable templates', desc: 'Save post layouts for quotes, stats and announcements so drafting starts halfway done.' },
-      { icon: ICONS.shield, title: 'Consistency checks', desc: 'The approval queue flags anything that drifts from your saved brand guidelines.' },
+      { icon: ICONS.document, title: 'Brand profile', desc: 'Describe your company, your brand tone and your target audience so AI drafts start with the right context.' },
+      { icon: ICONS.palette, title: 'Visual style', desc: 'Pick Minimalist, Bold or Futuristic, or go Custom with your own color and font.' },
+      { icon: ICONS.folder, title: 'Logo upload', desc: 'Upload your logo once and keep it with your brand profile.' },
     ],
     stepsTitle: 'Set your brand up in three steps',
     stepsLead: 'A one-time setup that pays off on every post afterward.',
     steps: [
-      { title: 'Upload your assets', desc: 'Logo, color codes and fonts go in once.' },
-      { title: 'Save your voice', desc: 'Define tone guidelines your writers and AI drafts follow.' },
-      { title: 'Reuse everywhere', desc: 'Every new post starts pre-styled to match.' },
+      { title: 'Upload your logo', desc: 'Add your logo to your brand profile.' },
+      { title: 'Describe your brand', desc: 'Company description, brand tone and target audience.' },
+      { title: 'Pick a visual style', desc: 'Choose a preset or set your own color and font.' },
     ],
-    ctaTitle: 'Give every post a consistent brand voice.',
-    ctaLead: 'Set up your first brand kit in minutes.',
+    ctaTitle: 'Give the AI your brand voice.',
+    ctaLead: 'Set up your brand profile in minutes.',
   },
 
   'create-post': {
@@ -72,32 +72,32 @@ export const PRODUCT_CONTENT = {
     eyebrow: 'PRODUCT: CREATE POST',
     title: (
       <>
-        Draft once, tailor for <em>every</em> channel.
+        Describe it once, post it on <em>every</em> channel.
       </>
     ),
-    lead: 'Write a single idea and adapt the tone, length and hashtags per platform, without opening three separate composers.',
+    lead: 'Write a prompt, pick your platforms, tone and language, and AI drafts the post for LinkedIn, Instagram, Facebook and X, ready for review.',
     stats: [
-      { value: '3', label: 'Platforms at once' },
-      { value: '60s', label: 'Avg. draft time' },
-      { value: '1', label: 'Click to submit' },
+      { value: '4', label: 'Social platforms' },
+      { value: '6', label: 'Languages' },
+      { value: '5', label: 'Tone options' },
     ],
     cardsKicker: 'CREATE POST',
-    cardsTitle: 'Built for fast, accurate drafting',
-    cardsLead: 'Everything a writer needs, nothing that slows them down.',
+    cardsTitle: 'From prompt to ready-to-review post',
+    cardsLead: 'Everything you need to get a post drafted, nothing that slows you down.',
     cards: [
-      { icon: ICONS.plus, title: 'Multi-platform composer', desc: 'Write once and preview how the post will look on LinkedIn, Instagram and X before you submit.' },
-      { icon: ICONS.palette, title: 'On-brand by default', desc: 'Fonts, colors and tone pull automatically from your saved brand kit.' },
-      { icon: ICONS.shield, title: 'One-click submission', desc: 'Send a finished draft straight into the Approval Queue, no extra steps.' },
+      { icon: ICONS.plus, title: 'AI from a prompt', desc: 'Describe the post, add hashtags, a reference link or your own images, and let AI write the draft.' },
+      { icon: ICONS.grid, title: 'Mobile and web previews', desc: 'See how the post will look on each platform, on mobile and desktop, before it goes out.' },
+      { icon: ICONS.shield, title: 'Straight to review', desc: 'Every generated post lands in the Approval Queue with its date and time already set.' },
     ],
-    stepsTitle: 'From idea to submitted draft',
+    stepsTitle: 'From idea to drafted post',
     stepsLead: 'Three steps, most of them automatic.',
     steps: [
-      { title: 'Start typing', desc: 'Write your core idea in the composer.' },
-      { title: 'Adjust per platform', desc: 'Tweak tone or length for each channel if needed.' },
-      { title: 'Submit for review', desc: 'One click sends it to your approval queue.' },
+      { title: 'Write your prompt', desc: 'Describe the post and choose tone, language and hashtags.' },
+      { title: 'Pick platforms and a time', desc: 'Select where it goes and when it should publish.' },
+      { title: 'Generate', desc: 'AI drafts it and sends it to your Approval Queue.' },
     ],
-    ctaTitle: 'Write your next post in under a minute.',
-    ctaLead: 'See how the composer feels with a free trial.',
+    ctaTitle: 'Get your next post drafted in minutes.',
+    ctaLead: 'Try the AI composer on the free plan.',
   },
 
   'create-blog': {
@@ -105,32 +105,32 @@ export const PRODUCT_CONTENT = {
     eyebrow: 'PRODUCT: CREATE BLOG',
     title: (
       <>
-        Long-form lessons your audience <em>saves</em>.
+        Long-form articles, drafted by <em>AI</em>.
       </>
     ),
-    lead: 'Turn a daily term into a full article, with structure, formatting and SEO guidance built into the editor.',
+    lead: 'Turn a prompt into a full blog post for WordPress, Medium, Blogger or Wix, in the tone and language you choose.',
     stats: [
-      { value: '6 min', label: 'Avg. read time' },
-      { value: '1-click', label: 'Publish to site' },
-      { value: '100%', label: 'SEO-checked' },
+      { value: '4', label: 'Blog platforms' },
+      { value: '6', label: 'Languages' },
+      { value: '1', label: 'Prompt to start' },
     ],
     cardsKicker: 'CREATE BLOG',
-    cardsTitle: 'A distraction-free long-form editor',
-    cardsLead: 'Everything you need to turn a lesson into an article worth bookmarking.',
+    cardsTitle: 'From a prompt to a finished article',
+    cardsLead: 'Let AI do the first draft, then make it yours.',
     cards: [
-      { icon: ICONS.document, title: 'Structured editor', desc: 'Headings, pull-quotes and callouts formatted automatically as you write.' },
-      { icon: ICONS.grid, title: 'SEO guidance', desc: 'Built-in checks for title length, readability and keyword placement before you publish.' },
-      { icon: ICONS.folder, title: 'Auto-saved to Library', desc: 'Every draft and published article is filed automatically for later reuse.' },
+      { icon: ICONS.document, title: 'AI-drafted articles', desc: 'Describe the topic, add a reference link or cover image, and get a complete article to review.' },
+      { icon: ICONS.grid, title: 'Edit before it goes live', desc: 'Open any draft from the Approval Queue and refine the text right in the editor.' },
+      { icon: ICONS.calendar, title: 'Scheduled publishing', desc: 'Set a date and time and the article shows up on your Calendar.' },
     ],
-    stepsTitle: 'From outline to published article',
-    stepsLead: 'The editor keeps you focused on writing.',
+    stepsTitle: 'From prompt to published article',
+    stepsLead: 'AI writes the draft, you stay in control.',
     steps: [
-      { title: 'Draft the outline', desc: 'Start from a term-of-the-day or a blank page.' },
-      { title: 'Format as you write', desc: 'Headings and pull-quotes are one click away.' },
-      { title: 'Publish or schedule', desc: 'Push live now or queue it into the Calendar.' },
+      { title: 'Write your prompt', desc: 'Topic, tone, language and an optional reference link.' },
+      { title: 'Review and edit', desc: 'The draft waits in the Approval Queue for your changes.' },
+      { title: 'Approve and schedule', desc: 'It publishes on the date and time you set.' },
     ],
-    ctaTitle: "Turn today's lesson into a full article.",
-    ctaLead: 'Try the blog editor free for 14 days.',
+    ctaTitle: "Turn today's idea into a full article.",
+    ctaLead: 'Start free and draft your first article.',
   },
 
   library: {
@@ -138,32 +138,32 @@ export const PRODUCT_CONTENT = {
     eyebrow: 'PRODUCT: LIBRARY',
     title: (
       <>
-        Every asset, caption and clip in <em>one</em> place.
+        Your photos and videos in <em>one</em> place.
       </>
     ),
-    lead: 'Stop digging through folders and old chat threads. Search your entire content history in seconds.',
+    lead: 'Upload the images and clips your team uses, sort them by type, and find them quickly when you need them.',
     stats: [
-      { value: '128+', label: 'Assets stored' },
-      { value: '34', label: 'Saved captions' },
-      { value: '1', label: 'Search bar' },
+      { value: '2', label: 'Media types' },
+      { value: '1', label: 'Shared library' },
+      { value: '1-click', label: 'Filters' },
     ],
     cardsKicker: 'LIBRARY',
-    cardsTitle: "A searchable home for everything you've made",
-    cardsLead: 'Every image, caption, and video your team has ever used, tagged and ready to reuse.',
+    cardsTitle: 'A home for your media',
+    cardsLead: 'Stop digging through folders and old chat threads.',
     cards: [
-      { icon: ICONS.folder, title: 'Smart tagging', desc: "Assets are tagged by platform, topic and brand kit automatically as they're uploaded." },
-      { icon: ICONS.plus, title: 'Reuse in one click', desc: 'Drop any saved image or caption straight into a new draft.' },
-      { icon: ICONS.plug, title: 'Synced from every module', desc: 'Anything created in Create Post, Create Blog or Planner lands here automatically.' },
+      { icon: ICONS.folder, title: 'Upload once', desc: "Add photos and videos with a name and category so they're easy to find later." },
+      { icon: ICONS.grid, title: 'Filter by type', desc: 'Switch between all assets, photographs and videos with a single click.' },
+      { icon: ICONS.plus, title: 'Edit or replace', desc: 'Rename an asset, change its category or swap in a new file anytime.' },
     ],
-    stepsTitle: 'Find anything in seconds',
-    stepsLead: 'Search beats scrolling.',
+    stepsTitle: 'Keep your media organized',
+    stepsLead: 'Filtering beats scrolling.',
     steps: [
-      { title: 'Upload or auto-save', desc: 'Assets land here from every other module.' },
-      { title: 'Tag and organize', desc: 'Filter by platform, campaign or brand.' },
-      { title: 'Reuse instantly', desc: 'Drop straight into your next draft.' },
+      { title: 'Upload', desc: 'Add photos and videos from your device.' },
+      { title: 'Name and categorize', desc: 'Give each asset a name and category.' },
+      { title: 'Find it fast', desc: 'Filter by type whenever you need something.' },
     ],
-    ctaTitle: 'Never recreate an asset twice.',
-    ctaLead: 'Start organizing your content library today.',
+    ctaTitle: 'Keep every asset where your team can find it.',
+    ctaLead: 'Start building your library today.',
   },
 
   'approval-queue': {
@@ -174,26 +174,26 @@ export const PRODUCT_CONTENT = {
         Nothing goes live without a <em>sign-off</em>.
       </>
     ),
-    lead: 'Every draft, from any writer, on any platform, passes through review before it can be scheduled or published.',
+    lead: 'Every AI-generated post and article waits in the queue until you approve it, so nothing is published without your say.',
     stats: [
-      { value: '4', label: 'Awaiting review' },
-      { value: '6h', label: 'Oldest pending' },
+      { value: 'AI', label: 'Safety score' },
+      { value: '1-click', label: 'Batch approve' },
       { value: '100%', label: 'Posts reviewed' },
     ],
     cardsKicker: 'APPROVAL QUEUE',
     cardsTitle: 'A safety net for every post',
     cardsLead: 'Catch mistakes before your audience does.',
     cards: [
-      { icon: ICONS.shield, title: 'Clear review states', desc: 'Every draft is marked drafted, awaiting review, or approved, never ambiguous.' },
-      { icon: ICONS.bell, title: 'Reviewer alerts', desc: 'Reviewers get notified the moment something needs their attention.' },
-      { icon: ICONS.grid, title: 'Full audit trail', desc: 'See who drafted, who approved and when, for every single post.' },
+      { icon: ICONS.shield, title: 'AI safety score', desc: 'Each draft gets a safety score, and risky content is flagged so you look at it first.' },
+      { icon: ICONS.document, title: 'Edit before approving', desc: "Open any post or blog, adjust the text, and approve it once it's right." },
+      { icon: ICONS.grid, title: 'Batch approve', desc: 'Select several drafts and approve them together in one click.' },
     ],
     stepsTitle: 'From draft to approved in three steps',
     stepsLead: 'Built to be fast, not just thorough.',
     steps: [
-      { title: 'Draft is submitted', desc: 'A writer sends a finished post from Create Post or Create Blog.' },
-      { title: 'Reviewer checks it', desc: 'Brand, accuracy and tone are checked against your guidelines.' },
-      { title: 'Approve or return', desc: 'Approved posts move to Calendar; flagged ones go back with notes.' },
+      { title: 'Draft arrives', desc: 'Generated posts and blogs land here automatically.' },
+      { title: 'Review and edit', desc: 'Check the score, preview it and fix anything you want.' },
+      { title: 'Approve', desc: 'Approved content goes to the Calendar to publish on schedule.' },
     ],
     ctaTitle: 'Publish with confidence, every time.',
     ctaLead: 'Add a review step to your workflow today.',
@@ -207,26 +207,26 @@ export const PRODUCT_CONTENT = {
         See your whole content month at a <em>glance</em>.
       </>
     ),
-    lead: 'Every scheduled post, on every platform, laid out on one calendar, drag to reschedule in seconds.',
+    lead: 'Every scheduled post and article, on every platform, laid out on one calendar. Drag to reschedule in seconds.',
     stats: [
-      { value: '3', label: 'Platforms shown' },
+      { value: '4', label: 'Platforms shown' },
       { value: '1', label: 'Drag to reschedule' },
-      { value: '0', label: 'Missed slots' },
+      { value: '3', label: 'Views: day, week, month' },
     ],
     cardsKicker: 'CALENDAR',
     cardsTitle: 'Your entire schedule, visualized',
     cardsLead: 'Spot gaps and clashes before they become a problem.',
     cards: [
-      { icon: ICONS.calendar, title: 'Color-coded by platform', desc: 'LinkedIn, Instagram and X posts are instantly distinguishable at a glance.' },
-      { icon: ICONS.star, title: 'Drag-and-drop rescheduling', desc: 'Move a post to a new day or time without leaving the calendar view.' },
-      { icon: ICONS.bell, title: 'Deadline reminders', desc: "Get nudged before a scheduled post's review deadline passes." },
+      { icon: ICONS.calendar, title: 'Color-coded by platform', desc: 'LinkedIn, Instagram, Facebook and X posts are instantly distinguishable at a glance.' },
+      { icon: ICONS.star, title: 'Drag-and-drop rescheduling', desc: 'Move a post to a new day without leaving the calendar view.' },
+      { icon: ICONS.grid, title: 'Day, week and month views', desc: 'Zoom out to plan the month or zoom in on the week or a single day.' },
     ],
     stepsTitle: 'Plan a full month in minutes',
     stepsLead: 'Built to make gaps and clashes obvious.',
     steps: [
-      { title: 'Approved posts land automatically', desc: "Nothing needs manual entry once it's approved." },
+      { title: 'Scheduled posts appear automatically', desc: 'Nothing needs manual entry.' },
       { title: 'Scan for gaps', desc: 'Empty days stand out immediately.' },
-      { title: 'Drag to fine-tune', desc: 'Reschedule with a click, no menus required.' },
+      { title: 'Drag to fine-tune', desc: 'Reschedule with a drag, no menus required.' },
     ],
     ctaTitle: "Stop guessing what's going out this week.",
     ctaLead: 'Bring your whole schedule into one calendar.',
@@ -237,32 +237,32 @@ export const PRODUCT_CONTENT = {
     eyebrow: 'PRODUCT: PLANNER',
     title: (
       <>
-        Plan <em>campaigns</em>, not just posts.
+        Plan a whole <em>week</em> or month in one go.
       </>
     ),
-    lead: 'Group related lessons into a themed campaign, map them across weeks, and track progress from idea to published.',
+    lead: 'Give the AI your topic, platforms and posting frequency, and it builds a weekly or monthly content schedule for you to review.',
     stats: [
-      { value: 'Kanban', label: 'Board view' },
-      { value: 'Weeks', label: 'Or months out' },
-      { value: '1', label: 'Shared board' },
+      { value: 'Weekly', label: 'Or monthly plans' },
+      { value: '30', label: 'Posts per month, max' },
+      { value: '4', label: 'Social platforms' },
     ],
     cardsKicker: 'PLANNER',
     cardsTitle: 'Zoom out from single posts',
-    cardsLead: 'See the campaign, not just the next deadline.',
+    cardsLead: 'Let AI lay out the schedule, then review what it planned.',
     cards: [
-      { icon: ICONS.star, title: 'Kanban-style boards', desc: 'Move ideas from idea to in-progress to scheduled with a simple drag.' },
-      { icon: ICONS.calendar, title: 'Campaign timelines', desc: 'Lay a themed series of posts across weeks or months at a glance.' },
-      { icon: ICONS.plug, title: 'Team collaboration', desc: 'Everyone sees the same board, no separate spreadsheet needed.' },
+      { icon: ICONS.star, title: 'AI-built schedules', desc: 'Choose how many posts you want and at what time, and AI spreads them across the period.' },
+      { icon: ICONS.palette, title: 'Uses your brand', desc: 'Plans draw on your company description, brand tone and target audience.' },
+      { icon: ICONS.calendar, title: 'Track progress', desc: 'See how many planned posts are awaiting approval, scheduled or published.' },
     ],
-    stepsTitle: 'From idea to campaign',
+    stepsTitle: 'From topic to full schedule',
     stepsLead: "Built for planning ahead, not just today's post.",
     steps: [
-      { title: 'Capture the idea', desc: 'Drop a topic into the Ideas column.' },
-      { title: 'Assign and schedule', desc: 'Move it through stages as work happens.' },
-      { title: 'Track to publish', desc: 'Watch the whole campaign progress on one board.' },
+      { title: 'Choose weekly or monthly', desc: 'Set the period, platforms and number of posts.' },
+      { title: 'Describe the topic', desc: 'Tell the AI what the plan should cover.' },
+      { title: 'Review the plan', desc: 'Planned posts go through the Approval Queue like any other draft.' },
     ],
-    ctaTitle: 'Plan your next campaign properly.',
-    ctaLead: 'Try the Planner with your team, free.',
+    ctaTitle: 'Plan your next month properly.',
+    ctaLead: 'The Planner is included in the Pro plan and above.',
   },
 
   integrations: {
@@ -270,32 +270,32 @@ export const PRODUCT_CONTENT = {
     eyebrow: 'PRODUCT: INTEGRATIONS',
     title: (
       <>
-        Connect the tools your team already <em>uses</em>.
+        Connect your social <em>accounts</em>.
       </>
     ),
-    lead: 'Link your social platforms, design tools and workflow apps, Financial Market fits into your stack, not the other way around.',
+    lead: 'Link LinkedIn, Instagram, Facebook and X so approved posts publish straight to your pages.',
     stats: [
-      { value: '3', label: 'Social platforms' },
-      { value: '10+', label: 'Connected apps' },
-      { value: '2 min', label: 'Avg. connect time' },
+      { value: '4', label: 'Social platforms' },
+      { value: '3', label: 'Notification channels' },
+      { value: '1', label: 'Page to manage them' },
     ],
     cardsKicker: 'INTEGRATIONS',
-    cardsTitle: 'Fits the stack you already have',
-    cardsLead: 'No migration, no re-training, just connect and go.',
+    cardsTitle: 'Your accounts, connected once',
+    cardsLead: 'Set it up once and publishing just works.',
     cards: [
-      { icon: ICONS.plug, title: 'One-click platform connect', desc: 'Authorize LinkedIn, Instagram and X in a couple of clicks each.' },
-      { icon: ICONS.bell, title: 'Workflow notifications', desc: 'Pipe approval and publish alerts straight into Slack or email.' },
-      { icon: ICONS.folder, title: 'Design tool sync', desc: 'Pull assets in directly from Canva or your shared drive.' },
+      { icon: ICONS.plug, title: 'Social platform connect', desc: 'Connect LinkedIn, Instagram, Facebook and X from the Integrations page.' },
+      { icon: ICONS.bell, title: 'Team notifications', desc: 'Send alerts to WhatsApp, Slack or Microsoft Teams.' },
+      { icon: ICONS.grid, title: 'Connection status', desc: 'See at a glance which platforms are connected and which still need setup.' },
     ],
-    stepsTitle: 'Connect once, use everywhere',
-    stepsLead: 'Set up your stack in minutes, not days.',
+    stepsTitle: 'Connect once, publish everywhere',
+    stepsLead: 'Set up your accounts in minutes.',
     steps: [
-      { title: 'Pick a service', desc: 'Choose from social, design or workflow integrations.' },
-      { title: 'Authorize access', desc: 'A secure, standard OAuth connection, no passwords shared.' },
-      { title: 'Start using it', desc: 'The integration is immediately available across every module.' },
+      { title: 'Pick a platform', desc: 'Choose LinkedIn, Instagram, Facebook or X.' },
+      { title: 'Authorize access', desc: 'Add your app credentials or sign in to connect.' },
+      { title: 'Start publishing', desc: 'Approved posts go out to the connected account.' },
     ],
-    ctaTitle: 'Bring your existing tools along.',
-    ctaLead: 'Connect your first integration in under two minutes.',
+    ctaTitle: 'Connect your first platform.',
+    ctaLead: 'It only takes a few minutes.',
   },
 
   notifications: {
@@ -306,28 +306,28 @@ export const PRODUCT_CONTENT = {
         The right nudge, right when it <em>matters</em>.
       </>
     ),
-    lead: 'No inbox overload, just the alerts that keep drafts moving: approvals, deadlines and publish confirmations.',
+    lead: 'Know when a post is generated, approved or published, in the app or in WhatsApp, Slack or Microsoft Teams.',
     stats: [
-      { value: '3', label: 'Unread today' },
-      { value: '0', label: 'Missed reviews' },
-      { value: 'Real-time', label: 'Delivery' },
+      { value: '3', label: 'External channels' },
+      { value: 'In-app', label: 'Notification feed' },
+      { value: 'Test', label: 'Before you rely on it' },
     ],
     cardsKicker: 'NOTIFICATIONS',
     cardsTitle: 'Only the alerts that matter',
     cardsLead: 'Tuned to keep your team moving, not distracted.',
     cards: [
-      { icon: ICONS.bell, title: 'Smart filtering', desc: 'Approval requests, deadlines and publish confirmations, nothing else.' },
-      { icon: ICONS.shield, title: 'Reviewer escalation', desc: 'A pending draft nearing its deadline gets flagged to reviewers automatically.' },
-      { icon: ICONS.plug, title: 'Cross-channel delivery', desc: 'Get notified in-app, by email, or in your connected Slack workspace.' },
+      { icon: ICONS.bell, title: 'In-app notifications', desc: 'Generated, approved and published posts show up in your notification feed.' },
+      { icon: ICONS.plug, title: 'Team channels', desc: 'Connect WhatsApp, Slack or Microsoft Teams so alerts reach your team where they already talk.' },
+      { icon: ICONS.shield, title: 'Send a test', desc: 'Check that a channel works with a test message before you rely on it.' },
     ],
     stepsTitle: 'Stay on top of your queue without checking constantly',
     stepsLead: 'Notifications come to you.',
     steps: [
-      { title: 'Something needs attention', desc: 'A draft is submitted, approved, or nearing a deadline.' },
-      { title: "You're notified instantly", desc: 'In-app, email or Slack, your choice.' },
-      { title: 'Act in one click', desc: 'Jump straight to the item from the notification.' },
+      { title: 'Something happens', desc: 'A post is generated, approved or published.' },
+      { title: "You're notified", desc: 'In the app, WhatsApp, Slack or Teams.' },
+      { title: 'Take the next step', desc: 'Open the app and act on it.' },
     ],
     ctaTitle: 'Never miss a pending approval again.',
-    ctaLead: 'Set up your notification preferences today.',
+    ctaLead: 'Set up your notification channels today.',
   },
 }

@@ -3,16 +3,16 @@ import { FeatureCards, CtaBannerSection } from './pieces'
 import { ICONS } from './icons'
 
 const STATS = [
-  { value: '42K+', label: 'Students taught' },
-  { value: '180+', label: 'Terms explained' },
-  { value: '3', label: 'Platforms published daily across' },
-  { value: '4.9/5', label: 'Learner rating' },
+  { value: '8', label: 'Platforms to publish on' },
+  { value: '6', label: 'Languages for AI drafts' },
+  { value: '3', label: 'Team notification channels' },
+  { value: '100%', label: 'Posts reviewed before going live' },
 ]
 
 const TEAM = [
-  { initials: 'AM', bg: 'var(--navy)', name: 'Alex Martinez', role: 'Admin & Editorial Lead' },
-  { initials: 'AV', bg: 'var(--blue-dark)', name: 'Alex V.', role: 'Content Reviewer' },
-  { initials: 'RI', bg: 'var(--orange-deep)', name: 'Investment Academy', role: 'Guest Contributors' },
+  { initials: 'AM', bg: 'var(--navy)', name: 'Alex Martinez', role: 'Founder & Product Lead' },
+  { initials: 'AV', bg: 'var(--blue-dark)', name: 'Alex V.', role: 'Customer Success' },
+  { initials: 'EN', bg: 'var(--orange-deep)', name: 'Engineering Team', role: 'AI & Integrations' },
 ]
 
 export default function AboutPage() {
@@ -21,15 +21,15 @@ export default function AboutPage() {
       <section className="page-banner">
         <div className="wrap banner-center">
           <div className="eyebrow reveal">
-            <span className="dot" /> OUR STORY
+            OUR STORY
           </div>
-          <h1 className="headline reveal reveal-d1" style={{ maxWidth: 760 }}>
-            We think financial literacy should feel like a daily habit, not a chore.
+          <h1 className="headline reveal reveal-d1" style={{ maxWidth: 1000, fontSize: 'clamp(30px, 3.6vw, 46px)' }}>
+            We think consistent publishing should feel effortless, not like a second job.
           </h1>
-          <p className="lead reveal reveal-d2" style={{ maxWidth: 620 }}>
-            Financial Market started as a single LinkedIn post explaining compound interest. Three years and
-            180+ terms later, it&apos;s a full content studio helping educators publish trustworthy investing
-            lessons every single day.
+          <p className="lead reveal reveal-d2" style={{ maxWidth: 980 }}>
+            Financial Market started as a simple fix for missed posts. Today it&apos;s a full content studio where
+            AI drafts, your team approves, and every post publishes itself across LinkedIn, Instagram, Facebook,
+            X and your blog, right on schedule.
           </p>
         </div>
       </section>
@@ -51,12 +51,12 @@ export default function AboutPage() {
 
       <FeatureCards
         kicker="WHAT WE BELIEVE"
-        title="The principles behind every lesson"
+        title="The principles behind every post"
         cards={[
           {
             icon: ICONS.grid,
-            title: 'Clarity over jargon',
-            desc: "If a fifteen-year-old can't follow it, we rewrite it. Every term gets the plain-language treatment before it ever gets published.",
+            title: 'Simple over complicated',
+            desc: 'If a feature needs a manual, we rethink it. Planning, drafting and scheduling should feel obvious from the first click.',
           },
           {
             icon: ICONS.shield,
@@ -66,7 +66,7 @@ export default function AboutPage() {
           {
             icon: ICONS.calendar,
             title: 'Consistency over virality',
-            desc: 'One useful lesson a day, every day, beats one viral post a month. Compounding works on knowledge too.',
+            desc: 'One useful post a day, every day, beats one viral post a month. Consistency is what grows an audience.',
           },
         ]}
       />
@@ -75,10 +75,10 @@ export default function AboutPage() {
         <div className="wrap">
           <div className="sec-head reveal">
             <span className="kicker">
-              <span className="dot" /> THE TEAM
+              THE TEAM
             </span>
             <h2 className="sec-title">Small team, daily output</h2>
-            <p>A tight editorial and product team keeps every lesson accurate, on-brand, and on time.</p>
+            <p>A tight product and support team keeps the platform fast, reliable and easy to use.</p>
           </div>
           <div className="cards-grid">
             {TEAM.map((t, i) => (
@@ -99,7 +99,7 @@ export default function AboutPage() {
 
       <CtaBannerSection
         title="Want to build a studio like this?"
-        lead="See how the platform behind Financial Market can run your brand's content too."
+        lead="See how Financial Market can plan, draft and publish your brand's content too."
         ctaLabel="Explore the Platform"
         to="/product/dashboard"
       />

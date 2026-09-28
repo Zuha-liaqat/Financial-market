@@ -10,21 +10,21 @@ const STEPS = [
   {
     tag: 'Plan',
     title: 'See the whole month before you write a word',
-    desc: 'Drop every topic into the Planner, group related lessons into campaigns, and spot gaps weeks in advance, no more scrambling for tomorrow’s post.',
+    desc: 'Tell the Planner your topic, platforms and how often you want to post, and AI lays out a full week or month of content for you.',
     icon: ICONS.star,
     accent: 'var(--blue)',
   },
   {
     tag: 'Create & Review',
-    title: 'Draft fast, publish with total confidence',
-    desc: 'Write in Create Post or Create Blog with your brand kit applied automatically, then route every draft through the Approval Queue so nothing goes out unchecked.',
+    title: 'Let AI draft it, then you approve it',
+    desc: 'Describe what you want in Create Post or Create Blog and AI writes the draft. Every draft waits in the Approval Queue, with an AI safety score, until you sign off.',
     icon: ICONS.shield,
     accent: 'var(--orange-deep)',
   },
   {
     tag: 'Publish',
     title: 'It lands exactly where it belongs',
-    desc: 'Approved content drops straight onto the Calendar and goes live on LinkedIn, Instagram and X, with results flowing back to your Dashboard automatically.',
+    desc: 'Approved content shows up on the Calendar and publishes to LinkedIn, Instagram, Facebook and X on schedule, while your Dashboard tracks what is drafted, scheduled and live.',
     icon: ICONS.send,
     accent: 'var(--navy)',
   },
@@ -34,17 +34,17 @@ const TESTIMONIAL_COLUMNS = [
   {
     duration: 34,
     quotes: [
-      { text: '"I finally understand what dividend yield actually means for my own portfolio."', initials: 'RA', name: 'Raluca A.', role: 'Learner since 2024', bg: 'var(--blue-dark)' },
-      { text: '"Five minutes on my lunch break taught me more than a semester of lectures."', initials: 'MD', name: 'Mihai D.', role: 'Portfolio Clinic', bg: 'var(--orange-deep)' },
-      { text: '"The daily term posts are the only finance content I never skip."', initials: 'SI', name: 'Sorina I.', role: 'Learner since 2023', bg: 'var(--navy)' },
-      { text: '"Our approval queue caught a factual error before it ever went live."', initials: 'AV', name: 'Alex V.', role: 'Content Reviewer', bg: 'var(--blue-dark)' },
+      { text: '"We plan the whole month on Monday and don’t think about posting again until the next one."', initials: 'RA', name: 'Raluca A.', role: 'Marketing Manager', bg: 'var(--blue-dark)' },
+      { text: '"The AI drafts get us most of the way there. We just polish and approve."', initials: 'MD', name: 'Mihai D.', role: 'Social Media Lead', bg: 'var(--orange-deep)' },
+      { text: '"We haven’t missed a scheduled post since we switched."', initials: 'SI', name: 'Sorina I.', role: 'Content Creator', bg: 'var(--navy)' },
+      { text: '"The safety score flagged a risky post before it ever went live."', initials: 'AV', name: 'Alex V.', role: 'Content Reviewer', bg: 'var(--blue-dark)' },
     ],
   },
   {
     duration: 28,
     reverse: true,
     quotes: [
-      { text: '"Planning a whole campaign on one board changed how our small team works."', initials: 'DP', name: 'Diana P.', role: 'Editorial Lead', bg: 'var(--orange-deep)' },
+      { text: '"Generating a whole month of posts in one go changed how our small team works."', initials: 'DP', name: 'Diana P.', role: 'Editorial Lead', bg: 'var(--orange-deep)' },
       { text: "\"Drafting for three platforms used to take an hour. Now it's minutes.\"", initials: 'AM', name: 'Andrei M.', role: 'Writer', bg: 'var(--navy)' },
       { text: '"The calendar view alone is worth it. I can see gaps before they happen."', initials: 'CT', name: 'Cristina T.', role: 'Planner', bg: 'var(--blue-dark)' },
       { text: '"Our engagement on LinkedIn nearly tripled once posting got consistent."', initials: 'VS', name: 'Vlad S.', role: 'Growth Lead', bg: 'var(--orange-deep)' },
@@ -55,7 +55,7 @@ const TESTIMONIAL_COLUMNS = [
     quotes: [
       { text: '"Notifications are tuned just right. I never feel overwhelmed."', initials: 'IR', name: 'Ioana R.', role: 'Reviewer', bg: 'var(--navy)' },
       { text: "\"Integrations meant we didn't have to change how our team already works.\"", initials: 'BC', name: 'Bogdan C.', role: 'Ops Lead', bg: 'var(--blue-dark)' },
-      { text: '"Library search alone saved us from redoing graphics twice."', initials: 'EF', name: 'Elena F.', role: 'Designer', bg: 'var(--orange-deep)' },
+      { text: '"Having every photo and video in one library saved us from redoing graphics twice."', initials: 'EF', name: 'Elena F.', role: 'Designer', bg: 'var(--orange-deep)' },
       { text: '"It replaced three separate scheduling tools we were paying for."', initials: 'RN', name: 'Radu N.', role: 'Founder', bg: 'var(--navy)' },
     ],
   },
@@ -171,14 +171,14 @@ export default function HomePage() {
           </div>
           <div className="hero-copy">
             <div className="eyebrow reveal">
-              <span className="dot" /> TERM OF THE DAY: DIVIDEND YIELD
+              AI-POWERED CONTENT SCHEDULING
             </div>
             <h1 className="headline reveal reveal-d1">
               <em>Never</em> Miss A Post Again
             </h1>
             <p className="lead reveal reveal-d2">
               From idea to published post in minutes: let <strong className="lead-strong">AI</strong> draft it,
-              approve it in a click, and watch it publish itself across LinkedIn, Instagram and X, right on
+              approve it in a click, and watch it publish itself across LinkedIn, Instagram, Facebook and X, right on
               schedule.
             </p>
             <form className="hero-ctas hero-signup reveal reveal-d3" onSubmit={handleTrialSubmit}>
@@ -192,7 +192,7 @@ export default function HomePage() {
                 required
               />
               <button type="submit" className="btn btn-primary btn-arrow">
-                Start Free Trial
+                Start for Free
                 <ArrowRight className="btn-arrow-icon" size={17} strokeWidth={2.5} />
               </button>
             </form>
@@ -201,16 +201,16 @@ export default function HomePage() {
             </div>
             <div className="stats-row reveal reveal-d4">
               <div className="stat">
-                <Counter target={42} suffix="K+" />
-                <div className="lbl">Posts published</div>
+                <Counter target={4} />
+                <div className="lbl">Social platforms</div>
               </div>
               <div className="stat">
-                <Counter target={8} />
-                <div className="lbl">Platforms supported</div>
+                <Counter target={4} />
+                <div className="lbl">Blog platforms</div>
               </div>
               <div className="stat">
-                <Counter target={4.9} decimals={1} suffix="/5" />
-                <div className="lbl">User rating</div>
+                <Counter target={6} />
+                <div className="lbl">Languages</div>
               </div>
             </div>
           </div>
@@ -250,7 +250,7 @@ export default function HomePage() {
             }}
           >
             <span style={{ width: 36, height: 1, background: 'var(--line)' }} />
-            TRUSTED BY EDUCATORS PUBLISHING ON
+            TRUSTED BY TEAMS PUBLISHING ON
             <span style={{ width: 36, height: 1, background: 'var(--line)' }} />
           </div>
           <div className="logo-marquee-band reveal">
@@ -324,10 +324,10 @@ export default function HomePage() {
         <div className="wrap">
           <div className="sec-head reveal">
             <span className="kicker">
-              <span className="dot" /> HOW IT WORKS
+              HOW IT WORKS
             </span>
             <h2 className="sec-title">From idea to published post, in three steps</h2>
-            <p>Every lesson moves through the same reliable pipeline, no matter who&apos;s writing it.</p>
+            <p>Every post moves through the same reliable pipeline, no matter who&apos;s writing it.</p>
           </div>
           <div className="proc-row">
             {STEPS.map((s, i) => (
@@ -351,7 +351,7 @@ export default function HomePage() {
         <div className="wrap">
           <div className="sec-head reveal">
             <span className="kicker">
-              <span className="dot" /> THE PLATFORM
+              THE PLATFORM
             </span>
             <h2 className="sec-title">Every module your content team needs</h2>
             <p>From the first draft to the published post, explore every part of the studio.</p>
@@ -377,6 +377,11 @@ export default function HomePage() {
                         <circle cx="12" cy="12" r="4" />
                       </svg>
                     </span>
+                    <span title="Facebook">
+                      <svg width="14" height="14" viewBox="0 0 24 24" fill="#1877F2">
+                        <path d="M24 12.07C24 5.4 18.63 0 12 0S0 5.4 0 12.07C0 18.1 4.39 23.1 10.13 24v-8.44H7.08v-3.49h3.05V9.41c0-3.02 1.79-4.69 4.53-4.69 1.31 0 2.68.23 2.68.23v2.97h-1.51c-1.49 0-1.96.93-1.96 1.88v2.27h3.33l-.53 3.49h-2.8V24C19.61 23.1 24 18.1 24 12.07z" />
+                      </svg>
+                    </span>
                     <span title="X / Twitter">
                       <svg width="12" height="12" viewBox="0 0 24 24" fill="#111820">
                         <path d="M18.9 2H22l-7.6 8.7L23.3 22H16.6l-5.2-6.8L5.4 22H2.3l8.1-9.3L1.4 2h6.9l4.7 6.2L18.9 2z" />
@@ -387,7 +392,7 @@ export default function HomePage() {
                 {m.slug === 'notifications' && (
                   <div className="platform-icons">
                     <span title="WhatsApp">
-                      <img src="/whatsapp.jfif" alt="WhatsApp" className="h-full w-full rounded-md object-cover" />
+                      <img src="/whatsapp.png" alt="WhatsApp" className="h-full w-full rounded-md object-cover" />
                     </span>
                     <span title="Slack">
                       <svg width="14" height="14" viewBox="0 0 122.8 122.8">
@@ -426,10 +431,10 @@ export default function HomePage() {
           <div className="panel-dark">
             <div className="sec-head left reveal">
               <span className="kicker">
-                <span className="dot" /> COMMUNITY
+                PLATFORMS
               </span>
-              <h2 className="sec-title">Learn where you already are</h2>
-              <p>The same daily lessons, tailored to how each platform is actually used.</p>
+              <h2 className="sec-title">Show up wherever your audience is</h2>
+              <p>One idea, tailored to how each platform is actually used.</p>
             </div>
             <div className="plat-grid">
               <div className="pcard reveal reveal-d1" style={{ '--pc-accent': '#3D86D8' }}>
@@ -443,12 +448,12 @@ export default function HomePage() {
                 </div>
                 <div className="pstats">
                   <div>
-                    <div className="n">9.2k</div>
-                    <div className="l">Followers</div>
+                    <div className="n">3,000</div>
+                    <div className="l">Character limit</div>
                   </div>
                   <div>
-                    <div className="n">312</div>
-                    <div className="l">Avg. reactions</div>
+                    <div className="n">Pro</div>
+                    <div className="l">Professional tone</div>
                   </div>
                 </div>
               </div>
@@ -465,12 +470,12 @@ export default function HomePage() {
                 </div>
                 <div className="pstats">
                   <div>
-                    <div className="n">6.4k</div>
-                    <div className="l">Followers</div>
+                    <div className="n">2,200</div>
+                    <div className="l">Character limit</div>
                   </div>
                   <div>
-                    <div className="n">18%</div>
-                    <div className="l">Save rate</div>
+                    <div className="n">#</div>
+                    <div className="l">Hashtag-ready</div>
                   </div>
                 </div>
               </div>
@@ -485,12 +490,12 @@ export default function HomePage() {
                 </div>
                 <div className="pstats">
                   <div>
-                    <div className="n">4.1k</div>
-                    <div className="l">Followers</div>
+                    <div className="n">280</div>
+                    <div className="l">Character limit</div>
                   </div>
                   <div>
-                    <div className="n">28</div>
-                    <div className="l">Avg. reposts</div>
+                    <div className="n">Short</div>
+                    <div className="l">And punchy</div>
                   </div>
                 </div>
               </div>
@@ -504,10 +509,10 @@ export default function HomePage() {
         <div className="wrap">
           <div className="sec-head reveal">
             <span className="kicker">
-              <span className="dot" /> WALL OF LOVE
+              WALL OF LOVE
             </span>
-            <h2 className="sec-title">Loved by learners and writers alike</h2>
-            <p>A few of the notes we get from people using Financial Market every day.</p>
+            <h2 className="sec-title">Loved by marketers and creators alike</h2>
+            <p>A few of the notes we get from teams using Financial Market every day.</p>
           </div>
           <div className="wall-wrap reveal">
             {TESTIMONIAL_COLUMNS.map((col, ci) => (
@@ -536,8 +541,8 @@ export default function HomePage() {
       <section>
         <div className="wrap">
           <div className="cta-banner reveal">
-            <h2>Your first lesson is on us.</h2>
-            <p>Enter your email and get tomorrow&apos;s term of the day before anyone else does.</p>
+            <h2>Your first week of posts is on us.</h2>
+            <p>Enter your email and start scheduling across every platform in minutes.</p>
             <form
               className="cta-input-row"
               onSubmit={(e) => {

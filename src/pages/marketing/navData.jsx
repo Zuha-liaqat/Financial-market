@@ -16,7 +16,7 @@ export const MODULES = [
   {
     slug: 'themes-brands',
     title: 'Themes / Brands',
-    desc: 'Keep every post on-brand, automatically',
+    desc: 'Teach the AI your brand, once',
     color: '#F2790C',
     icon: (
       <>
@@ -30,14 +30,14 @@ export const MODULES = [
   {
     slug: 'create-post',
     title: 'Create Post',
-    desc: 'Draft once, tailor for every channel',
+    desc: 'Describe it once, post on every channel',
     color: '#00A6F4',
     icon: <path d="M12 5v14M5 12h14" />,
   },
   {
     slug: 'create-blog',
     title: 'Create Blog',
-    desc: 'Long-form lessons your audience saves',
+    desc: 'Long-form articles, drafted by AI',
     color: '#045C8C',
     icon: (
       <>
@@ -50,7 +50,7 @@ export const MODULES = [
   {
     slug: 'library',
     title: 'Library',
-    desc: 'Every asset, caption and clip in one place',
+    desc: 'Your photos and videos in one place',
     color: '#FF9F1C',
     icon: <path d="M3 7a2 2 0 012-2h4l2 2h8a2 2 0 012 2v9a2 2 0 01-2 2H5a2 2 0 01-2-2V7z" />,
   },
@@ -81,7 +81,7 @@ export const MODULES = [
   {
     slug: 'planner',
     title: 'Planner',
-    desc: 'Plan campaigns, not just posts',
+    desc: 'Plan a whole week or month in one go',
     color: '#0A66C2',
     icon: (
       <>
@@ -93,7 +93,7 @@ export const MODULES = [
   {
     slug: 'integrations',
     title: 'Integrations',
-    desc: 'Connect the tools your team already uses',
+    desc: 'Connect your social accounts',
     color: '#7B4FE0',
     icon: (
       <>

@@ -87,7 +87,7 @@ export default function MarketingHeader({ active = 'home' }) {
             className="btn btn-primary"
             onClick={() => trackEvent('cta_click', { cta_label: 'Start Free Trial', cta_location: 'nav' })}
           >
-            Start Free Trial
+            Start for Free
           </Link>
         </div>
 
@@ -125,7 +125,7 @@ export default function MarketingHeader({ active = 'home' }) {
             setMobileOpen(false)
           }}
         >
-          Start Free Trial
+          Start for Free
         </Link>
       </div>
     </header>

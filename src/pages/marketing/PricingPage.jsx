@@ -52,20 +52,20 @@ const FAQS = [
     a: 'Yes, upgrade or downgrade anytime, and billing adjusts automatically from your next cycle.',
   },
   {
-    q: 'Is there a free trial on paid plans?',
-    a: 'Every paid plan starts with a 14-day free trial, no card required to begin.',
+    q: 'Do I need a credit card to start?',
+    a: 'No. The Free plan costs nothing and needs no card. You only pay when you upgrade to a paid plan.',
   },
   {
     q: 'What platforms are supported?',
-    a: 'LinkedIn, Instagram and X today, with more integrations added regularly.',
+    a: 'LinkedIn, Instagram, Facebook and X for social, plus WordPress, Medium, Blogger and Wix for blogs, with more added regularly.',
   },
   {
-    q: 'Do you offer education discounts?',
+    q: 'Do you offer discounts for agencies or nonprofits?',
     a: "Yes, reach out on the Contact page and we'll set up a plan that fits.",
   },
   {
-    q: 'What happens to my content if I cancel?',
-    a: 'You can export your entire Library and post history at any time, even after cancelling.',
+    q: 'Do posts publish automatically?',
+    a: 'Yes. Once you approve a post, it publishes to your connected accounts on the date and time you scheduled.',
   },
 ]
 
@@ -104,7 +104,7 @@ export default function PricingPage() {
       <section className="page-banner">
         <div className="wrap" style={{ textAlign: 'center' }}>
           <div className="eyebrow reveal" style={{ marginLeft: 'auto', marginRight: 'auto' }}>
-            <span className="dot" /> SUBSCRIPTIONS
+            SUBSCRIPTIONS
           </div>
           <h1 className="headline reveal reveal-d1" style={{ maxWidth: 820, margin: '0 auto 16px' }}>
             Simple pricing, for every stage of your content studio.

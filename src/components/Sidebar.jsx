@@ -1,165 +1,233 @@
-import { useState } from 'react'
-import { NavLink, useNavigate } from 'react-router-dom'
+import { useEffect, useRef, useState } from 'react'
+import { Link, NavLink, useNavigate } from 'react-router-dom'
+import {
+  Bell,
+  BookOpen,
+  Building2,
+  CalendarDays,
+  ChevronUp,
+  CreditCard,
+  FileText,
+  Images,
+  LayoutDashboard,
+  ListChecks,
+  LogOut,
+  Palette,
+  Plug,
+  Plus,
+  Settings,
+  Sparkles,
+  SquarePen,
+  X,
+} from 'lucide-react'
 import Logo from './Logo'
 import { isSuperAdmin, logout as clearSuperAdmin } from '../data/auth'
+import { getUnreadCount } from '../data/notifications'
+import { apiGetCurrentUser, apiListPlatformCredentials } from '../lib/api'
 
 const navItems = [
-  { to: '/dashboard', label: 'Dashboard', icon: 'grid' },
-  { to: '/super-admin/companies', label: 'Companies', icon: 'building', superAdminOnly: true },
-  { to: '/super-admin/plans', label: 'Subscriptions', icon: 'card', superAdminOnly: true },
-  { to: '/themes', label: 'Themes/Brands', icon: 'palette', hideForSuperAdmin: true },
-  { to: '/create-post', label: 'Create Post', icon: 'plus', hideForSuperAdmin: true },
-  { to: '/create-blog', label: 'Create Blog', icon: 'pencil', hideForSuperAdmin: true },
-  { to: '/library', label: 'Library', icon: 'folder', hideForSuperAdmin: true },
-  { to: '/approval-queue', label: 'Approval Queue', icon: 'check', hideForSuperAdmin: true },
-  { to: '/calendar', label: 'Calendar', icon: 'calendar', hideForSuperAdmin: true },
-  { to: '/planner', label: 'Planner', icon: 'sparkles', hideForSuperAdmin: true },
-  { to: '/integrations', label: 'Integrations', icon: 'plug', hideForSuperAdmin: true },
-  { to: '/notifications', label: 'Notifications', icon: 'bell', hideForSuperAdmin: true },
-  { to: '/super-admin/subscriptions', label: 'Subscriptions', icon: 'card', hideForSuperAdmin: true },
-  { to: '/documentation', label: 'Documentation', icon: 'document', hideForSuperAdmin: true },
+  { to: '/dashboard', label: 'Dashboard', icon: LayoutDashboard, color: '#3a5f87' },
+  { to: '/super-admin/companies', label: 'Companies', icon: Building2, color: '#0284c7', superAdminOnly: true },
+  { to: '/super-admin/plans', label: 'Subscriptions', icon: CreditCard, color: '#7c3aed', superAdminOnly: true },
+  { to: '/library', label: 'Library', icon: Images, color: '#d97706', hideForSuperAdmin: true },
+  { to: '/approval-queue', label: 'Approval Queue', icon: ListChecks, color: '#16a34a', hideForSuperAdmin: true },
+  { to: '/calendar', label: 'Calendar', icon: CalendarDays, color: '#e11d48', hideForSuperAdmin: true },
+  { to: '/planner', label: 'Planner', icon: Sparkles, color: '#7c3aed', hideForSuperAdmin: true },
 ]
 
-const icons = {
-  grid: (
-    <path
-      strokeLinecap="round"
-      strokeLinejoin="round"
-      strokeWidth={1.75}
-      d="M3.75 6A2.25 2.25 0 016 3.75h2.25A2.25 2.25 0 0110.5 6v2.25a2.25 2.25 0 01-2.25 2.25H6a2.25 2.25 0 01-2.25-2.25V6zM3.75 15.75A2.25 2.25 0 016 13.5h2.25a2.25 2.25 0 012.25 2.25V18a2.25 2.25 0 01-2.25 2.25H6A2.25 2.25 0 013.75 18v-2.25zM13.5 6a2.25 2.25 0 012.25-2.25H18A2.25 2.25 0 0120.25 6v2.25A2.25 2.25 0 0118 10.5h-2.25a2.25 2.25 0 01-2.25-2.25V6zM13.5 15.75a2.25 2.25 0 012.25-2.25H18a2.25 2.25 0 012.25 2.25V18A2.25 2.25 0 0118 20.25h-2.25A2.25 2.25 0 0113.5 18v-2.25z"
-    />
-  ),
-  plus: (
-    <path
-      strokeLinecap="round"
-      strokeLinejoin="round"
-      strokeWidth={1.75}
-      d="M12 4.5v15m7.5-7.5h-15"
-    />
-  ),
-  palette: (
-    <path
-      strokeLinecap="round"
-      strokeLinejoin="round"
-      strokeWidth={1.75}
-      d="M9.53 16.122a3 3 0 00-5.78 1.128 2.25 2.25 0 01-2.4 2.245 4.5 4.5 0 008.4-2.245c0-.399-.078-.78-.22-1.128zm0 0a15.998 15.998 0 003.388-1.62m-5.043-.025a15.994 15.994 0 011.622-3.395m3.42 3.42a15.995 15.995 0 004.764-4.648l3.876-5.814a1.151 1.151 0 00-1.597-1.597l-5.814 3.876a15.996 15.996 0 00-4.649 4.763m3.42 3.42a6.776 6.776 0 00-3.42-3.42"
-    />
-  ),
-  folder: (
-    <path
-      strokeLinecap="round"
-      strokeLinejoin="round"
-      strokeWidth={1.75}
-      d="M3.75 9.776c.112-.017.227-.026.344-.026h15.812c.117 0 .232.009.344.026m-16.5 0a2.25 2.25 0 00-1.883 2.542l.857 6a2.25 2.25 0 002.227 1.932H19.05a2.25 2.25 0 002.227-1.932l.857-6a2.25 2.25 0 00-1.883-2.542m-16.5 0V6A2.25 2.25 0 016 3.75h3.879a1.5 1.5 0 011.06.44l2.122 2.12a1.5 1.5 0 001.06.44H18A2.25 2.25 0 0120.25 6v3.776"
-    />
-  ),
-  check: (
-    <path
-      strokeLinecap="round"
-      strokeLinejoin="round"
-      strokeWidth={1.75}
-      d="M9 12.75l2.25 2.25L15 9.75m-3-7.036A11.959 11.959 0 013.598 6 11.99 11.99 0 003 9.749c0 5.592 3.824 10.29 9 11.623 5.176-1.332 9-6.03 9-11.622 0-1.31-.21-2.571-.598-3.751h-.152c-3.196 0-6.1-1.248-8.25-3.285z"
-    />
-  ),
-  plug: (
-    <path
-      strokeLinecap="round"
-      strokeLinejoin="round"
-      strokeWidth={1.75}
-      d="M14.25 6.087c0-.355.186-.676.401-.959.221-.29.349-.634.349-1.003 0-1.036-1.007-1.875-2.25-1.875s-2.25.84-2.25 1.875c0 .369.128.713.349 1.003.215.283.401.604.401.959v0a.64.64 0 01-.657.643 48.39 48.39 0 01-4.163-.3c.186 1.613.293 3.25.315 4.907a.656.656 0 01-.658.663v0c-.355 0-.676-.186-.959-.401a1.647 1.647 0 00-1.003-.349c-1.036 0-1.875 1.007-1.875 2.25s.84 2.25 1.875 2.25c.369 0 .713-.128 1.003-.349.283-.215.604-.401.959-.401v0c.31 0 .555.26.532.57a48.039 48.039 0 01-.642 5.056c1.518.19 3.058.309 4.616.354a.64.64 0 00.657-.643v0c0-.355-.186-.676-.401-.959a1.647 1.647 0 01-.349-1.003c0-1.035 1.008-1.875 2.25-1.875 1.243 0 2.25.84 2.25 1.875 0 .369-.128.713-.349 1.003-.215.283-.4.604-.4.959v0c0 .333.277.599.61.58a48.1 48.1 0 005.427-.63 48.05 48.05 0 00.582-4.717.532.532 0 00-.533-.57v0c-.355 0-.676.186-.959.401-.29.221-.634.349-1.003.349-1.035 0-1.875-1.007-1.875-2.25s.84-2.25 1.875-2.25c.37 0 .713.128 1.003.349.283.215.604.401.96.401v0a.656.656 0 00.658-.663 48.422 48.422 0 00-.37-5.36c-1.886.342-3.81.574-5.766.689a.578.578 0 01-.61-.58v0z"
-    />
-  ),
-  calendar: (
-    <path
-      strokeLinecap="round"
-      strokeLinejoin="round"
-      strokeWidth={1.75}
-      d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"
-    />
-  ),
-  pencil: (
-    <path
-      strokeLinecap="round"
-      strokeLinejoin="round"
-      strokeWidth={1.75}
-      d="M16.862 4.487l1.687-1.688a1.875 1.875 0 112.652 2.652L6.832 19.82a4.5 4.5 0 01-1.897 1.13l-2.685.8.8-2.685a4.5 4.5 0 011.13-1.897L16.863 4.487zm0 0L19.5 7.125"
-    />
-  ),
-  document: (
-    <path
-      strokeLinecap="round"
-      strokeLinejoin="round"
-      strokeWidth={1.75}
-      d="M19.5 14.25v-2.625a3.375 3.375 0 00-3.375-3.375h-1.5A1.125 1.125 0 0113.5 7.125v-1.5a3.375 3.375 0 00-3.375-3.375H8.25m0 12.75h7.5m-7.5 3H12M10.5 2.25H5.625c-.621 0-1.125.504-1.125 1.125v17.25c0 .621.504 1.125 1.125 1.125h12.75c.621 0 1.125-.504 1.125-1.125V11.25a9 9 0 00-9-9z"
-    />
-  ),
-  sparkles: (
-    <path
-      strokeLinecap="round"
-      strokeLinejoin="round"
-      strokeWidth={1.75}
-      d="M9.813 15.904L9 18.75l-.813-2.846a4.5 4.5 0 00-3.09-3.09L2.25 12l2.846-.813a4.5 4.5 0 003.09-3.09L9 5.25l.813 2.846a4.5 4.5 0 003.09 3.09L15.75 12l-2.846.813a4.5 4.5 0 00-3.09 3.09zM18.259 8.715L18 9.75l-.259-1.035a3.375 3.375 0 00-2.455-2.456L14.25 6l1.036-.259a3.375 3.375 0 002.455-2.456L18 2.25l.259 1.035a3.375 3.375 0 002.456 2.456L21.75 6l-1.035.259a3.375 3.375 0 00-2.456 2.456z"
-    />
-  ),
-  building: (
-    <path
-      strokeLinecap="round"
-      strokeLinejoin="round"
-      strokeWidth={1.75}
-      d="M3.75 21h16.5M4.5 3.75h9a.75.75 0 01.75.75v16.5H4.5V4.5a.75.75 0 01.75-.75zM13.5 9h5.25a.75.75 0 01.75.75V21h-6V9.75A.75.75 0 0113.5 9zM7.5 6.75h.008v.008H7.5V6.75zm3 0h.008v.008H10.5V6.75zm-3 3.75h.008v.008H7.5v-.008zm3 0h.008v.008H10.5v-.008zm-3 3.75h.008v.008H7.5v-.008zm3 0h.008v.008H10.5v-.008z"
-    />
-  ),
-  card: (
-    <path
-      strokeLinecap="round"
-      strokeLinejoin="round"
-      strokeWidth={1.75}
-      d="M2.25 8.25h19.5M2.25 9h19.5m-16.5 5.25h6M3 6h18a.75.75 0 01.75.75v10.5a.75.75 0 01-.75.75H3a.75.75 0 01-.75-.75V6.75A.75.75 0 013 6z"
-    />
-  ),
-  bell: (
-    <path
-      strokeLinecap="round"
-      strokeLinejoin="round"
-      strokeWidth={1.75}
-      d="M14.857 17.082a23.848 23.848 0 005.454-1.31A8.967 8.967 0 0118 9.75V9A6 6 0 006 9v.75a8.967 8.967 0 01-2.312 6.022c1.733.64 3.56 1.085 5.455 1.31m5.714 0a24.255 24.255 0 01-5.714 0m5.714 0a3 3 0 11-5.714 0"
-    />
-  ),
-  settings: (
-    <>
-      <path
-        strokeLinecap="round"
-        strokeLinejoin="round"
-        strokeWidth={1.75}
-        d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z"
-      />
-      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.75} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
-    </>
-  ),
-  logout: (
-    <path
-      strokeLinecap="round"
-      strokeLinejoin="round"
-      strokeWidth={1.75}
-      d="M15.75 9V5.25A2.25 2.25 0 0013.5 3h-6a2.25 2.25 0 00-2.25 2.25v13.5A2.25 2.25 0 007.5 21h6a2.25 2.25 0 002.25-2.25V15M12 9l3 3m0 0l-3 3m3-3H3"
-    />
-  ),
+const createItems = [
+  { to: '/create-post', label: 'Create Post', desc: 'For LinkedIn, Instagram, Facebook and X', icon: SquarePen, color: '#0284c7' },
+  { to: '/create-blog', label: 'Create Blog', desc: 'For WordPress, Medium, Blogger and Wix', icon: FileText, color: '#7c3aed' },
+]
+
+const accountItems = [
+  { to: '/themes', label: 'Themes/Brands', icon: Palette, color: '#ea580c', hideForSuperAdmin: true },
+  { to: '/notifications', label: 'Notifications', icon: Bell, color: '#2563eb', hideForSuperAdmin: true, badge: true },
+  { to: '/super-admin/subscriptions', label: 'Plans and Billing', icon: CreditCard, color: '#0d9488', hideForSuperAdmin: true },
+  { to: '/documentation', label: 'Documentation', icon: BookOpen, color: '#64748b', hideForSuperAdmin: true },
+  { to: '/settings', label: 'Settings', icon: Settings, color: '#475569' },
+]
+
+const channels = [
+  {
+    key: 'instagram',
+    label: 'Instagram',
+    icon: (
+      <svg className="h-3.5 w-3.5" viewBox="0 0 24 24" fill="none" stroke="#fff" strokeWidth="2">
+        <rect x="3" y="3" width="18" height="18" rx="5" />
+        <circle cx="12" cy="12" r="4" />
+        <circle cx="17.5" cy="6.5" r="1" fill="#fff" />
+      </svg>
+    ),
+    bg: 'bg-linear-to-br from-amber-400 via-pink-500 to-violet-600',
+  },
+  {
+    key: 'facebook',
+    label: 'Facebook',
+    icon: (
+      <svg className="h-3.5 w-3.5" viewBox="0 0 24 24" fill="#fff">
+        <path d="M14 8h3V4h-3c-2.8 0-4.5 1.8-4.5 4.6V11H7v4h2.5v9h4v-9h3l.5-4h-3.5V8.8c0-.5.3-.8.5-.8z" />
+      </svg>
+    ),
+    bg: 'bg-[#1877F2]',
+  },
+  {
+    key: 'linkedin',
+    label: 'LinkedIn',
+    icon: (
+      <svg className="h-3.5 w-3.5" viewBox="0 0 24 24" fill="#fff">
+        <path d="M4.98 3.5C3.88 3.5 3 4.38 3 5.48c0 1.1.88 2 1.98 2h.02C6.1 7.48 7 6.6 7 5.48 7 4.38 6.1 3.5 4.98 3.5zM3.5 8.75h3v11.75h-3zM9.5 8.75h2.9v1.6h.04c.4-.76 1.4-1.6 2.9-1.6 3.1 0 3.66 2 3.66 4.6v6.65h-3v-5.9c0-1.4-.03-3.2-1.95-3.2-1.96 0-2.26 1.53-2.26 3.1v6h-3z" />
+      </svg>
+    ),
+    bg: 'bg-[#0A66C2]',
+  },
+  {
+    key: 'twitter',
+    label: 'X / Twitter',
+    icon: (
+      <svg className="h-3 w-3" viewBox="0 0 24 24" fill="#fff">
+        <path d="M18.9 2H22l-7.6 8.7L23.3 22H16.6l-5.2-6.8L5.4 22H2.3l8.1-9.3L1.4 2h6.9l4.7 6.2L18.9 2z" />
+      </svg>
+    ),
+    bg: 'bg-black',
+  },
+]
+
+function getInitials(name) {
+  return (
+    name
+      .trim()
+      .split(/\s+/)
+      .slice(0, 2)
+      .map((w) => w[0]?.toUpperCase() ?? '')
+      .join('') || '?'
+  )
 }
 
-function Icon({ name, className }) {
+function formatRole(role) {
+  if (!role) return 'User'
+  return role
+    .split(/[\s_-]+/)
+    .map((w) => w.charAt(0).toUpperCase() + w.slice(1))
+    .join(' ')
+}
+
+// Closes a popover when the user clicks outside it or presses Escape.
+function useDismiss(ref, open, onDismiss) {
+  useEffect(() => {
+    if (!open) return undefined
+    function handleOutside(e) {
+      if (ref.current && !ref.current.contains(e.target)) onDismiss()
+    }
+    function handleEscape(e) {
+      if (e.key === 'Escape') onDismiss()
+    }
+    document.addEventListener('mousedown', handleOutside)
+    document.addEventListener('keydown', handleEscape)
+    return () => {
+      document.removeEventListener('mousedown', handleOutside)
+      document.removeEventListener('keydown', handleEscape)
+    }
+  }, [ref, open, onDismiss])
+}
+
+// Small rounded tile holding a tinted icon, used for every sidebar row.
+function IconTile({ icon: IconComponent, color, active, size = 'h-8 w-8' }) {
   return (
-    <svg className={className} fill="none" viewBox="0 0 24 24" stroke="currentColor">
-      {icons[name]}
-    </svg>
+    <span
+      className={`flex ${size} shrink-0 items-center justify-center rounded-lg transition ${
+        active ? 'bg-white shadow-sm ring-1 ring-black/5' : ''
+      }`}
+      style={active ? { color } : { backgroundColor: `${color}14`, color }}
+    >
+      <IconComponent className="h-4 w-4" strokeWidth={2} />
+    </span>
+  )
+}
+
+function SidebarLink({ item, onClick }) {
+  return (
+    <NavLink to={item.to} onClick={onClick}>
+      {({ isActive }) => (
+        <span
+          className={`relative flex items-center gap-3 rounded-xl px-2 py-1.5 text-sm transition ${
+            isActive
+              ? 'bg-brand-50 font-semibold text-brand-800'
+              : 'font-medium text-neutral-600 hover:bg-neutral-50 hover:text-black'
+          }`}
+        >
+          {isActive && <span className="absolute -left-3 top-1.5 bottom-1.5 w-1 rounded-r-full bg-brand-600" />}
+          <IconTile icon={item.icon} color={item.color} active={isActive} />
+          {item.label}
+        </span>
+      )}
+    </NavLink>
+  )
+}
+
+function SectionLabel({ children, action }) {
+  return (
+    <div className="mb-1.5 flex items-center justify-between px-2">
+      <p className="text-[11px] font-semibold uppercase tracking-wider text-neutral-400">{children}</p>
+      {action}
+    </div>
   )
 }
 
 export default function Sidebar({ open = false, onClose = () => { } }) {
   const navigate = useNavigate()
   const [superAdmin] = useState(() => isSuperAdmin())
+  const [user, setUser] = useState(null)
+  const [connected, setConnected] = useState({})
+  const [unread, setUnread] = useState(() => getUnreadCount())
+  const [newOpen, setNewOpen] = useState(false)
+  const [menuOpen, setMenuOpen] = useState(false)
+  const newRef = useRef(null)
+  const menuRef = useRef(null)
+
+  useDismiss(newRef, newOpen, () => setNewOpen(false))
+  useDismiss(menuRef, menuOpen, () => setMenuOpen(false))
+
   const visibleNavItems = navItems.filter(
     (item) => (!item.superAdminOnly || superAdmin) && (!item.hideForSuperAdmin || !superAdmin),
   )
+  const visibleAccountItems = accountItems.filter((item) => !item.hideForSuperAdmin || !superAdmin)
+  const connectedChannels = channels.filter((c) => connected[c.key])
+  const unconnectedChannels = channels.filter((c) => !connected[c.key])
+
+  useEffect(() => {
+    apiGetCurrentUser()
+      .then(setUser)
+      .catch(() => {})
+    if (!superAdmin) {
+      apiListPlatformCredentials()
+        .then((list) => setConnected(Object.fromEntries((list || []).map((p) => [p.platform, p.is_connected]))))
+        .catch(() => {})
+    }
+  }, [superAdmin])
+
+  useEffect(() => {
+    const id = setInterval(() => setUnread(getUnreadCount()), 2000)
+    return () => clearInterval(id)
+  }, [])
+
+  useEffect(() => {
+    function handleProfileUpdated(e) {
+      setUser((prev) => (prev ? { ...prev, ...e.detail } : prev))
+    }
+    window.addEventListener('user-profile-updated', handleProfileUpdated)
+    return () => window.removeEventListener('user-profile-updated', handleProfileUpdated)
+  }, [])
+
+  const displayName = user?.name || 'Guest'
+  const displayRole = user ? (user.is_superuser ? 'Super Admin' : formatRole(user.role)) : ''
+  const avatarUrl = user?.avatar_url || null
+
+  function closeAll() {
+    setNewOpen(false)
+    setMenuOpen(false)
+    onClose()
+  }
 
   function handleLogout() {
     clearSuperAdmin()
@@ -186,50 +254,187 @@ export default function Sidebar({ open = false, onClose = () => { } }) {
             aria-label="Close menu"
             className="absolute right-2 top-2 rounded-md p-1.5 text-neutral-400 hover:bg-neutral-100 hover:text-black lg:hidden"
           >
-            <svg className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.75} d="M6 18L18 6M6 6l12 12" />
-            </svg>
+            <X className="h-5 w-5" />
           </button>
         </div>
 
-        <nav className="min-h-0 flex-1 space-y-1 overflow-y-auto px-3">
-          {visibleNavItems.map((item) => (
-            <NavLink key={item.to} to={item.to} onClick={onClose}>
-              {({ isActive }) => (
-                <span
-                  className={`relative flex items-center gap-3 overflow-hidden rounded-lg px-3 py-2.5 text-sm font-medium transition ${
-                    isActive ? 'bg-brand-500 text-white' : 'text-neutral-600 hover:bg-neutral-50'
-                  }`}
-                >
-                  {isActive && <span className="absolute left-0 top-0 h-full w-1 bg-brand-500" />}
-                  <Icon name={item.icon} className="h-4 w-4" />
-                  {item.label}
-                </span>
+        {!superAdmin && (
+          <div ref={newRef} className="relative px-3 pb-4">
+            <button
+              type="button"
+              onClick={() => setNewOpen((v) => !v)}
+              aria-expanded={newOpen}
+              aria-haspopup="menu"
+              className="flex w-full items-center justify-center gap-2 rounded-xl bg-brand-50 px-3 py-2.5 text-sm font-semibold text-brand-700 ring-1 ring-inset ring-brand-200 transition hover:bg-brand-100"
+            >
+              <span className="flex h-5 w-5 items-center justify-center rounded-full bg-brand-600 text-white">
+                <Plus className="h-3.5 w-3.5" strokeWidth={2.5} />
+              </span>
+              New
+            </button>
+            {newOpen && (
+              <div
+                role="menu"
+                className="absolute left-3 right-3 top-full z-50 -mt-2 rounded-xl border border-neutral-200 bg-white p-1.5 shadow-lg"
+              >
+                {createItems.map((item) => (
+                  <Link
+                    key={item.to}
+                    to={item.to}
+                    role="menuitem"
+                    onClick={closeAll}
+                    className="flex items-center gap-3 rounded-lg px-2 py-2 transition hover:bg-neutral-50"
+                  >
+                    <IconTile icon={item.icon} color={item.color} />
+                    <span className="min-w-0 leading-tight">
+                      <span className="block text-sm font-semibold text-neutral-800">{item.label}</span>
+                      <span className="block text-[11px] text-neutral-400">{item.desc}</span>
+                    </span>
+                  </Link>
+                ))}
+              </div>
+            )}
+          </div>
+        )}
+
+        <nav className="min-h-0 flex-1 overflow-y-auto px-3 pb-3">
+          <SectionLabel>Workspace</SectionLabel>
+          <div className="space-y-0.5">
+            {visibleNavItems.map((item) => (
+              <SidebarLink key={item.to} item={item} onClick={onClose} />
+            ))}
+          </div>
+
+          {!superAdmin && (
+            <div className="mt-5">
+              <SectionLabel
+                action={
+                  <Link
+                    to="/integrations"
+                    onClick={onClose}
+                    aria-label="Manage integrations"
+                    title="Manage integrations"
+                    className="rounded p-1 text-neutral-400 transition hover:bg-neutral-100 hover:text-black"
+                  >
+                    <Settings className="h-3.5 w-3.5" />
+                  </Link>
+                }
+              >
+                Channels
+              </SectionLabel>
+
+              <div className="space-y-0.5">
+                {connectedChannels.map((c) => (
+                  <Link
+                    key={c.key}
+                    to="/integrations"
+                    onClick={onClose}
+                    className="flex items-center gap-3 rounded-xl px-2 py-1.5 text-sm font-medium text-neutral-600 transition hover:bg-neutral-50 hover:text-black"
+                  >
+                    <span className={`flex h-8 w-8 items-center justify-center rounded-lg ${c.bg}`}>{c.icon}</span>
+                    <span className="flex-1">{c.label}</span>
+                    <span className="h-2 w-2 rounded-full bg-emerald-500" title="Connected" />
+                  </Link>
+                ))}
+                <SidebarLink item={{ to: '/integrations', label: 'Integrations', icon: Plug, color: '#0891b2' }} onClick={onClose} />
+              </div>
+
+              {unconnectedChannels.length > 0 && (
+                <div className="mt-3 rounded-xl border border-dashed border-neutral-200 px-3 py-2.5">
+                  <p className="mb-2 text-[11px] font-medium text-neutral-400">Connect more channels</p>
+                  <div className="flex items-center gap-1.5">
+                    {unconnectedChannels.map((c) => (
+                      <Link
+                        key={c.key}
+                        to="/integrations"
+                        onClick={onClose}
+                        title={`Connect ${c.label}`}
+                        aria-label={`Connect ${c.label}`}
+                        className={`flex h-7 w-7 items-center justify-center rounded-lg transition hover:-translate-y-0.5 ${c.bg}`}
+                      >
+                        {c.icon}
+                      </Link>
+                    ))}
+                    <Link
+                      to="/integrations"
+                      onClick={onClose}
+                      title="All integrations"
+                      aria-label="All integrations"
+                      className="flex h-7 w-7 items-center justify-center rounded-lg border border-neutral-200 text-neutral-400 transition hover:text-black"
+                    >
+                      <Plus className="h-3.5 w-3.5" />
+                    </Link>
+                  </div>
+                </div>
               )}
-            </NavLink>
-          ))}
+            </div>
+          )}
         </nav>
 
-        <div className="border-t border-neutral-200 px-3 py-4">
-          <NavLink to="/settings" onClick={onClose}>
-            {({ isActive }) => (
-                <span
-                  className={`relative flex items-center gap-3 overflow-hidden rounded-lg px-3 py-2.5 text-sm font-medium transition ${
-                    isActive ? 'bg-brand-500 text-white' : 'text-neutral-600 hover:bg-neutral-50'
-                  }`}
+        <div ref={menuRef} className="relative border-t border-neutral-200 p-3">
+          {menuOpen && (
+            <div
+              role="menu"
+              className="absolute bottom-full left-3 right-3 z-50 mb-2 rounded-xl border border-neutral-200 bg-white p-1.5 shadow-lg"
+            >
+              {user?.email && (
+                <p className="truncate border-b border-neutral-100 px-2 pb-2 pt-1 text-xs text-neutral-500">
+                  {user.email}
+                </p>
+              )}
+              <div className="py-1">
+                {visibleAccountItems.map((item) => (
+                  <Link
+                    key={item.to}
+                    to={item.to}
+                    role="menuitem"
+                    onClick={closeAll}
+                    className="flex items-center gap-2.5 rounded-lg px-2 py-1.5 text-sm font-medium text-neutral-700 transition hover:bg-neutral-50"
+                  >
+                    <IconTile icon={item.icon} color={item.color} size="h-7 w-7" />
+                    <span className="flex-1">{item.label}</span>
+                    {item.badge && unread > 0 && (
+                      <span className="rounded-full bg-red-500 px-1.5 text-[10px] font-bold text-white">{unread}</span>
+                    )}
+                  </Link>
+                ))}
+              </div>
+              <div className="border-t border-neutral-100 pt-1">
+                <button
+                  type="button"
+                  role="menuitem"
+                  onClick={handleLogout}
+                  className="flex w-full items-center gap-2.5 rounded-lg px-2 py-1.5 text-sm font-medium text-red-600 transition hover:bg-red-50"
                 >
-                {isActive && <span className="absolute left-0 top-0 h-full w-1 bg-brand-500" />}
-                <Icon name="settings" className="h-4 w-4" />
-                Settings
+                  <IconTile icon={LogOut} color="#dc2626" size="h-7 w-7" />
+                  Log out
+                </button>
+              </div>
+            </div>
+          )}
+          <button
+            type="button"
+            onClick={() => setMenuOpen((v) => !v)}
+            aria-expanded={menuOpen}
+            aria-haspopup="menu"
+            className={`flex w-full items-center gap-2.5 rounded-xl px-2 py-2 text-left ring-1 transition ${
+              menuOpen ? 'bg-brand-50 ring-brand-200' : 'bg-neutral-50 ring-neutral-200 hover:bg-neutral-100'
+            }`}
+          >
+            {avatarUrl ? (
+              <img src={avatarUrl} alt={displayName} className="h-8 w-8 shrink-0 rounded-full object-cover" />
+            ) : (
+              <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-linear-to-br from-brand-400 to-brand-600 text-xs font-semibold text-white">
+                {getInitials(displayName)}
               </span>
             )}
-          </NavLink>
-          <button
-            onClick={handleLogout}
-            className="mt-1 flex w-full items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-medium text-red-600 transition hover:bg-red-50"
-          >
-            <Icon name="logout" className="h-4 w-4" />
-            Logout
+            <span className="min-w-0 flex-1 leading-tight">
+              <span className="block truncate text-sm font-semibold text-black">{displayName}</span>
+              <span className="block truncate text-xs text-neutral-400">{displayRole}</span>
+            </span>
+            <ChevronUp
+              className={`h-4 w-4 shrink-0 text-neutral-400 transition-transform ${menuOpen ? '' : 'rotate-180'}`}
+            />
           </button>
         </div>
       </aside>

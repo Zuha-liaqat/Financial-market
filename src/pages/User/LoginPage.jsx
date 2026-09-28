@@ -59,8 +59,8 @@ export default function LoginPage() {
         {/* <div className="relative z-10 flex h-full flex-col justify-end p-12">
           <h2 className="text-3xl font-bold text-white">Financial Market</h2>
           <p className="mt-3 max-w-sm text-sm text-white/70">
-            Manage, review, and publish your investing &amp; education
-            content across every channel — from one place.
+            Draft, review, and publish your social and blog
+            content across every channel, all from one place.
           </p>
         </div> */}
       </div>
@@ -111,20 +111,12 @@ export default function LoginPage() {
             </div>
 
             <div>
-              <div className="mb-1 flex items-center justify-between">
-                <label
-                  htmlFor="password"
-                  className="block text-xs font-semibold tracking-wide text-neutral-500"
-                >
-                  PASSWORD
-                </label>
-                <a
-                  href="#"
-                  className="text-xs text-neutral-500 hover:text-black"
-                >
-                  FORGOT PASSWORD?
-                </a>
-              </div>
+              <label
+                htmlFor="password"
+                className="mb-1 block text-xs font-semibold tracking-wide text-neutral-500"
+              >
+                PASSWORD
+              </label>
               <div className="flex items-center gap-2 rounded-lg border border-neutral-200 bg-neutral-50 px-3 py-2.5 transition focus-within:border-black focus-within:bg-white focus-within:ring-2 focus-within:ring-black/10">
                 <svg
                   className="h-4 w-4 shrink-0 text-neutral-400"
@@ -191,6 +183,14 @@ export default function LoginPage() {
                     </svg>
                   )}
                 </button>
+              </div>
+              <div className="mt-1.5 flex justify-end">
+                <a
+                  href="#"
+                  className="text-xs text-neutral-500 hover:text-black"
+                >
+                  FORGOT PASSWORD?
+                </a>
               </div>
             </div>
 

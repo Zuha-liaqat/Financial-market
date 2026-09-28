@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from 'react'
-import { Link } from 'react-router-dom'
+import { Link, useNavigate } from 'react-router-dom'
 import { ArrowRight } from 'lucide-react'
 import MarketingPage from './MarketingPage'
 import { MODULES, moduleIcon } from './navData'
@@ -114,6 +114,15 @@ function Counter({ target, suffix = '', decimals = 0 }) {
 }
 
 export default function HomePage() {
+  const navigate = useNavigate()
+  const [email, setEmail] = useState('')
+
+  function handleTrialSubmit(e) {
+    e.preventDefault()
+    trackEvent('cta_click', { cta_label: 'Start Free Trial', cta_location: 'home_hero' })
+    navigate(`/pricing?email=${encodeURIComponent(email.trim())}`)
+  }
+
   return (
     <MarketingPage active="home">
       {/* Hero */}
@@ -153,6 +162,13 @@ export default function HomePage() {
           <div className="floaty f7" aria-hidden="true">
             <MonogramBadge letter="Wx" bg="#0C6EFC" />
           </div>
+          <div className="floaty f8" aria-hidden="true">
+            <span className="fi" style={{ background: '#E7F0FE' }}>
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="#1877F2">
+                <path d="M24 12.07C24 5.4 18.63 0 12 0S0 5.4 0 12.07C0 18.1 4.39 23.1 10.13 24v-8.44H7.08v-3.49h3.05V9.41c0-3.02 1.79-4.69 4.53-4.69 1.31 0 2.68.23 2.68.23v2.97h-1.51c-1.49 0-1.96.93-1.96 1.88v2.27h3.33l-.53 3.49h-2.8V24C19.61 23.1 24 18.1 24 12.07z" />
+              </svg>
+            </span>
+          </div>
           <div className="hero-copy">
             <div className="eyebrow reveal">
               <span className="dot" /> TERM OF THE DAY: DIVIDEND YIELD
@@ -165,23 +181,21 @@ export default function HomePage() {
               approve it in a click, and watch it publish itself across LinkedIn, Instagram and X, right on
               schedule.
             </p>
-            <div className="hero-ctas reveal reveal-d3">
-              <Link
-                to="/pricing"
-                className="btn btn-primary btn-arrow"
-                onClick={() => trackEvent('cta_click', { cta_label: 'Start Free Trial', cta_location: 'home_hero' })}
-              >
+            <form className="hero-ctas hero-signup reveal reveal-d3" onSubmit={handleTrialSubmit}>
+              <input
+                type="email"
+                className="hero-email"
+                placeholder="Enter your email"
+                aria-label="Email address"
+                value={email}
+                onChange={(e) => setEmail(e.target.value)}
+                required
+              />
+              <button type="submit" className="btn btn-primary btn-arrow">
                 Start Free Trial
                 <ArrowRight className="btn-arrow-icon" size={17} strokeWidth={2.5} />
-              </Link>
-              <Link
-                to="/about"
-                className="btn btn-ghost"
-                onClick={() => trackEvent('cta_click', { cta_label: 'Our Story', cta_location: 'home_hero' })}
-              >
-                Our Story
-              </Link>
-            </div>
+              </button>
+            </form>
             <div style={{ fontSize: 12, color: 'var(--muted)', marginBottom: 26 }} className="reveal reveal-d3">
               Free to start · No credit card required
             </div>
@@ -258,6 +272,14 @@ export default function HomePage() {
                     </svg>
                   </span>
                   Instagram
+                </div>,
+                <div className="logo-chip" key={`fb-${dup}`}>
+                  <span className="lc-ico">
+                    <svg width="14" height="14" viewBox="0 0 24 24" fill="#1877F2">
+                      <path d="M24 12.07C24 5.4 18.63 0 12 0S0 5.4 0 12.07C0 18.1 4.39 23.1 10.13 24v-8.44H7.08v-3.49h3.05V9.41c0-3.02 1.79-4.69 4.53-4.69 1.31 0 2.68.23 2.68.23v2.97h-1.51c-1.49 0-1.96.93-1.96 1.88v2.27h3.33l-.53 3.49h-2.8V24C19.61 23.1 24 18.1 24 12.07z" />
+                    </svg>
+                  </span>
+                  Facebook
                 </div>,
                 <div className="logo-chip" key={`x-${dup}`}>
                   <span className="lc-ico">

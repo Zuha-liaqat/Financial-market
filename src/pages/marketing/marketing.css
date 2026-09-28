@@ -196,6 +196,21 @@
 
 .fm-home .hero-grid--center .hero-copy { max-width: 900px; margin: 0 auto; }
 .fm-home .hero-grid--center .hero-ctas { justify-content: center; }
+.fm-home .hero-signup {
+  flex-wrap: nowrap; gap: 6px; max-width: 400px; margin-left: auto; margin-right: auto; padding: 6px;
+  background: #fff; border: 1px solid var(--line); border-radius: 100px; box-shadow: var(--shadow-md);
+}
+.fm-home .hero-email {
+  flex: 1; min-width: 0; border: 0; outline: none; background: transparent;
+  padding: 0 18px; font: inherit; font-size: 14px; color: var(--ink, #111820);
+}
+.fm-home .hero-signup:focus-within { border-color: var(--navy); }
+.fm-home .hero-signup .btn { flex-shrink: 0; }
+@media (max-width: 480px) {
+  .fm-home .hero-signup { flex-direction: column; border-radius: 20px; }
+  .fm-home .hero-email { padding: 12px 16px; text-align: center; }
+  .fm-home .hero-signup .btn { justify-content: center; }
+}
 .fm-home .hero-grid--center .stats-row { justify-content: center; }
 .fm-home .hero-grid--center p.lead { margin: 0 auto 22px; }
 .fm-home .hero-grid--center .hero-shot-wrap { max-width: 760px; margin: 0 auto; }
@@ -222,8 +237,9 @@
 .fm-home .floaty.f3 { top: -20px; left: 6%; animation-delay: 0.6s; }
 .fm-home .hero-grid--center .floaty.f1 { top: 15px; right: 8%; bottom: auto; left: auto; }
 .fm-home .hero-grid--center .floaty.f3 { top: 95px; left: 10%; bottom: auto; right: auto; }
-.fm-home .hero-grid--center .floaty.f7 { top: 190px; right: 27%; bottom: auto; left: auto; animation-delay: 2.6s; }
-.fm-home .hero-grid--center .floaty.f6 { top: 200px; left: 27%; bottom: auto; right: auto; animation-delay: 2.2s; }
+.fm-home .hero-grid--center .floaty.f7 { top: 190px; right: 18%; bottom: auto; left: auto; animation-delay: 2.6s; }
+.fm-home .hero-grid--center .floaty.f6 { top: 200px; left: 18%; bottom: auto; right: auto; animation-delay: 2.2s; }
+.fm-home .hero-grid--center .floaty.f8 { top: 20px; left: 3%; bottom: auto; right: auto; animation-delay: 3s; }
 .fm-home .hero-grid--center .floaty.f5 { top: 280px; right: 9%; bottom: auto; left: auto; animation-delay: 1.8s; }
 .fm-home .hero-grid--center .floaty.f4 { top: 300px; left: 11%; bottom: auto; right: auto; animation-delay: 1.4s; }
 .fm-home .hero-grid--center .floaty.f2 { top: 300px; right: 24%; bottom: auto; left: auto; }

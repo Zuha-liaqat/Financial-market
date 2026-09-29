@@ -5,6 +5,8 @@ import { avatarColors } from '../../data/companies'
 import { apiAdminListPlans, apiListUsers } from '../../lib/api'
 import { formatRelativeTime } from '../../lib/posts'
 import { ErrorToast } from '../../components/Toast'
+import SpacedRow from '../../components/SpacedRow'
+import ChannelBadges, { sampleChannelsFor } from '../../components/ChannelBadges'
 
 const RECENT_LIMIT = 5
 const WEEK_MS = 7 * 24 * 60 * 60 * 1000
@@ -61,12 +63,18 @@ function StatSkeleton() {
 
 function RecentRowSkeleton() {
   return (
-    <tr className="border-b border-neutral-100 last:border-0">
+    <SpacedRow className="border-b border-neutral-100 last:border-0">
       <td className="px-4 py-3.5">
         <div className="flex items-center gap-3">
           <div className="h-9 w-9 shrink-0 animate-pulse rounded-full bg-neutral-200" />
-          <div className="h-3.5 w-32 animate-pulse rounded bg-neutral-200" />
+          <div className="space-y-1.5">
+            <div className="h-3.5 w-32 animate-pulse rounded bg-neutral-200" />
+            <div className="h-3 w-40 animate-pulse rounded bg-neutral-200" />
+          </div>
         </div>
+      </td>
+      <td className="px-3 py-3.5">
+        <div className="h-6 w-20 animate-pulse rounded-md bg-neutral-200" />
       </td>
       <td className="px-3 py-3.5">
         <div className="h-3.5 w-16 animate-pulse rounded bg-neutral-200" />
@@ -77,7 +85,7 @@ function RecentRowSkeleton() {
       <td className="px-3 py-3.5">
         <div className="h-5 w-16 animate-pulse rounded-full bg-neutral-200" />
       </td>
-    </tr>
+    </SpacedRow>
   )
 }
 
@@ -182,21 +190,22 @@ export default function AdminDashboardPage() {
         </div>
 
         <div className="overflow-x-auto">
-          <table className="w-full min-w-[560px] text-left text-sm">
+          <table className="w-full min-w-[680px] table-even-gaps text-left text-sm">
             <thead>
-              <tr className="border-b border-neutral-200 text-xs font-semibold text-neutral-500">
+              <SpacedRow header className="border-b border-neutral-200 text-xs font-semibold text-neutral-500">
                 <th className="px-4 py-3">Company</th>
+                <th className="px-3 py-3">Channels</th>
                 <th className="px-3 py-3">Plan</th>
                 <th className="px-3 py-3">Joined</th>
                 <th className="px-3 py-3">Status</th>
-              </tr>
+              </SpacedRow>
             </thead>
             <tbody>
               {status === 'loading' &&
                 Array.from({ length: RECENT_LIMIT }).map((_, i) => <RecentRowSkeleton key={i} />)}
               {status !== 'loading' && recent.length === 0 && (
                 <tr>
-                  <td colSpan={4} className="px-4 py-8 text-center text-sm text-neutral-400">
+                  <td colSpan={9} className="px-4 py-8 text-center text-sm text-neutral-400">
                     No companies yet
                   </td>
                 </tr>
@@ -205,7 +214,7 @@ export default function AdminDashboardPage() {
                 const name = c.name || c.email || 'Unnamed'
                 const companyStatus = c.is_active ? 'Active' : 'Inactive'
                 return (
-                  <tr key={c.id} className="border-b border-neutral-100 last:border-0">
+                  <SpacedRow key={c.id} className="border-b border-neutral-100 last:border-0">
                     <td className="px-4 py-3.5">
                       <div className="flex items-center gap-3">
                         <div
@@ -213,8 +222,16 @@ export default function AdminDashboardPage() {
                         >
                           {getInitials(name)}
                         </div>
-                        <p className="truncate font-medium text-black">{name}</p>
+                        <div className="min-w-0">
+                          <p className="truncate font-medium text-black">{name}</p>
+                          {c.email && c.email !== name && (
+                            <p className="truncate text-xs text-neutral-500">{c.email}</p>
+                          )}
+                        </div>
                       </div>
+                    </td>
+                    <td className="px-3 py-3.5">
+                      <ChannelBadges channels={sampleChannelsFor(c.id)} />
                     </td>
                     <td className="px-3 py-3.5 text-neutral-600">
                       {plans.find((p) => p.code === c.plan?.plan_code)?.name || c.plan?.plan_name || 'Free'}
@@ -229,7 +246,7 @@ export default function AdminDashboardPage() {
                         {companyStatus}
                       </span>
                     </td>
-                  </tr>
+                  </SpacedRow>
                 )
               })}
             </tbody>

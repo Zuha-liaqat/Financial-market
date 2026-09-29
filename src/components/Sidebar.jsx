@@ -16,23 +16,21 @@ import {
   Plug,
   Plus,
   Settings,
-  Sparkles,
+  NotebookPen,
   SquarePen,
   X,
 } from 'lucide-react'
 import Logo from './Logo'
 import { isSuperAdmin, logout as clearSuperAdmin } from '../data/auth'
-import { getUnreadCount } from '../data/notifications'
-import { apiGetCurrentUser, apiListPlatformCredentials } from '../lib/api'
+import { apiListPlatformCredentials } from '../lib/api'
+import { useCurrentUser } from '../lib/useCurrentUser'
 
 const navItems = [
   { to: '/dashboard', label: 'Dashboard', icon: LayoutDashboard, color: '#3a5f87' },
-  { to: '/super-admin/companies', label: 'Companies', icon: Building2, color: '#0284c7', superAdminOnly: true },
-  { to: '/super-admin/plans', label: 'Subscriptions', icon: CreditCard, color: '#7c3aed', superAdminOnly: true },
   { to: '/library', label: 'Library', icon: Images, color: '#d97706', hideForSuperAdmin: true },
   { to: '/approval-queue', label: 'Approval Queue', icon: ListChecks, color: '#16a34a', hideForSuperAdmin: true },
   { to: '/calendar', label: 'Calendar', icon: CalendarDays, color: '#e11d48', hideForSuperAdmin: true },
-  { to: '/planner', label: 'Planner', icon: Sparkles, color: '#7c3aed', hideForSuperAdmin: true },
+  { to: '/planner', label: 'Planner', icon: NotebookPen, color: '#7c3aed', hideForSuperAdmin: true },
 ]
 
 const createItems = [
@@ -40,9 +38,15 @@ const createItems = [
   { to: '/create-blog', label: 'Create Blog', desc: 'For WordPress, Medium, Blogger and Wix', icon: FileText, color: '#7c3aed' },
 ]
 
+// Super admin's second section, shown where company users see Channels.
+const managementItems = [
+  { to: '/super-admin/companies', label: 'Companies', icon: Building2, color: '#0284c7' },
+  { to: '/super-admin/plans', label: 'Subscriptions', icon: CreditCard, color: '#7c3aed' },
+]
+
 const accountItems = [
   { to: '/themes', label: 'Themes/Brands', icon: Palette, color: '#ea580c', hideForSuperAdmin: true },
-  { to: '/notifications', label: 'Notifications', icon: Bell, color: '#2563eb', hideForSuperAdmin: true, badge: true },
+  { to: '/notifications', label: 'Notifications', icon: Bell, color: '#2563eb', hideForSuperAdmin: true },
   { to: '/super-admin/subscriptions', label: 'Plans and Billing', icon: CreditCard, color: '#0d9488', hideForSuperAdmin: true },
   { to: '/documentation', label: 'Documentation', icon: BookOpen, color: '#64748b', hideForSuperAdmin: true },
   { to: '/settings', label: 'Settings', icon: Settings, color: '#475569' },
@@ -102,14 +106,6 @@ function getInitials(name) {
       .map((w) => w[0]?.toUpperCase() ?? '')
       .join('') || '?'
   )
-}
-
-function formatRole(role) {
-  if (!role) return 'User'
-  return role
-    .split(/[\s_-]+/)
-    .map((w) => w.charAt(0).toUpperCase() + w.slice(1))
-    .join(' ')
 }
 
 // Closes a popover when the user clicks outside it or presses Escape.
@@ -177,9 +173,10 @@ function SectionLabel({ children, action }) {
 export default function Sidebar({ open = false, onClose = () => { } }) {
   const navigate = useNavigate()
   const [superAdmin] = useState(() => isSuperAdmin())
-  const [user, setUser] = useState(null)
+  const { user, userName: displayName, displayRole, avatarUrl } = useCurrentUser()
+  // Remember a photo that failed to load so we show initials instead of a blank circle.
+  const [failedAvatarUrl, setFailedAvatarUrl] = useState(null)
   const [connected, setConnected] = useState({})
-  const [unread, setUnread] = useState(() => getUnreadCount())
   const [newOpen, setNewOpen] = useState(false)
   const [menuOpen, setMenuOpen] = useState(false)
   const newRef = useRef(null)
@@ -189,39 +186,19 @@ export default function Sidebar({ open = false, onClose = () => { } }) {
   useDismiss(menuRef, menuOpen, () => setMenuOpen(false))
 
   const visibleNavItems = navItems.filter(
-    (item) => (!item.superAdminOnly || superAdmin) && (!item.hideForSuperAdmin || !superAdmin),
+    (item) => !item.hideForSuperAdmin || !superAdmin,
   )
   const visibleAccountItems = accountItems.filter((item) => !item.hideForSuperAdmin || !superAdmin)
   const connectedChannels = channels.filter((c) => connected[c.key])
   const unconnectedChannels = channels.filter((c) => !connected[c.key])
 
   useEffect(() => {
-    apiGetCurrentUser()
-      .then(setUser)
-      .catch(() => {})
     if (!superAdmin) {
       apiListPlatformCredentials()
         .then((list) => setConnected(Object.fromEntries((list || []).map((p) => [p.platform, p.is_connected]))))
         .catch(() => {})
     }
   }, [superAdmin])
-
-  useEffect(() => {
-    const id = setInterval(() => setUnread(getUnreadCount()), 2000)
-    return () => clearInterval(id)
-  }, [])
-
-  useEffect(() => {
-    function handleProfileUpdated(e) {
-      setUser((prev) => (prev ? { ...prev, ...e.detail } : prev))
-    }
-    window.addEventListener('user-profile-updated', handleProfileUpdated)
-    return () => window.removeEventListener('user-profile-updated', handleProfileUpdated)
-  }, [])
-
-  const displayName = user?.name || 'Guest'
-  const displayRole = user ? (user.is_superuser ? 'Super Admin' : formatRole(user.role)) : ''
-  const avatarUrl = user?.avatar_url || null
 
   function closeAll() {
     setNewOpen(false)
@@ -305,23 +282,20 @@ export default function Sidebar({ open = false, onClose = () => { } }) {
             ))}
           </div>
 
+          {superAdmin && (
+            <div className="mt-5">
+              <SectionLabel>Management</SectionLabel>
+              <div className="space-y-0.5">
+                {managementItems.map((item) => (
+                  <SidebarLink key={item.to} item={item} onClick={onClose} />
+                ))}
+              </div>
+            </div>
+          )}
+
           {!superAdmin && (
             <div className="mt-5">
-              <SectionLabel
-                action={
-                  <Link
-                    to="/integrations"
-                    onClick={onClose}
-                    aria-label="Manage integrations"
-                    title="Manage integrations"
-                    className="rounded p-1 text-neutral-400 transition hover:bg-neutral-100 hover:text-black"
-                  >
-                    <Settings className="h-3.5 w-3.5" />
-                  </Link>
-                }
-              >
-                Channels
-              </SectionLabel>
+              <SectionLabel>Channels</SectionLabel>
 
               <div className="space-y-0.5">
                 {connectedChannels.map((c) => (
@@ -339,34 +313,31 @@ export default function Sidebar({ open = false, onClose = () => { } }) {
                 <SidebarLink item={{ to: '/integrations', label: 'Integrations', icon: Plug, color: '#0891b2' }} onClick={onClose} />
               </div>
 
-              {unconnectedChannels.length > 0 && (
-                <div className="mt-3 rounded-xl border border-dashed border-neutral-200 px-3 py-2.5">
-                  <p className="mb-2 text-[11px] font-medium text-neutral-400">Connect more channels</p>
-                  <div className="flex items-center gap-1.5">
-                    {unconnectedChannels.map((c) => (
-                      <Link
-                        key={c.key}
-                        to="/integrations"
-                        onClick={onClose}
-                        title={`Connect ${c.label}`}
-                        aria-label={`Connect ${c.label}`}
-                        className={`flex h-7 w-7 items-center justify-center rounded-lg transition hover:-translate-y-0.5 ${c.bg}`}
-                      >
-                        {c.icon}
-                      </Link>
-                    ))}
+              <div className="mt-3 rounded-xl border border-dashed border-neutral-200 px-3 py-2.5">
+                <div className="flex flex-wrap items-center gap-1.5">
+                  {unconnectedChannels.map((c) => (
                     <Link
+                      key={c.key}
                       to="/integrations"
                       onClick={onClose}
-                      title="All integrations"
-                      aria-label="All integrations"
-                      className="flex h-7 w-7 items-center justify-center rounded-lg border border-neutral-200 text-neutral-400 transition hover:text-black"
+                      title={`Connect ${c.label}`}
+                      aria-label={`Connect ${c.label}`}
+                      className={`flex h-7 w-7 items-center justify-center rounded-lg transition hover:-translate-y-0.5 ${c.bg}`}
                     >
-                      <Plus className="h-3.5 w-3.5" />
+                      {c.icon}
                     </Link>
-                  </div>
+                  ))}
+                  <Link
+                    to="/integrations"
+                    onClick={onClose}
+                    title="Add channel"
+                    aria-label="Add channel"
+                    className="flex h-7 w-7 items-center justify-center rounded-lg border border-dashed border-neutral-300 text-neutral-400 transition hover:-translate-y-0.5 hover:border-brand-300 hover:bg-brand-50 hover:text-brand-600"
+                  >
+                    <Plus className="h-3.5 w-3.5" strokeWidth={2.5} />
+                  </Link>
                 </div>
-              )}
+              </div>
             </div>
           )}
         </nav>
@@ -393,9 +364,6 @@ export default function Sidebar({ open = false, onClose = () => { } }) {
                   >
                     <IconTile icon={item.icon} color={item.color} size="h-7 w-7" />
                     <span className="flex-1">{item.label}</span>
-                    {item.badge && unread > 0 && (
-                      <span className="rounded-full bg-red-500 px-1.5 text-[10px] font-bold text-white">{unread}</span>
-                    )}
                   </Link>
                 ))}
               </div>
@@ -421,11 +389,16 @@ export default function Sidebar({ open = false, onClose = () => { } }) {
               menuOpen ? 'bg-brand-50 ring-brand-200' : 'bg-neutral-50 ring-neutral-200 hover:bg-neutral-100'
             }`}
           >
-            {avatarUrl ? (
-              <img src={avatarUrl} alt={displayName} className="h-8 w-8 shrink-0 rounded-full object-cover" />
+            {avatarUrl && avatarUrl !== failedAvatarUrl ? (
+              <img
+                src={avatarUrl}
+                alt={displayName}
+                onError={() => setFailedAvatarUrl(avatarUrl)}
+                className="h-8 w-8 shrink-0 rounded-full object-cover"
+              />
             ) : (
               <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-linear-to-br from-brand-400 to-brand-600 text-xs font-semibold text-white">
-                {getInitials(displayName)}
+                {superAdmin ? 'SA' : getInitials(displayName)}
               </span>
             )}
             <span className="min-w-0 flex-1 leading-tight">

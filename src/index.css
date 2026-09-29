@@ -29,6 +29,18 @@ body {
   font-family: var(--font-sans);
 }
 
+/* Never leave a single word stranded on the last line: headings split evenly
+   across lines, body text pulls a word down so the last line isn't an orphan.
+   Kept in the base layer so Tailwind's text-wrap utilities can still override it. */
+@layer base {
+  h1, h2, h3, h4, h5, h6 {
+    text-wrap: balance;
+  }
+  p, li, blockquote, figcaption, dd {
+    text-wrap: pretty;
+  }
+}
+
 .bg-brand-500 {
   background-image: linear-gradient(-54deg, #2977a7 0%, #0e1d35 100%);
 }
@@ -60,4 +72,13 @@ body {
   background-clip: text;
   color: transparent;
   animation: shimmer-text 2.2s linear infinite;
+}
+
+/* Tables built with SpacedRow: columns hug their content and the spacer cells share the rest equally. */
+.table-even-gaps {
+  table-layout: auto;
+}
+.table-even-gaps :is(th, td):not(.table-gap):not([colspan]) {
+  width: 1px;
+  white-space: nowrap;
 }

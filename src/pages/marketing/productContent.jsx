@@ -75,10 +75,10 @@ export const PRODUCT_CONTENT = {
         Describe it once, post it on <em>every</em> channel.
       </>
     ),
-    lead: 'Write a prompt, pick your platforms, tone and language, and AI drafts the post for LinkedIn, Instagram, Facebook and X, ready for review.',
+    lead: 'Write a prompt, pick your platforms and tone, and AI drafts the post for LinkedIn, Instagram, Facebook and X, ready for review.',
     stats: [
       { value: '4', label: 'Social platforms' },
-      { value: '6', label: 'Languages' },
+      { value: '100%', label: 'Reviewed before publishing' },
       { value: '5', label: 'Tone options' },
     ],
     cardsKicker: 'CREATE POST',
@@ -92,7 +92,7 @@ export const PRODUCT_CONTENT = {
     stepsTitle: 'From idea to drafted post',
     stepsLead: 'Three steps, most of them automatic.',
     steps: [
-      { title: 'Write your prompt', desc: 'Describe the post and choose tone, language and hashtags.' },
+      { title: 'Write your prompt', desc: 'Describe the post and choose the tone and hashtags.' },
       { title: 'Pick platforms and a time', desc: 'Select where it goes and when it should publish.' },
       { title: 'Generate', desc: 'AI drafts it and sends it to your Approval Queue.' },
     ],
@@ -108,10 +108,10 @@ export const PRODUCT_CONTENT = {
         Long-form articles, drafted by <em>AI</em>.
       </>
     ),
-    lead: 'Turn a prompt into a full blog post for WordPress, Medium, Blogger or Wix, in the tone and language you choose.',
+    lead: 'Turn a prompt into a full blog post for WordPress, Medium, Blogger or Wix, in the tone you choose.',
     stats: [
       { value: '4', label: 'Blog platforms' },
-      { value: '6', label: 'Languages' },
+      { value: '100%', label: 'Reviewed before publishing' },
       { value: '1', label: 'Prompt to start' },
     ],
     cardsKicker: 'CREATE BLOG',
@@ -125,7 +125,7 @@ export const PRODUCT_CONTENT = {
     stepsTitle: 'From prompt to published article',
     stepsLead: 'AI writes the draft, you stay in control.',
     steps: [
-      { title: 'Write your prompt', desc: 'Topic, tone, language and an optional reference link.' },
+      { title: 'Write your prompt', desc: 'Topic, tone and an optional reference link.' },
       { title: 'Review and edit', desc: 'The draft waits in the Approval Queue for your changes.' },
       { title: 'Approve and schedule', desc: 'It publishes on the date and time you set.' },
     ],

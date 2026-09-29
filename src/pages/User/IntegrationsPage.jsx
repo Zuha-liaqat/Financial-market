@@ -6,6 +6,7 @@ import {
   apiSaveCredentials,
 } from "../../lib/api";
 import CredentialsModal from "../../components/CredentialsModal";
+import WebsiteConnectModal from "../../components/WebsiteConnectModal";
 
 const statusStyles = {
   ACTIVE: "bg-emerald-50 text-emerald-600 ring-1 ring-emerald-200",
@@ -21,6 +22,28 @@ const metaStyles = {
   error: "text-red-600",
   none: "text-neutral-400",
 };
+
+function MonogramIcon({ letter, bg }) {
+  return (
+    <span
+      className="flex h-6 w-6 items-center justify-center rounded-full text-[10px] font-bold text-white"
+      style={{ backgroundColor: bg }}
+    >
+      {letter}
+    </span>
+  );
+}
+
+const blogIntegration = (key, name, description, icon) => ({
+  key,
+  name,
+  group: "blog",
+  status: "INACTIVE",
+  description,
+  meta: { type: "none", text: "Not configured" },
+  action: "Enable",
+  icon,
+});
 
 const integrations = [
   {
@@ -110,6 +133,53 @@ const integrations = [
       </svg>
     ),
   },
+  blogIntegration(
+    "website",
+    "Website",
+    "Send approved blog posts to your own website through a secure webhook.",
+    <svg
+      className="h-6 w-6 text-brand-500"
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+    >
+      <circle cx="12" cy="12" r="9" strokeWidth="1.75" />
+      <path
+        strokeLinecap="round"
+        strokeWidth="1.75"
+        d="M3 12h18M12 3c2.485 2.4 3.75 5.55 3.75 9s-1.265 6.6-3.75 9c-2.485-2.4-3.75-5.55-3.75-9S9.515 5.4 12 3z"
+      />
+    </svg>,
+  ),
+  blogIntegration(
+    "wordpress",
+    "WordPress",
+    "Publish generated blog posts directly to your WordPress site.",
+    <MonogramIcon letter="W" bg="#21759B" />,
+  ),
+  blogIntegration(
+    "medium",
+    "Medium",
+    "Share approved blog posts as stories on your Medium profile or publication.",
+    <MonogramIcon letter="M" bg="#000000" />,
+  ),
+  blogIntegration(
+    "blogger",
+    "Blogger",
+    "Post generated articles straight to your Blogger blog.",
+    <MonogramIcon letter="B" bg="#F57D00" />,
+  ),
+  blogIntegration(
+    "wix",
+    "Wix",
+    "Publish blog posts to the blog on your Wix website.",
+    <MonogramIcon letter="Wx" bg="#0C6EFC" />,
+  ),
+];
+
+const sections = [
+  { key: "social", title: "Social Channels" },
+  { key: "blog", title: "Blog Channels" },
 ];
 
 function Toggle({ checked, onChange, disabled, label }) {
@@ -370,21 +440,30 @@ export default function IntegrationsPage() {
 
   return (
     <div className="space-y-6">
-      <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-4">
-        {displayIntegrations.map((integration) => (
-          <IntegrationCard
-            key={integration.key}
-            integration={integration}
-            enabled={Boolean(connectedMap[integration.key])}
-            onToggle={() => handleIntegrationAction(integration)}
-            onConfigure={() => handleIntegrationAction(integration)}
-            statusLoading={
-              statusLoading ||
-              (integration.key === "instagram" && connectingInstagram)
-            }
-          />
-        ))}
-      </div>
+      {sections.map((section) => (
+        <section key={section.key}>
+          <h2 className="mb-3 text-xs font-semibold uppercase tracking-wider text-neutral-400">
+            {section.title}
+          </h2>
+          <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-4">
+            {displayIntegrations
+              .filter((integration) => (integration.group ?? "social") === section.key)
+              .map((integration) => (
+                <IntegrationCard
+                  key={integration.key}
+                  integration={integration}
+                  enabled={Boolean(connectedMap[integration.key])}
+                  onToggle={() => handleIntegrationAction(integration)}
+                  onConfigure={() => handleIntegrationAction(integration)}
+                  statusLoading={
+                    statusLoading ||
+                    (integration.key === "instagram" && connectingInstagram)
+                  }
+                />
+              ))}
+          </div>
+        </section>
+      ))}
 
       {instagramError && (
         <div className="rounded-lg border border-red-200 bg-red-50 px-4 py-2.5 text-sm text-red-600">
@@ -392,7 +471,14 @@ export default function IntegrationsPage() {
         </div>
       )}
 
-      {configureTarget && (
+      {configureTarget?.key === "website" && (
+        <WebsiteConnectModal
+          onClose={() => setConfigureTarget(null)}
+          onSave={handleSaveCredentials}
+        />
+      )}
+
+      {configureTarget && configureTarget.key !== "website" && (
         <CredentialsModal
           platform={configureTarget.key}
           platformLabel={configureTarget.name}

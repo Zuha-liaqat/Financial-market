@@ -1,7 +1,8 @@
 import { useEffect, useRef, useState } from 'react'
-import { Link, useNavigate } from 'react-router-dom'
+import { Link } from 'react-router-dom'
 import { ArrowRight } from 'lucide-react'
 import MarketingPage from './MarketingPage'
+import { SignupForm } from './pieces'
 import { MODULES, moduleIcon } from './navData'
 import { ICONS } from './icons'
 import { trackEvent } from '../../lib/analytics'
@@ -80,6 +81,11 @@ function Counter({ target, suffix = '', decimals = 0 }) {
   useEffect(() => {
     const el = ref.current
     if (!el) return undefined
+    // Already animated once: jump straight to a changed target instead of keeping the old number.
+    if (done.current) {
+      setValue(target)
+      return undefined
+    }
     const io = new IntersectionObserver(
       (entries) => {
         entries.forEach((entry) => {
@@ -114,15 +120,6 @@ function Counter({ target, suffix = '', decimals = 0 }) {
 }
 
 export default function HomePage() {
-  const navigate = useNavigate()
-  const [email, setEmail] = useState('')
-
-  function handleTrialSubmit(e) {
-    e.preventDefault()
-    trackEvent('cta_click', { cta_label: 'Start Free Trial', cta_location: 'home_hero' })
-    navigate(`/pricing?email=${encodeURIComponent(email.trim())}`)
-  }
-
   return (
     <MarketingPage active="home">
       {/* Hero */}
@@ -181,21 +178,7 @@ export default function HomePage() {
               approve it in a click, and watch it publish itself across LinkedIn, Instagram, Facebook and X, right on
               schedule.
             </p>
-            <form className="hero-ctas hero-signup reveal reveal-d3" onSubmit={handleTrialSubmit}>
-              <input
-                type="email"
-                className="hero-email"
-                placeholder="Enter your email"
-                aria-label="Email address"
-                value={email}
-                onChange={(e) => setEmail(e.target.value)}
-                required
-              />
-              <button type="submit" className="btn btn-primary btn-arrow">
-                Start for Free
-                <ArrowRight className="btn-arrow-icon" size={17} strokeWidth={2.5} />
-              </button>
-            </form>
+            <SignupForm location="home_hero" className="reveal reveal-d3" />
             <div style={{ fontSize: 12, color: 'var(--muted)', marginBottom: 26 }} className="reveal reveal-d3">
               Free to start · No credit card required
             </div>
@@ -209,8 +192,8 @@ export default function HomePage() {
                 <div className="lbl">Blog platforms</div>
               </div>
               <div className="stat">
-                <Counter target={6} />
-                <div className="lbl">Languages</div>
+                <Counter target={100} suffix="%" />
+                <div className="lbl">Reviewed before publishing</div>
               </div>
             </div>
           </div>
@@ -429,7 +412,7 @@ export default function HomePage() {
       <section>
         <div className="wrap">
           <div className="panel-dark">
-            <div className="sec-head left reveal">
+            <div className="sec-head left wide reveal">
               <span className="kicker">
                 PLATFORMS
               </span>

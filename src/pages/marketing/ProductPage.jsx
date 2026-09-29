@@ -22,11 +22,24 @@ function ScreenshotVisual({ slug }) {
   const isShort = SHORT_VISUALS.has(slug)
   return (
     <div style={isShort ? { display: 'flex', alignItems: 'center', justifyContent: 'center', minHeight: 320 } : undefined}>
-      <img
-        src={`/product-screenshots/${slug}.png`}
-        alt={VISUAL_TITLES[slug]}
-        style={{ display: 'block', width: '100%', background: '#fff', borderRadius: 12 }}
-      />
+      {/* The screenshots carry the app's light grey page colour, so frame them on a white card
+          to keep them from blending into the banner background. */}
+      <div
+        style={{
+          width: '100%',
+          background: '#fff',
+          padding: 12,
+          borderRadius: 16,
+          border: '1px solid #e5e7eb',
+          boxShadow: '0 10px 30px rgba(15, 23, 42, 0.08)',
+        }}
+      >
+        <img
+          src={`/product-screenshots/${slug}.png`}
+          alt={VISUAL_TITLES[slug]}
+          style={{ display: 'block', width: '100%', borderRadius: 8 }}
+        />
+      </div>
     </div>
   )
 }

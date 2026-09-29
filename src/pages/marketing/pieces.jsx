@@ -1,6 +1,37 @@
-import { Link } from 'react-router-dom'
+import { useState } from 'react'
+import { Link, useNavigate } from 'react-router-dom'
 import { ArrowRight } from 'lucide-react'
 import { trackEvent } from '../../lib/analytics'
+
+// Email field with a "Start for Free" button; sends the visitor to pricing with the email attached.
+export function SignupForm({ location, className = '' }) {
+  const navigate = useNavigate()
+  const [email, setEmail] = useState('')
+
+  function handleSubmit(e) {
+    e.preventDefault()
+    trackEvent('cta_click', { cta_label: 'Start Free Trial', cta_location: location })
+    navigate(`/pricing?email=${encodeURIComponent(email.trim())}`)
+  }
+
+  return (
+    <form className={`hero-ctas hero-signup ${className}`} onSubmit={handleSubmit}>
+      <input
+        type="email"
+        className="hero-email"
+        placeholder="Enter your email"
+        aria-label="Email address"
+        value={email}
+        onChange={(e) => setEmail(e.target.value)}
+        required
+      />
+      <button type="submit" className="btn btn-primary btn-arrow">
+        Start for Free
+        <ArrowRight className="btn-arrow-icon" size={17} strokeWidth={2.5} />
+      </button>
+    </form>
+  )
+}
 
 export function PageBanner({ eyebrow, title, lead, stats, visual }) {
   return (
@@ -12,23 +43,7 @@ export function PageBanner({ eyebrow, title, lead, stats, visual }) {
           </div>
           <h1 className="headline reveal reveal-d1">{title}</h1>
           <p className="lead reveal reveal-d2">{lead}</p>
-          <div className="hero-ctas reveal reveal-d3">
-            <Link
-              to="/pricing"
-              className="btn btn-primary btn-arrow"
-              onClick={() => trackEvent('cta_click', { cta_label: 'Start Free Trial', cta_location: 'product_banner' })}
-            >
-              Start for Free
-              <ArrowRight className="btn-arrow-icon" size={17} strokeWidth={2.5} />
-            </Link>
-            <Link
-              to="/contact"
-              className="btn btn-ghost"
-              onClick={() => trackEvent('cta_click', { cta_label: 'Book a Demo', cta_location: 'product_banner' })}
-            >
-              Book a Demo
-            </Link>
-          </div>
+          <SignupForm location="product_banner" className="reveal reveal-d3" />
           {stats && (
             <div className="stats-row reveal reveal-d4">
               {stats.map((s) => (

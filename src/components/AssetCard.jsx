@@ -1,4 +1,5 @@
 import { useState } from 'react'
+import { SquarePen, Trash2 } from 'lucide-react'
 
 const badgeStyles = {
   'VIDEO 4K': 'bg-black text-white',
@@ -55,8 +56,8 @@ function Thumbnail({ type, mediaType, thumbClass, imageUrl, onView, children }) 
     <div
       className={`relative flex h-40 items-center justify-center overflow-hidden rounded-t-lg ${
         showImage ? 'bg-neutral-100' : thumbClass || fallbackGradient[mediaType] || 'bg-neutral-300'
-      } ${showImage && onView ? 'cursor-pointer' : ''}`}
-      onClick={showImage && onView ? onView : undefined}
+      } ${onView ? 'group/thumb cursor-pointer' : ''}`}
+      onClick={onView}
     >
       {showImage ? (
         <>
@@ -85,6 +86,13 @@ function Thumbnail({ type, mediaType, thumbClass, imageUrl, onView, children }) 
       >
         {type}
       </span>
+      {onView && (
+        <span className="absolute inset-0 z-[5] flex items-center justify-center bg-black/0 opacity-0 transition group-hover/thumb:bg-black/30 group-hover/thumb:opacity-100">
+          <span className="rounded-full bg-white/90 px-3 py-1 text-xs font-semibold text-neutral-800 shadow">
+            {mediaType === 'photo' ? 'View' : 'Preview'}
+          </span>
+        </span>
+      )}
       {children}
     </div>
   )
@@ -176,14 +184,7 @@ export default function AssetCard({
                         }}
                         className="flex w-full items-center gap-2 px-3 py-2 text-left text-sm text-neutral-600 hover:bg-neutral-50"
                       >
-                        <svg className="h-3.5 w-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                          <path
-                            strokeLinecap="round"
-                            strokeLinejoin="round"
-                            strokeWidth={1.75}
-                            d="M16.862 4.487l1.687-1.688a1.875 1.875 0 112.652 2.652L10.582 16.07a4.5 4.5 0 01-1.897 1.13L6 18l.8-2.685a4.5 4.5 0 011.13-1.897l8.932-8.931zm0 0L19.5 7.125"
-                          />
-                        </svg>
+                        <SquarePen className="h-4 w-4" strokeWidth={1.75} />
                         Edit
                       </button>
                     )}
@@ -195,14 +196,7 @@ export default function AssetCard({
                         }}
                         className="flex w-full items-center gap-2 px-3 py-2 text-left text-sm text-red-600 hover:bg-red-50"
                       >
-                        <svg className="h-3.5 w-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                          <path
-                            strokeLinecap="round"
-                            strokeLinejoin="round"
-                            strokeWidth={1.75}
-                            d="M6 7h12M9.5 7V5.5A1.5 1.5 0 0111 4h2a1.5 1.5 0 011.5 1.5V7m2 0-.7 12.1a2 2 0 01-2 1.9H8.2a2 2 0 01-2-1.9L5.5 7"
-                          />
-                        </svg>
+                        <Trash2 className="h-4 w-4" strokeWidth={1.75} />
                         Delete
                       </button>
                     )}

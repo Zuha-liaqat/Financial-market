@@ -1,6 +1,8 @@
 import { useEffect, useMemo, useRef, useState } from 'react'
 import { createPortal } from 'react-dom'
 import ConfirmDialog from '../../components/ConfirmDialog'
+import SpacedRow from '../../components/SpacedRow'
+import ChannelBadges, { sampleChannelsFor } from '../../components/ChannelBadges'
 import { avatarColors } from '../../data/companies'
 import { apiDeleteUser, apiListUsers } from '../../lib/api'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '../../components/ui/select'
@@ -176,9 +178,9 @@ export default function CompaniesPage() {
             email: u.email,
             plan: u.plan?.plan_name || 'Free',
             status: u.is_active ? 'Active' : 'Inactive',
-            role: u.role || 'company',
             joinedDate: u.created_at,
             avatarColor: avatarColors[idx % avatarColors.length],
+            channels: sampleChannelsFor(u.id),
           }))
         setCompanies(list)
         setLoadState('ready')
@@ -282,21 +284,20 @@ export default function CompaniesPage() {
           </div>
         </div>
         <div className="overflow-x-auto">
-          <table className="w-full min-w-[860px] table-fixed text-left text-sm">
+          <table className="w-full min-w-[860px] table-even-gaps text-left text-sm">
             <thead>
-              <tr className="border-b border-neutral-200 bg-neutral-50 text-[10px] font-semibold tracking-widest text-neutral-400">
-                <th className="w-[24%] px-4 py-3.5">COMPANY</th>
-                <th className="w-[18%] px-3 py-3.5">EMAIL</th>
-                <th className="w-[12%] px-3 py-3.5">STATUS</th>
-                <th className="w-[16%] px-3 py-3.5">PLAN</th>
-                <th className="w-[10%] px-3 py-3.5">ROLE</th>
-                <th className="w-[14%] px-3 py-3.5">JOINED</th>
-                <th className="w-16 px-3 py-3.5 text-right">ACTIONS</th>
-              </tr>
+              <SpacedRow header className="border-b border-neutral-200 bg-neutral-50 text-[10px] font-semibold tracking-widest text-neutral-400">
+                <th className="px-4 py-3.5">COMPANY</th>
+                <th className="px-3 py-3.5">CHANNELS</th>
+                <th className="px-3 py-3.5">STATUS</th>
+                <th className="px-3 py-3.5">PLAN</th>
+                <th className="px-3 py-3.5">JOINED</th>
+                <th className="px-3 py-3.5 text-right">ACTIONS</th>
+              </SpacedRow>
             </thead>
             <tbody>
               {paginated.map((company) => (
-                <tr
+                <SpacedRow
                   key={company.id}
                   className="border-b border-neutral-100 last:border-0 transition hover:bg-brand-50/40"
                 >
@@ -309,10 +310,15 @@ export default function CompaniesPage() {
                       </div>
                       <div className="min-w-0">
                         <p className="truncate font-medium text-black">{company.name}</p>
+                        {company.email && company.email !== company.name && (
+                          <p className="truncate text-xs text-neutral-500">{company.email}</p>
+                        )}
                       </div>
                     </div>
                   </td>
-                  <td className="truncate px-3 py-3.5 text-neutral-500">{company.email || '—'}</td>
+                  <td className="px-3 py-3.5">
+                    <ChannelBadges channels={company.channels} />
+                  </td>
                   <td className="px-3 py-3.5">
                     <span
                       className={`inline-flex items-center gap-1.5 rounded-full px-2.5 py-1 text-[10px] font-semibold tracking-wide ${statusStyles[company.status]}`}
@@ -321,13 +327,12 @@ export default function CompaniesPage() {
                       {company.status}
                     </span>
                   </td>
-                  <td className="truncate px-3 py-3.5 text-neutral-600">{company.plan || 'Free'}</td>
-                  <td className="px-3 py-3.5 capitalize text-neutral-600">{company.role || 'company'}</td>
+                  <td className="px-3 py-3.5 text-neutral-600">{company.plan || 'Free'}</td>
                   <td className="px-3 py-3.5 whitespace-nowrap text-neutral-500">{formatDate(company.joinedDate)}</td>
                   <td className="px-3 py-3.5 text-right">
                     <ActionsMenu onDelete={() => setDeleteTarget(company)} />
                   </td>
-                </tr>
+                </SpacedRow>
               ))}
             </tbody>
           </table>

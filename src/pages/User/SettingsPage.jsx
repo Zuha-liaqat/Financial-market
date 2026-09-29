@@ -6,6 +6,7 @@ import {
   apiUploadProfilePhoto,
 } from "../../lib/api";
 import { ErrorToast, SuccessToast } from "../../components/Toast";
+import { isSuperAdmin } from "../../data/auth";
 
 function EyeButton({ show, onClick }) {
   return (
@@ -104,6 +105,9 @@ export default function SettingsPage() {
   const [uploadingAvatar, setUploadingAvatar] = useState(false);
   const [avatarError, setAvatarError] = useState("");
   const [profileLoading, setProfileLoading] = useState(true);
+  const [superAdmin] = useState(() => isSuperAdmin());
+  // Remember a photo that failed to load so we show initials instead of a blank circle.
+  const [failedAvatarUrl, setFailedAvatarUrl] = useState(null);
 
   useEffect(() => {
     apiGetProfile()
@@ -111,7 +115,7 @@ export default function SettingsPage() {
         setFirstName(profile.first_name || "");
         setLastName(profile.last_name || "");
         setEmail(profile.email || "");
-        setAvatarUrl(profile.avatar_url || null);
+        setAvatarUrl(profile.avatar_url?.trim() || null);
       })
       .catch(() => {})
       .finally(() => setProfileLoading(false));
@@ -182,6 +186,15 @@ export default function SettingsPage() {
       });
       setFirstName(profile.first_name || "");
       setLastName(profile.last_name || "");
+      window.dispatchEvent(
+        new CustomEvent("user-profile-updated", {
+          detail: {
+            full_name:
+              profile.full_name ||
+              [profile.first_name, profile.last_name].filter(Boolean).join(" "),
+          },
+        }),
+      );
       setProfileSaved(true);
     } catch (err) {
       setProfileError(err.message);
@@ -241,17 +254,18 @@ export default function SettingsPage() {
         ) : (
         <div className="flex flex-wrap items-center gap-4">
           <div className="relative h-20 w-20 shrink-0">
-            {avatarUrl ? (
+            {avatarUrl && avatarUrl !== failedAvatarUrl ? (
               <img
                 src={avatarUrl}
                 alt="Profile"
+                onError={() => setFailedAvatarUrl(avatarUrl)}
                 className={`h-20 w-20 rounded-full object-cover ring-2 ring-white shadow-sm ${uploadingAvatar ? "opacity-50" : ""}`}
               />
             ) : (
               <div
                 className={`flex h-20 w-20 items-center justify-center rounded-full bg-linear-to-br from-brand-400 to-brand-600 text-xl font-semibold text-white ring-2 ring-white shadow-sm ${uploadingAvatar ? "opacity-50" : ""}`}
               >
-                {initials || "A"}
+                {superAdmin ? "SA" : initials || "A"}
               </div>
             )}
             {uploadingAvatar && (

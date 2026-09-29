@@ -283,6 +283,11 @@ export default function ThemesPage() {
         status: complete ? "complete" : "draft",
       });
       if (profile?.logo_url) setLogoUrl(profile.logo_url);
+      window.dispatchEvent(
+        new CustomEvent("user-profile-updated", {
+          detail: { company_name: profile?.company_name ?? companyName },
+        }),
+      );
       addNotification({
         type: "creation",
         title: complete ? "Brand & voice setup completed" : "Draft saved",

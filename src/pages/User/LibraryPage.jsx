@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useState } from "react";
 import AssetCard from "../../components/AssetCard";
 import UploadAssetModal from "../../components/UploadAssetModal";
+import AssetViewer, { isPdfAsset } from "../../components/AssetViewer";
 import ConfirmDialog from "../../components/ConfirmDialog";
 import { apiDeleteLibraryAsset, apiListLibraryAssets } from "../../lib/api";
 
@@ -418,8 +419,12 @@ export default function LibraryPage() {
               onEdit={() => setEditItem(item)}
               onDelete={() => setDeleteTarget(item)}
               onView={
-                item.media_type === "photo" && item.media_url
-                  ? () => setViewItem(item)
+                item.media_url
+                  ? () =>
+                      // PDFs read better in the browser's own viewer, so open them in a new tab.
+                      isPdfAsset(item)
+                        ? window.open(item.media_url, "_blank", "noopener,noreferrer")
+                        : setViewItem(item)
                   : undefined
               }
             />
@@ -427,34 +432,7 @@ export default function LibraryPage() {
         </div>
       )}
 
-      {viewItem && (
-        <div
-          className="fixed inset-0 z-50 flex items-center justify-center bg-black/80 p-4"
-          onClick={() => setViewItem(null)}
-        >
-          <button
-            onClick={() => setViewItem(null)}
-            aria-label="Close"
-            className="absolute right-4 top-4 z-10 text-white/80 transition hover:text-white"
-          >
-            <svg className="h-7 w-7" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.75} d="M6 18L18 6M6 6l12 12" />
-            </svg>
-          </button>
-          <img
-            src={viewItem.media_url}
-            alt={viewItem.name}
-            onClick={(e) => e.stopPropagation()}
-            className="max-h-[85vh] max-w-full rounded-lg object-contain shadow-2xl"
-          />
-          <p
-            onClick={(e) => e.stopPropagation()}
-            className="absolute bottom-6 left-1/2 -translate-x-1/2 rounded-full bg-black/60 px-4 py-1.5 text-sm text-white"
-          >
-            {viewItem.name}
-          </p>
-        </div>
-      )}
+      {viewItem && <AssetViewer item={viewItem} onClose={() => setViewItem(null)} />}
 
       {(showUpload || editItem) && (
         <UploadAssetModal

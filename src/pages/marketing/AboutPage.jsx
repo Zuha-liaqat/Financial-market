@@ -3,10 +3,10 @@ import { FeatureCards, CtaBannerSection } from './pieces'
 import { ICONS } from './icons'
 
 const STATS = [
-  { value: '8', label: 'Platforms to publish on' },
-  { value: '6', label: 'Languages for AI drafts' },
-  { value: '3', label: 'Team notification channels' },
-  { value: '100%', label: 'Posts reviewed before going live' },
+  { value: '8', label: 'Platforms to publish on', icon: ICONS.plug },
+  { value: '30', label: 'Posts in one monthly plan', icon: ICONS.calendar },
+  { value: '3', label: 'Team notification channels', icon: ICONS.bell },
+  { value: '100%', label: 'Posts reviewed before going live', icon: ICONS.shield },
 ]
 
 const TEAM = [
@@ -24,7 +24,7 @@ export default function AboutPage() {
             OUR STORY
           </div>
           <h1 className="headline reveal reveal-d1" style={{ maxWidth: 1000, fontSize: 'clamp(30px, 3.6vw, 46px)' }}>
-            We think consistent publishing should feel effortless, not like a second job.
+            We think posting consistently shouldn&apos;t be this hard.
           </h1>
           <p className="lead reveal reveal-d2" style={{ maxWidth: 980 }}>
             Financial Market started as a simple fix for missed posts. Today it&apos;s a full content studio where
@@ -38,11 +38,16 @@ export default function AboutPage() {
         <div className="wrap">
           <div className="cards-grid cols-4">
             {STATS.map((s, i) => (
-              <div className={`lcard reveal reveal-d${i + 1}`} key={s.label}>
-                <div className="mono" style={{ fontSize: 26, fontWeight: 700, color: 'var(--navy)' }}>
-                  {s.value}
+              <div className={`lcard stat-card reveal reveal-d${i + 1}`} key={s.label}>
+                <div className="stat-card-top">
+                  <div className="mono stat-card-value">{s.value}</div>
+                  <div className="licon">
+                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#0B4A73" strokeWidth="1.8">
+                      {s.icon}
+                    </svg>
+                  </div>
                 </div>
-                <h3 style={{ marginTop: 10 }}>{s.label}</h3>
+                <h3>{s.label}</h3>
               </div>
             ))}
           </div>

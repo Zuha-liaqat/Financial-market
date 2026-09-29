@@ -39,6 +39,26 @@ body {
   p, li, blockquote, figcaption, dd {
     text-wrap: pretty;
   }
+  /* Tailwind v4 leaves buttons on the default arrow; show the hand on anything clickable. */
+  button:not(:disabled),
+  [role="button"]:not([aria-disabled="true"]),
+  [role="menuitem"],
+  [role="switch"]:not(:disabled),
+  [role="tab"],
+  [role="option"],
+  select:not(:disabled),
+  summary,
+  label[for],
+  input[type="checkbox"]:not(:disabled),
+  input[type="radio"]:not(:disabled),
+  input[type="file"]:not(:disabled) {
+    cursor: pointer;
+  }
+  button:disabled,
+  select:disabled,
+  [aria-disabled="true"] {
+    cursor: not-allowed;
+  }
 }
 
 .bg-brand-500 {

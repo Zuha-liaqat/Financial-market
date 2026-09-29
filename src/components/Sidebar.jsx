@@ -5,7 +5,6 @@ import {
   BookOpen,
   Building2,
   CalendarDays,
-  ChevronUp,
   CreditCard,
   FileText,
   Images,
@@ -23,7 +22,6 @@ import {
 import Logo from './Logo'
 import { isSuperAdmin, logout as clearSuperAdmin } from '../data/auth'
 import { apiListPlatformCredentials } from '../lib/api'
-import { useCurrentUser } from '../lib/useCurrentUser'
 
 const navItems = [
   { to: '/dashboard', label: 'Dashboard', icon: LayoutDashboard, color: '#3a5f87' },
@@ -49,8 +47,9 @@ const accountItems = [
   { to: '/notifications', label: 'Notifications', icon: Bell, color: '#2563eb', hideForSuperAdmin: true },
   { to: '/super-admin/subscriptions', label: 'Plans and Billing', icon: CreditCard, color: '#0d9488', hideForSuperAdmin: true },
   { to: '/documentation', label: 'Documentation', icon: BookOpen, color: '#64748b', hideForSuperAdmin: true },
-  { to: '/settings', label: 'Settings', icon: Settings, color: '#475569' },
 ]
+
+const settingsItem = { to: '/settings', label: 'Settings', icon: Settings, color: '#475569' }
 
 const channels = [
   {
@@ -96,17 +95,6 @@ const channels = [
     bg: 'bg-black',
   },
 ]
-
-function getInitials(name) {
-  return (
-    name
-      .trim()
-      .split(/\s+/)
-      .slice(0, 2)
-      .map((w) => w[0]?.toUpperCase() ?? '')
-      .join('') || '?'
-  )
-}
 
 // Closes a popover when the user clicks outside it or presses Escape.
 function useDismiss(ref, open, onDismiss) {
@@ -173,17 +161,11 @@ function SectionLabel({ children, action }) {
 export default function Sidebar({ open = false, onClose = () => { } }) {
   const navigate = useNavigate()
   const [superAdmin] = useState(() => isSuperAdmin())
-  const { user, userName: displayName, displayRole, avatarUrl } = useCurrentUser()
-  // Remember a photo that failed to load so we show initials instead of a blank circle.
-  const [failedAvatarUrl, setFailedAvatarUrl] = useState(null)
   const [connected, setConnected] = useState({})
   const [newOpen, setNewOpen] = useState(false)
-  const [menuOpen, setMenuOpen] = useState(false)
   const newRef = useRef(null)
-  const menuRef = useRef(null)
 
   useDismiss(newRef, newOpen, () => setNewOpen(false))
-  useDismiss(menuRef, menuOpen, () => setMenuOpen(false))
 
   const visibleNavItems = navItems.filter(
     (item) => !item.hideForSuperAdmin || !superAdmin,
@@ -202,7 +184,6 @@ export default function Sidebar({ open = false, onClose = () => { } }) {
 
   function closeAll() {
     setNewOpen(false)
-    setMenuOpen(false)
     onClose()
   }
 
@@ -242,9 +223,9 @@ export default function Sidebar({ open = false, onClose = () => { } }) {
               onClick={() => setNewOpen((v) => !v)}
               aria-expanded={newOpen}
               aria-haspopup="menu"
-              className="flex w-full items-center justify-center gap-2 rounded-xl bg-brand-50 px-3 py-2.5 text-sm font-semibold text-brand-700 ring-1 ring-inset ring-brand-200 transition hover:bg-brand-100"
+              className="flex w-full items-center justify-center gap-2 rounded-xl bg-brand-500 px-3 py-2.5 text-sm font-semibold text-white shadow-sm transition"
             >
-              <span className="flex h-5 w-5 items-center justify-center rounded-full bg-brand-600 text-white">
+              <span className="flex h-5 w-5 items-center justify-center rounded-full bg-white/20 text-white">
                 <Plus className="h-3.5 w-3.5" strokeWidth={2.5} />
               </span>
               New
@@ -277,7 +258,7 @@ export default function Sidebar({ open = false, onClose = () => { } }) {
         <nav className="min-h-0 flex-1 overflow-y-auto px-3 pb-3">
           <SectionLabel>Workspace</SectionLabel>
           <div className="space-y-0.5">
-            {visibleNavItems.map((item) => (
+            {[...visibleNavItems, ...visibleAccountItems].map((item) => (
               <SidebarLink key={item.to} item={item} onClick={onClose} />
             ))}
           </div>
@@ -297,117 +278,83 @@ export default function Sidebar({ open = false, onClose = () => { } }) {
             <div className="mt-5">
               <SectionLabel>Channels</SectionLabel>
 
-              <div className="space-y-0.5">
-                {connectedChannels.map((c) => (
-                  <Link
-                    key={c.key}
-                    to="/integrations"
-                    onClick={onClose}
-                    className="flex items-center gap-3 rounded-xl px-2 py-1.5 text-sm font-medium text-neutral-600 transition hover:bg-neutral-50 hover:text-black"
-                  >
-                    <span className={`flex h-8 w-8 items-center justify-center rounded-lg ${c.bg}`}>{c.icon}</span>
-                    <span className="flex-1">{c.label}</span>
-                    <span className="h-2 w-2 rounded-full bg-emerald-500" title="Connected" />
-                  </Link>
-                ))}
-                <SidebarLink item={{ to: '/integrations', label: 'Integrations', icon: Plug, color: '#0891b2' }} onClick={onClose} />
-              </div>
+              <div className="rounded-xl border border-neutral-200 bg-neutral-50/60 p-1.5">
+                <NavLink to="/integrations" onClick={onClose}>
+                  {({ isActive }) => (
+                    <span
+                      className={`flex items-center gap-3 rounded-lg px-1.5 py-1.5 text-sm transition ${
+                        isActive
+                          ? 'bg-white font-semibold text-brand-800 shadow-sm ring-1 ring-black/5'
+                          : 'font-medium text-neutral-700 hover:bg-white hover:text-black'
+                      }`}
+                    >
+                      <IconTile icon={Plug} color="#0891b2" active={isActive} />
+                      <span className="flex-1">Integrations</span>
+                    </span>
+                  )}
+                </NavLink>
 
-              <div className="mt-3 rounded-xl border border-dashed border-neutral-200 px-3 py-2.5">
-                <div className="flex flex-wrap items-center gap-1.5">
-                  {unconnectedChannels.map((c) => (
+                {connectedChannels.length > 0 && (
+                  <div className="mt-1 space-y-0.5">
+                    {connectedChannels.map((c) => (
+                      <Link
+                        key={c.key}
+                        to="/integrations"
+                        onClick={onClose}
+                        className="flex items-center gap-2.5 rounded-lg px-1.5 py-1 text-[13px] font-medium text-neutral-600 transition hover:bg-white hover:text-black"
+                      >
+                        <span className={`flex h-6 w-6 items-center justify-center rounded-md ${c.bg}`}>{c.icon}</span>
+                        <span className="flex-1">{c.label}</span>
+                        <span className="h-2 w-2 rounded-full bg-emerald-500" title="Connected" />
+                      </Link>
+                    ))}
+                  </div>
+                )}
+
+                <div className="mt-1.5 border-t border-neutral-200 px-1.5 pt-2 pb-1">
+                  {unconnectedChannels.length > 0 && (
+                    <p className="mb-1.5 text-[10px] font-semibold uppercase tracking-wider text-neutral-400">
+                      Connect a channel
+                    </p>
+                  )}
+                  <div className="flex flex-wrap items-center gap-1.5">
+                    {unconnectedChannels.map((c) => (
+                      <Link
+                        key={c.key}
+                        to="/integrations"
+                        onClick={onClose}
+                        title={`Connect ${c.label}`}
+                        aria-label={`Connect ${c.label}`}
+                        className={`flex h-7 w-7 items-center justify-center rounded-lg transition hover:-translate-y-0.5 ${c.bg}`}
+                      >
+                        {c.icon}
+                      </Link>
+                    ))}
                     <Link
-                      key={c.key}
                       to="/integrations"
                       onClick={onClose}
-                      title={`Connect ${c.label}`}
-                      aria-label={`Connect ${c.label}`}
-                      className={`flex h-7 w-7 items-center justify-center rounded-lg transition hover:-translate-y-0.5 ${c.bg}`}
+                      title="Add channel"
+                      aria-label="Add channel"
+                      className="flex h-7 w-7 items-center justify-center rounded-lg border border-dashed border-neutral-300 bg-white text-neutral-400 transition hover:-translate-y-0.5 hover:border-brand-300 hover:bg-brand-50 hover:text-brand-600"
                     >
-                      {c.icon}
+                      <Plus className="h-3.5 w-3.5" strokeWidth={2.5} />
                     </Link>
-                  ))}
-                  <Link
-                    to="/integrations"
-                    onClick={onClose}
-                    title="Add channel"
-                    aria-label="Add channel"
-                    className="flex h-7 w-7 items-center justify-center rounded-lg border border-dashed border-neutral-300 text-neutral-400 transition hover:-translate-y-0.5 hover:border-brand-300 hover:bg-brand-50 hover:text-brand-600"
-                  >
-                    <Plus className="h-3.5 w-3.5" strokeWidth={2.5} />
-                  </Link>
+                  </div>
                 </div>
               </div>
             </div>
           )}
         </nav>
 
-        <div ref={menuRef} className="relative border-t border-neutral-200 p-3">
-          {menuOpen && (
-            <div
-              role="menu"
-              className="absolute bottom-full left-3 right-3 z-50 mb-2 rounded-xl border border-neutral-200 bg-white p-1.5 shadow-lg"
-            >
-              {user?.email && (
-                <p className="truncate border-b border-neutral-100 px-2 pb-2 pt-1 text-xs text-neutral-500">
-                  {user.email}
-                </p>
-              )}
-              <div className="py-1">
-                {visibleAccountItems.map((item) => (
-                  <Link
-                    key={item.to}
-                    to={item.to}
-                    role="menuitem"
-                    onClick={closeAll}
-                    className="flex items-center gap-2.5 rounded-lg px-2 py-1.5 text-sm font-medium text-neutral-700 transition hover:bg-neutral-50"
-                  >
-                    <IconTile icon={item.icon} color={item.color} size="h-7 w-7" />
-                    <span className="flex-1">{item.label}</span>
-                  </Link>
-                ))}
-              </div>
-              <div className="border-t border-neutral-100 pt-1">
-                <button
-                  type="button"
-                  role="menuitem"
-                  onClick={handleLogout}
-                  className="flex w-full items-center gap-2.5 rounded-lg px-2 py-1.5 text-sm font-medium text-red-600 transition hover:bg-red-50"
-                >
-                  <IconTile icon={LogOut} color="#dc2626" size="h-7 w-7" />
-                  Log out
-                </button>
-              </div>
-            </div>
-          )}
+        <div className="space-y-0.5 border-t border-neutral-200 p-3">
+          <SidebarLink item={settingsItem} onClick={onClose} />
           <button
             type="button"
-            onClick={() => setMenuOpen((v) => !v)}
-            aria-expanded={menuOpen}
-            aria-haspopup="menu"
-            className={`flex w-full items-center gap-2.5 rounded-xl px-2 py-2 text-left ring-1 transition ${
-              menuOpen ? 'bg-brand-50 ring-brand-200' : 'bg-neutral-50 ring-neutral-200 hover:bg-neutral-100'
-            }`}
+            onClick={handleLogout}
+            className="flex w-full items-center gap-3 rounded-xl px-2 py-1.5 text-sm font-medium text-red-600 transition hover:bg-red-50"
           >
-            {avatarUrl && avatarUrl !== failedAvatarUrl ? (
-              <img
-                src={avatarUrl}
-                alt={displayName}
-                onError={() => setFailedAvatarUrl(avatarUrl)}
-                className="h-8 w-8 shrink-0 rounded-full object-cover"
-              />
-            ) : (
-              <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-linear-to-br from-brand-400 to-brand-600 text-xs font-semibold text-white">
-                {superAdmin ? 'SA' : getInitials(displayName)}
-              </span>
-            )}
-            <span className="min-w-0 flex-1 leading-tight">
-              <span className="block truncate text-sm font-semibold text-black">{displayName}</span>
-              <span className="block truncate text-xs text-neutral-400">{displayRole}</span>
-            </span>
-            <ChevronUp
-              className={`h-4 w-4 shrink-0 text-neutral-400 transition-transform ${menuOpen ? '' : 'rotate-180'}`}
-            />
+            <IconTile icon={LogOut} color="#dc2626" />
+            Log out
           </button>
         </div>
       </aside>

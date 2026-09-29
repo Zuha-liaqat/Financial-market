@@ -26,6 +26,7 @@ import CompaniesPage from './pages/superadmin/CompaniesPage'
 import SubscriptionsPage from './pages/User/SubscriptionsPage'
 import ManageSubscriptionsPage from './pages/superadmin/ManageSubscriptionsPage'
 import AdminDashboardPage from './pages/superadmin/AdminDashboardPage'
+import ReferralsPage from './pages/superadmin/ReferralsPage'
 import DashboardLayout from './layouts/DashboardLayout'
 import RequireSuperAdmin from './components/RequireSuperAdmin'
 import RequireNotSuperAdmin from './components/RequireNotSuperAdmin'
@@ -93,6 +94,14 @@ function App() {
             element={
               <RequireSuperAdmin>
                 <ManageSubscriptionsPage />
+              </RequireSuperAdmin>
+            }
+          />
+          <Route
+            path="/super-admin/referrals"
+            element={
+              <RequireSuperAdmin>
+                <ReferralsPage />
               </RequireSuperAdmin>
             }
           />

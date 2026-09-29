@@ -1,8 +1,10 @@
 import { useEffect, useRef, useState } from 'react'
 import { Link } from 'react-router-dom'
-import { ArrowRight } from 'lucide-react'
+import { ArrowRight, Gift } from 'lucide-react'
 import MarketingPage from './MarketingPage'
 import { SignupForm } from './pieces'
+import ReferFriendModal from './ReferFriendModal'
+import { PinterestIcon, ThreadsIcon, TikTokIcon } from '../../components/SocialIcons'
 import { MODULES, moduleIcon } from './navData'
 import { ICONS } from './icons'
 import { trackEvent } from '../../lib/analytics'
@@ -62,6 +64,22 @@ const TESTIMONIAL_COLUMNS = [
   },
 ]
 
+// Customer counts shown on the Platforms panel.
+const PLATFORM_CUSTOMERS = {
+  linkedin: 12400,
+  instagram: 9800,
+  twitter: 7300,
+}
+
+function PlatformUsage({ platform }) {
+  return (
+    <div className="pusers">
+      <div className="n">{PLATFORM_CUSTOMERS[platform].toLocaleString('en-US')}+</div>
+      <div className="l">customers publish here with us</div>
+    </div>
+  )
+}
+
 function MonogramBadge({ letter, bg }) {
   return (
     <span
@@ -120,6 +138,8 @@ function Counter({ target, suffix = '', decimals = 0 }) {
 }
 
 export default function HomePage() {
+  const [referOpen, setReferOpen] = useState(false)
+
   return (
     <MarketingPage active="home">
       {/* Hero */}
@@ -148,13 +168,22 @@ export default function HomePage() {
             </span>
           </div>
           <div className="floaty f4" aria-hidden="true">
-            <MonogramBadge letter="M" bg="#000000" />
+            <span className="fi" style={{ background: '#EEF0F2' }}>
+              <TikTokIcon size={15} color="#111820" />
+            </span>
           </div>
           <div className="floaty f5" aria-hidden="true">
             <MonogramBadge letter="W" bg="#21759B" />
           </div>
           <div className="floaty f6" aria-hidden="true">
-            <MonogramBadge letter="B" bg="#F57D00" />
+            <span className="fi" style={{ background: '#FDECEE' }}>
+              <PinterestIcon size={16} />
+            </span>
+          </div>
+          <div className="floaty f9" aria-hidden="true">
+            <span className="fi" style={{ background: '#EEF0F2' }}>
+              <ThreadsIcon size={15} color="#111820" />
+            </span>
           </div>
           <div className="floaty f7" aria-hidden="true">
             <MonogramBadge letter="Wx" bg="#0C6EFC" />
@@ -179,12 +208,25 @@ export default function HomePage() {
               schedule.
             </p>
             <SignupForm location="home_hero" className="reveal reveal-d3" />
+            <div className="reveal reveal-d3">
+              <button
+                type="button"
+                className="refer-note"
+                onClick={() => {
+                  trackEvent('cta_click', { cta_label: 'Refer a Friend', cta_location: 'home_hero' })
+                  setReferOpen(true)
+                }}
+              >
+                <Gift size={14} strokeWidth={2.2} />
+                <span>Refer a friend</span> and get more credits
+              </button>
+            </div>
             <div style={{ fontSize: 12, color: 'var(--muted)', marginBottom: 26 }} className="reveal reveal-d3">
               Free to start · No credit card required
             </div>
             <div className="stats-row reveal reveal-d4">
               <div className="stat">
-                <Counter target={4} />
+                <Counter target={7} />
                 <div className="lbl">Social platforms</div>
               </div>
               <div className="stat">
@@ -271,6 +313,24 @@ export default function HomePage() {
                     </svg>
                   </span>
                   X / Twitter
+                </div>,
+                <div className="logo-chip" key={`threads-${dup}`}>
+                  <span className="lc-ico">
+                    <ThreadsIcon size={13} color="#111820" />
+                  </span>
+                  Threads
+                </div>,
+                <div className="logo-chip" key={`tiktok-${dup}`}>
+                  <span className="lc-ico">
+                    <TikTokIcon size={13} color="#111820" />
+                  </span>
+                  TikTok
+                </div>,
+                <div className="logo-chip" key={`pinterest-${dup}`}>
+                  <span className="lc-ico">
+                    <PinterestIcon size={14} />
+                  </span>
+                  Pinterest
                 </div>,
                 <div className="logo-chip" key={`medium-${dup}`}>
                   <span className="lc-ico">
@@ -370,6 +430,15 @@ export default function HomePage() {
                         <path d="M18.9 2H22l-7.6 8.7L23.3 22H16.6l-5.2-6.8L5.4 22H2.3l8.1-9.3L1.4 2h6.9l4.7 6.2L18.9 2z" />
                       </svg>
                     </span>
+                    <span title="Threads">
+                      <ThreadsIcon size={13} color="#111820" />
+                    </span>
+                    <span title="TikTok">
+                      <TikTokIcon size={13} color="#111820" />
+                    </span>
+                    <span title="Pinterest">
+                      <PinterestIcon size={14} />
+                    </span>
                   </div>
                 )}
                 {m.slug === 'notifications' && (
@@ -429,16 +498,7 @@ export default function HomePage() {
                   </div>
                   <h4>LinkedIn</h4>
                 </div>
-                <div className="pstats">
-                  <div>
-                    <div className="n">3,000</div>
-                    <div className="l">Character limit</div>
-                  </div>
-                  <div>
-                    <div className="n">Pro</div>
-                    <div className="l">Professional tone</div>
-                  </div>
-                </div>
+                <PlatformUsage platform="linkedin" />
               </div>
               <div className="pcard reveal reveal-d2" style={{ '--pc-accent': '#E4405F' }}>
                 <div className="prow">
@@ -451,16 +511,7 @@ export default function HomePage() {
                   </div>
                   <h4>Instagram</h4>
                 </div>
-                <div className="pstats">
-                  <div>
-                    <div className="n">2,200</div>
-                    <div className="l">Character limit</div>
-                  </div>
-                  <div>
-                    <div className="n">#</div>
-                    <div className="l">Hashtag-ready</div>
-                  </div>
-                </div>
+                <PlatformUsage platform="instagram" />
               </div>
               <div className="pcard reveal reveal-d3" style={{ '--pc-accent': '#F3F6FA' }}>
                 <div className="prow">
@@ -471,16 +522,7 @@ export default function HomePage() {
                   </div>
                   <h4>X / Twitter</h4>
                 </div>
-                <div className="pstats">
-                  <div>
-                    <div className="n">280</div>
-                    <div className="l">Character limit</div>
-                  </div>
-                  <div>
-                    <div className="n">Short</div>
-                    <div className="l">And punchy</div>
-                  </div>
-                </div>
+                <PlatformUsage platform="twitter" />
               </div>
             </div>
           </div>
@@ -545,6 +587,8 @@ export default function HomePage() {
           </div>
         </div>
       </section>
+
+      {referOpen && <ReferFriendModal location="home_hero" onClose={() => setReferOpen(false)} />}
     </MarketingPage>
   )
 }

@@ -28,6 +28,7 @@ const pageTitles = [
   { match: '/super-admin/companies', label: 'Companies' },
   { match: '/super-admin/subscriptions', label: 'Plans and Billing' },
   { match: '/super-admin/plans', label: 'Subscriptions' },
+  { match: '/super-admin/referrals', label: 'Referrals' },
   { match: '/documentation', label: 'Documentation' },
   { match: '/settings', label: 'Settings' },
 ]

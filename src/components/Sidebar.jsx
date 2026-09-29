@@ -7,6 +7,7 @@ import {
   CalendarDays,
   CreditCard,
   FileText,
+  Gift,
   Images,
   LayoutDashboard,
   ListChecks,
@@ -22,6 +23,7 @@ import {
 import Logo from './Logo'
 import { isSuperAdmin, logout as clearSuperAdmin } from '../data/auth'
 import { apiListPlatformCredentials } from '../lib/api'
+import { PinterestIcon, ThreadsIcon, TikTokIcon } from './SocialIcons'
 
 const navItems = [
   { to: '/dashboard', label: 'Dashboard', icon: LayoutDashboard, color: '#3a5f87' },
@@ -40,6 +42,7 @@ const createItems = [
 const managementItems = [
   { to: '/super-admin/companies', label: 'Companies', icon: Building2, color: '#0284c7' },
   { to: '/super-admin/plans', label: 'Subscriptions', icon: CreditCard, color: '#7c3aed' },
+  { to: '/super-admin/referrals', label: 'Referrals', icon: Gift, color: '#ea580c' },
 ]
 
 const accountItems = [
@@ -93,6 +96,24 @@ const channels = [
       </svg>
     ),
     bg: 'bg-black',
+  },
+  {
+    key: 'threads',
+    label: 'Threads',
+    icon: <ThreadsIcon className="h-3.5 w-3.5" color="#fff" />,
+    bg: 'bg-black',
+  },
+  {
+    key: 'tiktok',
+    label: 'TikTok',
+    icon: <TikTokIcon className="h-3.5 w-3.5" color="#fff" />,
+    bg: 'bg-[#111820]',
+  },
+  {
+    key: 'pinterest',
+    label: 'Pinterest',
+    icon: <PinterestIcon className="h-3.5 w-3.5" color="#fff" />,
+    bg: 'bg-[#E60023]',
   },
 ]
 

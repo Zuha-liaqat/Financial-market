@@ -7,6 +7,11 @@ import {
 } from "../../lib/api";
 import CredentialsModal from "../../components/CredentialsModal";
 import WebsiteConnectModal from "../../components/WebsiteConnectModal";
+import {
+  PinterestIcon,
+  ThreadsIcon,
+  TikTokIcon,
+} from "../../components/SocialIcons";
 
 const statusStyles = {
   ACTIVE: "bg-emerald-50 text-emerald-600 ring-1 ring-emerald-200",
@@ -132,6 +137,36 @@ const integrations = [
         <path d="M22 12c0-5.523-4.477-10-10-10S2 6.477 2 12c0 4.991 3.657 9.128 8.438 9.878v-6.987h-2.54V12h2.54V9.797c0-2.506 1.492-3.89 3.777-3.89 1.094 0 2.238.195 2.238.195v2.46h-1.26c-1.243 0-1.63.771-1.63 1.562V12h2.773l-.443 2.89h-2.33v6.988C18.343 21.128 22 16.991 22 12z" />
       </svg>
     ),
+  },
+  {
+    key: "threads",
+    name: "Threads",
+    status: "INACTIVE",
+    description:
+      "Share approved posts and conversation starters to your Threads profile.",
+    meta: { type: "none", text: "Not configured" },
+    action: "Enable",
+    icon: <ThreadsIcon className="h-6 w-6" />,
+  },
+  {
+    key: "tiktok",
+    name: "TikTok",
+    status: "INACTIVE",
+    description:
+      "Publish approved short-form videos and captions to your TikTok account.",
+    meta: { type: "none", text: "Not configured" },
+    action: "Enable",
+    icon: <TikTokIcon className="h-6 w-6" />,
+  },
+  {
+    key: "pinterest",
+    name: "Pinterest",
+    status: "INACTIVE",
+    description:
+      "Pin approved images and graphics to your Pinterest boards automatically.",
+    meta: { type: "none", text: "Not configured" },
+    action: "Enable",
+    icon: <PinterestIcon className="h-6 w-6" />,
   },
   blogIntegration(
     "website",

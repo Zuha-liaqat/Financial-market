@@ -743,3 +743,26 @@ export async function apiGetDashboard(companyId) {
   }
   return body
 }
+
+// Public: a visitor invites a friend from the marketing site, so no login is required.
+export async function apiSendReferral({ referrer_email, referee_email }) {
+  const res = await fetch(`${API_BASE_URL}/api/referrals/`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json', accept: 'application/json' },
+    body: JSON.stringify({ referrer_email, referee_email }),
+  })
+  const body = await res.json().catch(() => null)
+  if (!res.ok) {
+    throw new Error(extractErrorMessage(body, 'Failed to send invite'))
+  }
+  return body
+}
+
+export async function apiAdminListReferrals() {
+  const res = await authorizedRequest('/api/referrals/admin')
+  const body = await res.json().catch(() => null)
+  if (!res.ok) {
+    throw new Error(extractErrorMessage(body, 'Failed to load referrals'))
+  }
+  return body
+}

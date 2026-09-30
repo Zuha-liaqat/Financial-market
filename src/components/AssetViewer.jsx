@@ -1,4 +1,4 @@
-import { useEffect } from 'react'
+import { useCallback, useEffect, useState } from 'react'
 
 function fileExtension(url) {
   try {
@@ -27,13 +27,24 @@ export function isPdfAsset(item) {
 
 // Full-screen preview for a Library asset: images, videos, PDFs and plain text open inline;
 // other documents (like .docx) offer "Open in new tab" and "Download" because browsers can't render them.
-export default function AssetViewer({ item, onClose }) {
+// Pass `items` (and `startIndex`) to page through an album with the arrow buttons or keys.
+export default function AssetViewer({ item: singleItem, items, startIndex = 0, onClose }) {
+  const [index, setIndex] = useState(startIndex)
+  const album = items?.length > 1 ? items : null
+  const item = album ? album[index] : singleItem
   const kind = previewKind(item)
   const ext = fileExtension(item.media_url)
+
+  const step = useCallback(
+    (delta) => album && setIndex((i) => (i + delta + album.length) % album.length),
+    [album],
+  )
 
   useEffect(() => {
     function handleKey(e) {
       if (e.key === 'Escape') onClose()
+      if (e.key === 'ArrowRight') step(1)
+      if (e.key === 'ArrowLeft') step(-1)
     }
     document.addEventListener('keydown', handleKey)
     const { overflow } = document.body.style
@@ -42,7 +53,7 @@ export default function AssetViewer({ item, onClose }) {
       document.removeEventListener('keydown', handleKey)
       document.body.style.overflow = overflow
     }
-  }, [onClose])
+  }, [onClose, step])
 
   const stop = (e) => e.stopPropagation()
 
@@ -55,22 +66,10 @@ export default function AssetViewer({ item, onClose }) {
       onClick={onClose}
     >
       <div onClick={stop} className="mx-auto mb-3 flex w-full max-w-5xl items-center gap-3 text-white">
-        <p className="min-w-0 flex-1 truncate text-sm font-medium">{item.name}</p>
-        <a
-          href={item.media_url}
-          target="_blank"
-          rel="noreferrer"
-          className="shrink-0 rounded-md bg-white/10 px-3 py-1.5 text-xs font-medium transition hover:bg-white/20"
-        >
-          Open in new tab
-        </a>
-        <a
-          href={item.media_url}
-          download
-          className="shrink-0 rounded-md bg-white/10 px-3 py-1.5 text-xs font-medium transition hover:bg-white/20"
-        >
-          Download
-        </a>
+        <p className="min-w-0 flex-1 truncate text-sm font-medium">
+          {item.name}
+          {album && <span className="ml-2 text-white/60">{index + 1} / {album.length}</span>}
+        </p>
         <button
           type="button"
           onClick={onClose}
@@ -83,7 +82,27 @@ export default function AssetViewer({ item, onClose }) {
         </button>
       </div>
 
-      <div className="flex min-h-0 flex-1 items-center justify-center">
+      <div className="relative flex min-h-0 flex-1 items-center justify-center">
+        {album &&
+          [
+            { delta: -1, label: 'Previous image', side: 'left-2', d: 'M15 19l-7-7 7-7' },
+            { delta: 1, label: 'Next image', side: 'right-2', d: 'M9 5l7 7-7 7' },
+          ].map((btn) => (
+            <button
+              key={btn.delta}
+              type="button"
+              aria-label={btn.label}
+              onClick={(e) => {
+                e.stopPropagation()
+                step(btn.delta)
+              }}
+              className={`absolute ${btn.side} z-10 rounded-full bg-white/10 p-2 text-white transition hover:bg-white/25`}
+            >
+              <svg className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d={btn.d} />
+              </svg>
+            </button>
+          ))}
         {kind === 'image' && (
           <img
             src={item.media_url}

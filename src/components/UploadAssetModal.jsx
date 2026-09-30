@@ -19,8 +19,10 @@ function fileKey(file) {
   return `${file.name}-${file.size}-${file.lastModified}`
 }
 
-export default function UploadAssetModal({ item, onClose, onSaved }) {
+// `group` holds every asset of a multi-image card; editing it renames/recategorises them all.
+export default function UploadAssetModal({ item, group, onClose, onSaved }) {
   const isEditing = Boolean(item)
+  const isGroupEdit = isEditing && group?.length > 1
 
   const [name, setName] = useState(item?.name ?? '')
   const [type, setType] = useState(item?.type ?? categoryOptions[0])
@@ -54,10 +56,10 @@ export default function UploadAssetModal({ item, onClose, onSaved }) {
     setFiles((prev) => prev.filter((_, i) => i !== index))
   }
 
-  // With several files, each asset gets the typed name plus a number, or its own file name when the name is blank.
-  function assetName(file, index) {
-    if (!isMultiple) return name.trim() || fileStem(file)
-    return name.trim() ? `${name.trim()} ${index + 1}` : fileStem(file)
+  // Files uploaded together share the typed name so the Library can show them as one card.
+  // With a blank name, the first file's name is used for the whole batch.
+  function assetName() {
+    return name.trim() || fileStem(files[0])
   }
 
   async function handleSubmit(e) {
@@ -71,6 +73,12 @@ export default function UploadAssetModal({ item, onClose, onSaved }) {
 
     if (isEditing) {
       try {
+        if (isGroupEdit) {
+          await Promise.all(group.map((asset) => apiUpdateLibraryAsset(asset.id, { name, type })))
+          onSaved()
+          onClose()
+          return
+        }
         const media = files[0]
         await apiUpdateLibraryAsset(item.id, {
           name,
@@ -93,7 +101,7 @@ export default function UploadAssetModal({ item, onClose, onSaved }) {
       setProgress(i + 1)
       try {
         await apiUploadLibraryAsset({
-          name: assetName(files[i], i),
+          name: assetName(),
           type,
           media_type: detectMediaType(files[i]),
           media: files[i],
@@ -136,7 +144,7 @@ export default function UploadAssetModal({ item, onClose, onSaved }) {
       <div className="w-full max-w-sm rounded-xl bg-white p-6 shadow-2xl">
         <div className="mb-4 flex items-center justify-between">
           <h3 className="text-lg font-semibold text-black">
-            {isEditing ? 'Edit Asset' : 'Upload Assets'}
+            {isGroupEdit ? 'Edit Album' : isEditing ? 'Edit Asset' : 'Upload Assets'}
           </h3>
           <button
             type="button"
@@ -166,7 +174,7 @@ export default function UploadAssetModal({ item, onClose, onSaved }) {
             {!isEditing && (
               <p className="mt-1 text-xs text-neutral-400">
                 {isMultiple
-                  ? 'Each file gets this name plus a number. Leave it blank to use the file names.'
+                  ? 'All files are saved under this name and shown together as one card.'
                   : 'Leave it blank to use the file name.'}
               </p>
             )}
@@ -190,6 +198,18 @@ export default function UploadAssetModal({ item, onClose, onSaved }) {
             </Select>
           </div>
 
+          {isGroupEdit ? (
+            <div>
+              <p className="mb-1 block text-xs font-semibold tracking-wide text-neutral-500">
+                MEDIA ({group.length} images)
+              </p>
+              <div className="flex flex-wrap gap-1.5">
+                {group.map((asset) => (
+                  <img key={asset.id} src={asset.media_url} alt="" className="h-12 w-12 rounded-md object-cover" />
+                ))}
+              </div>
+            </div>
+          ) : (
           <div>
             <label htmlFor="asset-media" className="mb-1 block text-xs font-semibold tracking-wide text-neutral-500">
               MEDIA
@@ -259,6 +279,7 @@ export default function UploadAssetModal({ item, onClose, onSaved }) {
               </ul>
             )}
           </div>
+          )}
 
           {error && <p className="text-sm text-red-600">{error}</p>}
 

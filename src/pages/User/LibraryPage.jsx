@@ -108,6 +108,38 @@ function formatSize(sizeKb) {
     : `${sizeKb.toFixed(2)} KB`;
 }
 
+// Photos uploaded together share a name and category and are created within moments of each other,
+// so they are gathered into one album card. Everything else stays a card of its own.
+const ALBUM_WINDOW_MS = 5 * 60 * 1000;
+
+// Batches used to be saved as "Name 1", "Name 2"…, so the trailing number is ignored when grouping.
+function albumName(name = "") {
+  return name.replace(/\s*\(?\d+\)?$/, "").trim() || name;
+}
+
+function groupIntoAlbums(assets) {
+  const groups = [];
+  const openAlbums = new Map();
+  for (const asset of assets) {
+    if (asset.media_type !== "photo" || !asset.media_url) {
+      groups.push([asset]);
+      continue;
+    }
+    const key = `${albumName(asset.name)}\u0000${asset.type}`;
+    const time = new Date(asset.created_at).getTime();
+    const album = openAlbums.get(key);
+    if (album && Math.abs(time - album.lastTime) <= ALBUM_WINDOW_MS) {
+      album.items.push(asset);
+      album.lastTime = time;
+    } else {
+      const items = [asset];
+      groups.push(items);
+      openAlbums.set(key, { items, lastTime: time });
+    }
+  }
+  return groups;
+}
+
 function AssetCardSkeleton() {
   return (
     <div className="overflow-hidden rounded-lg border border-neutral-200 bg-white">
@@ -171,16 +203,16 @@ export default function LibraryPage() {
     const categoryMatch = !activeCategory || item.type === activeCategory;
     return typeMatch && categoryMatch;
   });
+  const cards = groupIntoAlbums(filteredItems);
 
   useEffect(() => {
     loadItems();
   }, [loadItems]);
 
   async function confirmDelete() {
-    const id = deleteTarget.id;
     setDeleting(true);
     try {
-      await apiDeleteLibraryAsset(id);
+      await Promise.all(deleteTarget.map((asset) => apiDeleteLibraryAsset(asset.id)));
       await loadItems();
     } finally {
       setDeleteTarget(null);
@@ -406,37 +438,50 @@ export default function LibraryPage() {
 
       {status === "ready" && filteredItems.length > 0 && (
         <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
-          {filteredItems.map((item) => (
-            <AssetCard
-              key={item.id}
-              type={(item.media_type ?? item.type)?.toUpperCase()}
-              mediaType={item.media_type}
-              imageUrl={item.media_url}
-              title={item.name}
-              date={formatDate(item.created_at)}
-              size={formatSize(item.size_kb)}
-              category={item.type?.toUpperCase()}
-              onEdit={() => setEditItem(item)}
-              onDelete={() => setDeleteTarget(item)}
-              onView={
-                item.media_url
-                  ? () =>
-                      // PDFs read better in the browser's own viewer, so open them in a new tab.
-                      isPdfAsset(item)
-                        ? window.open(item.media_url, "_blank", "noopener,noreferrer")
-                        : setViewItem(item)
-                  : undefined
-              }
-            />
-          ))}
+          {cards.map((group) => {
+            const item = group[0];
+            const isAlbum = group.length > 1;
+            return (
+              <AssetCard
+                key={item.id}
+                type={(item.media_type ?? item.type)?.toUpperCase()}
+                mediaType={item.media_type}
+                imageUrl={item.media_url}
+                imageUrls={isAlbum ? group.map((a) => a.media_url) : undefined}
+                title={isAlbum ? albumName(item.name) : item.name}
+                date={formatDate(item.created_at)}
+                size={formatSize(group.reduce((sum, a) => sum + (a.size_kb ?? 0), 0))}
+                category={item.type?.toUpperCase()}
+                onEdit={() => setEditItem(group)}
+                onDelete={() => setDeleteTarget(group)}
+                onView={
+                  item.media_url
+                    ? (index = 0) =>
+                        // PDFs read better in the browser's own viewer, so open them in a new tab.
+                        isPdfAsset(item)
+                          ? window.open(item.media_url, "_blank", "noopener,noreferrer")
+                          : setViewItem({ items: group, index })
+                    : undefined
+                }
+              />
+            );
+          })}
         </div>
       )}
 
-      {viewItem && <AssetViewer item={viewItem} onClose={() => setViewItem(null)} />}
+      {viewItem && (
+        <AssetViewer
+          item={viewItem.items[0]}
+          items={viewItem.items}
+          startIndex={viewItem.index}
+          onClose={() => setViewItem(null)}
+        />
+      )}
 
       {(showUpload || editItem) && (
         <UploadAssetModal
-          item={editItem}
+          item={editItem?.[0]}
+          group={editItem}
           onClose={() => {
             setShowUpload(false);
             setEditItem(null);
@@ -447,8 +492,12 @@ export default function LibraryPage() {
 
       {deleteTarget && (
         <ConfirmDialog
-          title="Delete asset"
-          message={`Delete "${deleteTarget.name}"? This cannot be undone.`}
+          title={deleteTarget.length > 1 ? "Delete album" : "Delete asset"}
+          message={
+            deleteTarget.length > 1
+              ? `Delete "${albumName(deleteTarget[0].name)}" and all ${deleteTarget.length} of its images? This cannot be undone.`
+              : `Delete "${deleteTarget[0].name}"? This cannot be undone.`
+          }
           confirmLabel="Delete"
           confirming={deleting}
           onCancel={() => setDeleteTarget(null)}

@@ -47,17 +47,73 @@ const fallbackIcon = {
   ),
 }
 
-function Thumbnail({ type, mediaType, thumbClass, imageUrl, onView, children }) {
+function CollageImage({ src, className = '', onClick, children }) {
+  const [loaded, setLoaded] = useState(false)
+  return (
+    <div className={`relative overflow-hidden bg-neutral-200 ${className}`} onClick={onClick}>
+      {!loaded && <div className="absolute inset-0 animate-pulse bg-neutral-200" />}
+      <img
+        src={src}
+        alt=""
+        className={`h-full w-full object-cover transition duration-300 hover:scale-105 ${loaded ? 'opacity-100' : 'opacity-0'}`}
+        loading="lazy"
+        decoding="async"
+        onLoad={() => setLoaded(true)}
+      />
+      {children}
+    </div>
+  )
+}
+
+// One large image on the left and up to two small ones stacked on the right; extra images show as "+N".
+function Collage({ imageUrls, onView }) {
+  const [first, ...rest] = imageUrls
+  const side = rest.slice(0, 2)
+  const hidden = imageUrls.length - 3
+  return (
+    <div className={`absolute inset-0 grid gap-0.5 ${side.length === 1 ? 'grid-cols-2' : 'grid-cols-3 grid-rows-2'}`}>
+      <CollageImage
+        src={first}
+        className={side.length === 1 ? '' : 'col-span-2 row-span-2'}
+        onClick={() => onView?.(0)}
+      />
+      {side.map((url, i) => (
+        <CollageImage key={url} src={url} onClick={() => onView?.(i + 1)}>
+          {i === 1 && hidden > 0 && (
+            <span className="pointer-events-none absolute inset-0 flex items-center justify-center bg-black/50 text-lg font-semibold text-white">
+              +{hidden}
+            </span>
+          )}
+        </CollageImage>
+      ))}
+    </div>
+  )
+}
+
+function Thumbnail({ type, mediaType, thumbClass, imageUrl, imageUrls, onView, children }) {
   const [imgError, setImgError] = useState(false)
   const [imgLoaded, setImgLoaded] = useState(false)
+  const isCollage = imageUrls?.length > 1
   const showImage = mediaType === 'photo' && imageUrl && !imgError
+
+  if (isCollage) {
+    return (
+      <div className={`relative h-40 overflow-hidden rounded-t-lg bg-neutral-100 ${onView ? 'cursor-pointer' : ''}`}>
+        <Collage imageUrls={imageUrls} onView={onView} />
+        <span className="absolute left-2 top-2 z-10 rounded bg-black/70 px-2 py-0.5 text-[10px] font-semibold tracking-wide text-white">
+          {imageUrls.length} PHOTOS
+        </span>
+        {children}
+      </div>
+    )
+  }
 
   return (
     <div
       className={`relative flex h-40 items-center justify-center overflow-hidden rounded-t-lg ${
         showImage ? 'bg-neutral-100' : thumbClass || fallbackGradient[mediaType] || 'bg-neutral-300'
       } ${onView ? 'group/thumb cursor-pointer' : ''}`}
-      onClick={onView}
+      onClick={() => onView?.()}
     >
       {showImage ? (
         <>
@@ -103,6 +159,7 @@ export default function AssetCard({
   mediaType,
   thumbClass,
   imageUrl,
+  imageUrls,
   icon,
   title,
   date,
@@ -118,7 +175,7 @@ export default function AssetCard({
 
   return (
     <div className="rounded-lg border border-neutral-200 bg-white transition hover:shadow-md">
-      <Thumbnail type={type} mediaType={mediaType} thumbClass={thumbClass} imageUrl={imageUrl} onView={onView}>
+      <Thumbnail type={type} mediaType={mediaType} thumbClass={thumbClass} imageUrl={imageUrl} imageUrls={imageUrls} onView={onView}>
         {usedIn != null && (
           <span className="absolute right-2 top-2 z-10 rounded-full bg-white/90 px-2 py-0.5 text-[10px] font-medium text-neutral-600 shadow-sm">
             Used in {usedIn} post{usedIn === 1 ? '' : 's'}

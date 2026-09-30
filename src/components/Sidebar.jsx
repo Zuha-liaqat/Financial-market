@@ -193,7 +193,6 @@ export default function Sidebar({ open = false, onClose = () => { } }) {
   )
   const visibleAccountItems = accountItems.filter((item) => !item.hideForSuperAdmin || !superAdmin)
   const connectedChannels = channels.filter((c) => connected[c.key])
-  const unconnectedChannels = channels.filter((c) => !connected[c.key])
 
   useEffect(() => {
     if (!superAdmin) {
@@ -333,34 +332,16 @@ export default function Sidebar({ open = false, onClose = () => { } }) {
                 )}
 
                 <div className="mt-1.5 border-t border-neutral-200 px-1.5 pt-2 pb-1">
-                  {unconnectedChannels.length > 0 && (
-                    <p className="mb-1.5 text-[10px] font-semibold uppercase tracking-wider text-neutral-400">
-                      Connect a channel
-                    </p>
-                  )}
-                  <div className="flex flex-wrap items-center gap-1.5">
-                    {unconnectedChannels.map((c) => (
-                      <Link
-                        key={c.key}
-                        to="/integrations"
-                        onClick={onClose}
-                        title={`Connect ${c.label}`}
-                        aria-label={`Connect ${c.label}`}
-                        className={`flex h-7 w-7 items-center justify-center rounded-lg transition hover:-translate-y-0.5 ${c.bg}`}
-                      >
-                        {c.icon}
-                      </Link>
-                    ))}
-                    <Link
-                      to="/integrations"
-                      onClick={onClose}
-                      title="Add channel"
-                      aria-label="Add channel"
-                      className="flex h-7 w-7 items-center justify-center rounded-lg border border-dashed border-neutral-300 bg-white text-neutral-400 transition hover:-translate-y-0.5 hover:border-brand-300 hover:bg-brand-50 hover:text-brand-600"
-                    >
+                  <Link
+                    to="/integrations"
+                    onClick={onClose}
+                    className="flex items-center gap-2.5 rounded-lg text-[12px] font-medium text-neutral-500 transition hover:text-brand-600"
+                  >
+                    <span className="flex h-6 w-6 items-center justify-center rounded-md border border-dashed border-neutral-300 bg-white">
                       <Plus className="h-3.5 w-3.5" strokeWidth={2.5} />
-                    </Link>
-                  </div>
+                    </span>
+                    Add channel
+                  </Link>
                 </div>
               </div>
             </div>

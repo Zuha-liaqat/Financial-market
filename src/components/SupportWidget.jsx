@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useRef, useState } from 'react'
-import { ArrowLeft, Check, CheckCheck, Maximize2, MessageCircle, Minimize2, Send, X } from 'lucide-react'
+import { ArrowLeft, Check, CheckCheck, Maximize2, MessageCircle, Minimize2, Search, Send, X } from 'lucide-react'
 import { getApiToken } from '../lib/api'
 import { isSuperAdmin } from '../data/auth'
 import { useSupportConversations, useSupportThread, useSupportUnreadCount } from '../lib/useSupportChat'
@@ -135,8 +135,9 @@ function DayDivider({ value }) {
 
 function MessageGroup({ group, mine, showAvatar }) {
   const last = group.items[group.items.length - 1]
-  // Two ticks only once the other side has opened every message in the block.
+  // One tick sent, two once it reached the other side, two blue once read.
   const seen = group.items.every((message) => Boolean(message.read_at))
+  const delivered = seen || group.items.every((message) => Boolean(message.delivered_at))
 
   return (
     <div className={`flex items-end gap-2 ${mine ? 'flex-row-reverse' : ''}`}>
@@ -171,9 +172,11 @@ function MessageGroup({ group, mine, showAvatar }) {
           </span>
           {mine &&
             (seen ? (
-              <CheckCheck className="h-3.5 w-3.5 text-brand-500" aria-label="Seen" />
+              <CheckCheck className="h-3.5 w-3.5 text-sky-500" aria-label="Seen" />
+            ) : delivered ? (
+              <CheckCheck className="h-3.5 w-3.5 text-neutral-400" aria-label="Delivered" />
             ) : (
-              <Check className="h-3.5 w-3.5" aria-label="Sent" />
+              <Check className="h-3.5 w-3.5 text-neutral-400" aria-label="Sent" />
             ))}
         </span>
       </div>
@@ -181,49 +184,108 @@ function MessageGroup({ group, mine, showAvatar }) {
   )
 }
 
-function ConversationList({ conversations, status, error, activeId, onPick }) {
+function ConversationList({ conversations, status, error, activeId, onPick, query, onQueryChange }) {
+  const term = query.trim().toLowerCase()
+  const visible = term
+    ? conversations.filter((row) =>
+        `${row.company_name || ''} ${row.company_email || ''} ${row.last_message || ''}`.toLowerCase().includes(term),
+      )
+    : conversations
+  const totalUnread = conversations.reduce((sum, row) => sum + (row.unread_count || 0), 0)
+
   return (
-    <>
-      {status === 'loading' && (
-        <div className="p-4">
-          <MessageSkeleton />
+    <div className="flex h-full min-h-0 flex-col bg-white">
+      <div className="shrink-0 border-b border-neutral-200 px-3 py-2.5">
+        <div className="mb-2 flex items-center justify-between gap-2">
+          <span className="text-[10px] font-semibold tracking-widest text-neutral-400 uppercase">Conversations</span>
+          {totalUnread > 0 && (
+            <span className="rounded-full bg-brand-500 px-1.5 py-0.5 text-[10px] font-semibold text-white">
+              {totalUnread} new
+            </span>
+          )}
         </div>
-      )}
-      {status === 'error' && <p className="p-4 text-sm text-red-600">{error}</p>}
-      {status === 'ready' && conversations.length === 0 && <EmptyState>No one has written in yet.</EmptyState>}
-      {conversations.map((row) => (
-        <button
-          key={row.company_id}
-          type="button"
-          onClick={() => onPick(row)}
-          className={`flex w-full items-start gap-3 border-b border-neutral-100 px-4 py-3 text-left transition last:border-0 hover:bg-neutral-50 ${
-            row.company_id === activeId ? 'bg-brand-50/60' : ''
-          }`}
-          data-track-label="Support - Open Conversation"
-        >
-          <span className="mt-0.5 flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-brand-50 text-xs font-semibold text-brand-700">
-            {initials(row.company_name || row.company_email)}
-          </span>
-          <span className="min-w-0 flex-1">
-            <span className="flex items-center justify-between gap-2">
-              <span className="truncate text-sm font-medium text-neutral-800">{row.company_name}</span>
-              <span className="shrink-0 text-[10px] text-neutral-400">{formatWhen(row.last_message_at)}</span>
-            </span>
-            <span className="mt-0.5 flex items-center gap-2">
-              <span className="truncate text-xs text-neutral-500">
-                {row.last_sender_role === ADMIN_ROLE ? 'You: ' : ''}
-                {row.last_message}
+        <div className="flex items-center gap-2 rounded-lg border border-neutral-200 bg-neutral-50 px-2.5 py-1.5 transition focus-within:border-brand-400 focus-within:bg-white focus-within:ring-2 focus-within:ring-brand-500/15">
+          <Search className="h-3.5 w-3.5 shrink-0 text-neutral-400" />
+          <input
+            value={query}
+            onChange={(event) => onQueryChange(event.target.value)}
+            placeholder="Search a company…"
+            className="min-w-0 flex-1 bg-transparent text-xs text-neutral-700 outline-none placeholder:text-neutral-400"
+            data-track-label="Support - Search Conversations"
+          />
+          {query && (
+            <button
+              type="button"
+              onClick={() => onQueryChange('')}
+              className="shrink-0 rounded p-0.5 text-neutral-400 transition hover:text-neutral-600"
+              aria-label="Clear search"
+            >
+              <X className="h-3 w-3" />
+            </button>
+          )}
+        </div>
+      </div>
+
+      <div className="min-h-0 flex-1 overflow-y-auto">
+        {status === 'loading' && (
+          <div className="p-4">
+            <MessageSkeleton />
+          </div>
+        )}
+        {status === 'error' && <p className="p-4 text-sm text-red-600">{error}</p>}
+        {status === 'ready' && conversations.length === 0 && <EmptyState>No one has written in yet.</EmptyState>}
+        {status === 'ready' && conversations.length > 0 && visible.length === 0 && (
+          <EmptyState>Nothing matches that search.</EmptyState>
+        )}
+        {visible.map((row) => {
+          const unread = row.unread_count > 0
+          const active = row.company_id === activeId
+          return (
+            <button
+              key={row.company_id}
+              type="button"
+              onClick={() => onPick(row)}
+              className={`relative flex w-full items-start gap-3 border-b border-neutral-100 px-4 py-3 text-left transition last:border-0 hover:bg-neutral-50 ${
+                active ? 'bg-brand-50/70' : ''
+              }`}
+              data-track-label="Support - Open Conversation"
+            >
+              {active && <span className="absolute inset-y-0 left-0 w-0.5 bg-brand-500" aria-hidden="true" />}
+              <span className="mt-0.5 flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-brand-50 text-xs font-semibold text-brand-700 ring-1 ring-brand-100">
+                {initials(row.company_name || row.company_email)}
               </span>
-              {row.unread_count > 0 && (
-                <span className="ml-auto shrink-0 rounded-full bg-brand-500 px-1.5 py-0.5 text-[10px] font-semibold text-white">
-                  {row.unread_count}
+              <span className="min-w-0 flex-1">
+                <span className="flex items-baseline justify-between gap-2">
+                  <span
+                    className={`truncate text-sm ${
+                      unread ? 'font-semibold text-neutral-900' : 'font-medium text-neutral-700'
+                    }`}
+                  >
+                    {row.company_name}
+                  </span>
+                  <span
+                    className={`shrink-0 text-[10px] ${unread ? 'font-medium text-brand-600' : 'text-neutral-400'}`}
+                  >
+                    {formatWhen(row.last_message_at)}
+                  </span>
                 </span>
-              )}
-            </span>
-          </span>
-        </button>
-      ))}
-    </>
+                <span className="mt-1 flex items-center gap-2">
+                  <span className={`truncate text-xs ${unread ? 'text-neutral-700' : 'text-neutral-500'}`}>
+                    {row.last_sender_role === ADMIN_ROLE ? 'You: ' : ''}
+                    {row.last_message}
+                  </span>
+                  {unread && (
+                    <span className="ml-auto flex h-4 min-w-4 shrink-0 items-center justify-center rounded-full bg-brand-500 px-1 text-[10px] font-semibold text-white">
+                      {row.unread_count}
+                    </span>
+                  )}
+                </span>
+              </span>
+            </button>
+          )
+        })}
+      </div>
+    </div>
   )
 }
 
@@ -233,6 +295,7 @@ export default function SupportWidget() {
   const [draft, setDraft] = useState('')
   const [sendError, setSendError] = useState('')
   const [activeCompany, setActiveCompany] = useState(null)
+  const [inboxQuery, setInboxQuery] = useState('')
   const scrollerRef = useRef(null)
 
   // The same source of truth the sidebar and the route guards use, so the widget
@@ -252,8 +315,9 @@ export default function SupportWidget() {
 
   const contentRect = useContentRect(open && expanded)
 
-  const { messages, status, error, isLive, sendMessage } = useSupportThread({
+  const { messages, status, error, isLive, otherOnline, sendMessage } = useSupportThread({
     companyId: threadCompanyId,
+    myRole,
     active: threadActive,
   })
   const { conversations, status: inboxStatus, error: inboxError } = useSupportConversations({
@@ -306,13 +370,18 @@ export default function SupportWidget() {
   }
 
   const title = !superAdmin || twoPane || !activeCompany ? 'Support' : activeCompany.company_name
-  const subtitle =
-    showingListOnly || (twoPane && !activeCompany)
-      ? `${conversations.length} ${conversations.length === 1 ? 'conversation' : 'conversations'}`
-      : isLive
-        ? 'Connected'
-        : 'Reconnecting…'
-  const showConnectionDot = !showingListOnly && !(twoPane && !activeCompany)
+  const listOnly = showingListOnly || (twoPane && !activeCompany)
+  const otherLabel = superAdmin ? activeCompany?.company_name || 'This company' : 'Support'
+  const subtitle = listOnly
+    ? `${conversations.length} ${conversations.length === 1 ? 'conversation' : 'conversations'}`
+    : !isLive
+      ? 'Reconnecting…'
+      : otherOnline
+        ? `${otherLabel} is online`
+        : `${otherLabel} is offline`
+  // Green once the other side is actually there, amber while our own socket is
+  // still coming up, grey when they are away.
+  const dotClass = !isLive ? 'bg-amber-400' : otherOnline ? 'bg-emerald-500' : 'bg-neutral-300'
 
   // Expanded, the panel is placed over the page area that was measured; docked,
   // it is a small card above the launcher.
@@ -358,7 +427,7 @@ export default function SupportWidget() {
       <form onSubmit={handleSend} className={`border-t border-neutral-200 bg-white ${expanded ? 'px-6 py-3' : 'p-3'}`}>
         <div className="w-full">
           {sendError && <p className="mb-2 text-xs text-red-600">{sendError}</p>}
-          <div className="flex items-end gap-2 rounded-lg border border-neutral-200 bg-neutral-50 px-3 py-2 transition focus-within:border-brand-500 focus-within:bg-white focus-within:ring-2 focus-within:ring-brand-500/20">
+          <div className="flex items-end gap-2 rounded-xl border border-neutral-200 bg-white px-3 py-2 shadow-sm transition focus-within:border-brand-400 focus-within:ring-2 focus-within:ring-brand-500/15">
             <textarea
               value={draft}
               onChange={(event) => setDraft(event.target.value)}
@@ -366,18 +435,25 @@ export default function SupportWidget() {
               rows={1}
               maxLength={4000}
               placeholder="Write a message…"
-              className="max-h-24 flex-1 resize-none bg-transparent text-sm outline-none placeholder:text-neutral-400"
+              className="max-h-32 flex-1 resize-none bg-transparent py-1 text-sm leading-relaxed text-neutral-800 outline-none placeholder:text-neutral-400"
             />
+            {/* Greyed out rather than a faded brand colour, which read as a
+                half-broken button when there was nothing to send. */}
             <button
               type="submit"
               disabled={!draft.trim()}
-              className="rounded-md bg-brand-500 p-1.5 text-white transition hover:bg-brand-600 disabled:opacity-40"
+              className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-brand-500 text-white transition hover:bg-brand-600 disabled:cursor-not-allowed disabled:bg-neutral-100 disabled:text-neutral-400"
               aria-label="Send message"
               data-track-label="Support - Send Message"
             >
               <Send className="h-4 w-4" />
             </button>
           </div>
+          {expanded && (
+            <p className="mt-1.5 px-1 text-[10px] text-neutral-400">
+              Enter to send · Shift + Enter for a new line
+            </p>
+          )}
         </div>
       </form>
     </>
@@ -408,9 +484,7 @@ export default function SupportWidget() {
             <div className="min-w-0 flex-1">
               <p className="truncate text-sm font-semibold text-neutral-800">{title}</p>
               <p className="flex items-center gap-1.5 text-[11px] text-neutral-400">
-                {showConnectionDot && (
-                  <span className={`h-1.5 w-1.5 rounded-full ${isLive ? 'bg-emerald-500' : 'bg-amber-400'}`} />
-                )}
+                {!listOnly && <span className={`h-1.5 w-1.5 rounded-full ${dotClass}`} />}
                 {subtitle}
               </p>
             </div>
@@ -436,21 +510,29 @@ export default function SupportWidget() {
 
           {twoPane ? (
             <div className="flex min-h-0 flex-1">
-              <div className="w-72 shrink-0 overflow-y-auto border-r border-neutral-200">
+              <div className="w-72 shrink-0 overflow-hidden border-r border-neutral-200">
                 <ConversationList
                   conversations={conversations}
                   status={inboxStatus}
                   error={inboxError}
                   activeId={activeCompany?.company_id}
                   onPick={setActiveCompany}
+                  query={inboxQuery}
+                  onQueryChange={setInboxQuery}
                 />
               </div>
               <div className="flex min-w-0 flex-1 flex-col">
                 {activeCompany ? (
                   <>
                     <div className="flex items-center gap-2 border-b border-neutral-100 px-4 py-2">
-                      <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-brand-50 text-[11px] font-semibold text-brand-700">
+                      <span className="relative flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-brand-50 text-[11px] font-semibold text-brand-700">
                         {initials(activeCompany.company_name)}
+                        <span
+                          className={`absolute -right-0.5 -bottom-0.5 h-2.5 w-2.5 rounded-full ring-2 ring-white ${
+                            otherOnline ? 'bg-emerald-500' : 'bg-neutral-300'
+                          }`}
+                          aria-label={otherOnline ? 'Online' : 'Offline'}
+                        />
                       </span>
                       <span className="min-w-0">
                         <span className="block truncate text-sm font-medium text-neutral-800">
@@ -469,13 +551,15 @@ export default function SupportWidget() {
               </div>
             </div>
           ) : showingListOnly ? (
-            <div className="flex-1 overflow-y-auto">
+            <div className="min-h-0 flex-1 overflow-hidden">
               <ConversationList
                 conversations={conversations}
                 status={inboxStatus}
                 error={inboxError}
                 activeId={activeCompany?.company_id}
                 onPick={setActiveCompany}
+                query={inboxQuery}
+                onQueryChange={setInboxQuery}
               />
             </div>
           ) : (

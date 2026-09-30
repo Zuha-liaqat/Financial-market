@@ -15,6 +15,9 @@ const THREAD_POLL_MS = 4000
 // to be roughly live.
 const BADGE_POLL_MS = 20000
 const INBOX_POLL_MS = 10000
+// Keeps the socket accounted for: the server drops a connection it has heard
+// nothing from, which is how it notices a tab that closed without saying so.
+const HEARTBEAT_MS = 25000
 
 function socketUrl(companyId) {
   const base = getApiBaseUrl()
@@ -41,11 +44,12 @@ function mergeById(previous, incoming) {
  * the hook keeps the same conversation working by polling the REST endpoints, so
  * the caller never has to care which mode it is in beyond showing `isLive`.
  */
-export function useSupportThread({ companyId = null, active = false }) {
+export function useSupportThread({ companyId = null, myRole = 'company', active = false }) {
   const [messages, setMessages] = useState([])
   const [status, setStatus] = useState('idle')
   const [error, setError] = useState('')
   const [isLive, setIsLive] = useState(false)
+  const [otherOnline, setOtherOnline] = useState(false)
   const socketRef = useRef(null)
 
   const load = useCallback(
@@ -54,6 +58,7 @@ export function useSupportThread({ companyId = null, active = false }) {
       try {
         const thread = await apiGetSupportThread(companyId)
         setMessages((previous) => mergeById(previous, thread?.messages || []))
+        setOtherOnline(Boolean(thread?.other_online))
         setStatus('ready')
         setError('')
         return thread
@@ -71,6 +76,7 @@ export function useSupportThread({ companyId = null, active = false }) {
     setMessages([])
     setStatus('idle')
     setError('')
+    setOtherOnline(false)
   }, [companyId])
 
   useEffect(() => {
@@ -101,6 +107,8 @@ export function useSupportThread({ companyId = null, active = false }) {
     }
     socketRef.current = socket
 
+    let heartbeat = null
+
     socket.onopen = () => {
       setIsLive(true)
       try {
@@ -108,6 +116,9 @@ export function useSupportThread({ companyId = null, active = false }) {
       } catch {
         // The socket closed between opening and this send; polling covers it.
       }
+      heartbeat = setInterval(() => {
+        if (socket.readyState === WebSocket.OPEN) socket.send(JSON.stringify({ type: 'ping' }))
+      }, HEARTBEAT_MS)
     }
 
     socket.onmessage = (event) => {
@@ -117,9 +128,25 @@ export function useSupportThread({ companyId = null, active = false }) {
       } catch {
         return
       }
-      if (data?.type === 'message' && data.message) {
+      if (data?.type === 'ready') {
+        setOtherOnline(Boolean(data.other_online))
+      } else if (data?.type === 'presence') {
+        // Presence events are about the far end; ignore an echo of our own side,
+        // which another tab of the same account would produce.
+        if (data.role !== myRole) setOtherOnline(Boolean(data.online))
+      } else if (data?.type === 'message' && data.message) {
         setMessages((previous) => mergeById(previous, [data.message]))
         setStatus('ready')
+      } else if (data?.type === 'delivered') {
+        // Whoever just came online received everything the other side had sent.
+        const deliveredAt = new Date().toISOString()
+        setMessages((previous) =>
+          previous.map((message) =>
+            message.delivered_at || message.sender_role === data.delivered_to
+              ? message
+              : { ...message, delivered_at: deliveredAt },
+          ),
+        )
       } else if (data?.type === 'read') {
         // Whoever read the thread read the *other* side's messages, so only
         // those get a read stamp - that is what the ticks are drawn from.
@@ -135,11 +162,15 @@ export function useSupportThread({ companyId = null, active = false }) {
     socket.onerror = () => setIsLive(false)
     socket.onclose = () => {
       setIsLive(false)
+      setOtherOnline(false)
+      if (heartbeat) clearInterval(heartbeat)
       if (socketRef.current === socket) socketRef.current = null
     }
 
     return () => {
       setIsLive(false)
+      setOtherOnline(false)
+      if (heartbeat) clearInterval(heartbeat)
       if (socketRef.current === socket) socketRef.current = null
       try {
         socket.close()
@@ -147,7 +178,7 @@ export function useSupportThread({ companyId = null, active = false }) {
         // Already closed.
       }
     }
-  }, [active, companyId])
+  }, [active, companyId, myRole])
 
   // REST fallback: only runs while the socket is not carrying the conversation.
   useEffect(() => {
@@ -173,7 +204,7 @@ export function useSupportThread({ companyId = null, active = false }) {
     [companyId],
   )
 
-  return { messages, status, error, isLive, sendMessage, reload: load }
+  return { messages, status, error, isLive, otherOnline, sendMessage, reload: load }
 }
 
 /** Unread total for the badge on the round Support button. */

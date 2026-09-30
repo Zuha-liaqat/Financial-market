@@ -121,8 +121,13 @@ export function useSupportThread({ companyId = null, active = false }) {
         setMessages((previous) => mergeById(previous, [data.message]))
         setStatus('ready')
       } else if (data?.type === 'read') {
+        // Whoever read the thread read the *other* side's messages, so only
+        // those get a read stamp - that is what the ticks are drawn from.
+        const readAt = new Date().toISOString()
         setMessages((previous) =>
-          previous.map((message) => (message.read_at ? message : { ...message, read_at: new Date().toISOString() })),
+          previous.map((message) =>
+            message.read_at || message.sender_role === data.read_by ? message : { ...message, read_at: readAt },
+          ),
         )
       }
     }

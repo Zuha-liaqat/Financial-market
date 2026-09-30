@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useRef, useState } from 'react'
-import { ArrowLeft, Maximize2, MessageCircle, Minimize2, Send, X } from 'lucide-react'
+import { ArrowLeft, Check, CheckCheck, Maximize2, MessageCircle, Minimize2, Send, X } from 'lucide-react'
 import { getApiToken } from '../lib/api'
 import { isSuperAdmin } from '../data/auth'
 import { useSupportConversations, useSupportThread, useSupportUnreadCount } from '../lib/useSupportChat'
@@ -135,6 +135,8 @@ function DayDivider({ value }) {
 
 function MessageGroup({ group, mine, showAvatar }) {
   const last = group.items[group.items.length - 1]
+  // Two ticks only once the other side has opened every message in the block.
+  const seen = group.items.every((message) => Boolean(message.read_at))
 
   return (
     <div className={`flex items-end gap-2 ${mine ? 'flex-row-reverse' : ''}`}>
@@ -148,7 +150,7 @@ function MessageGroup({ group, mine, showAvatar }) {
           {initials(group.sender_name)}
         </span>
       )}
-      <div className={`flex min-w-0 max-w-[78%] flex-col gap-0.5 ${mine ? 'items-end' : 'items-start'}`}>
+      <div className={`flex min-w-0 max-w-[min(85%,42rem)] flex-col gap-0.5 ${mine ? 'items-end' : 'items-start'}`}>
         {group.items.map((message, index) => (
           <div
             key={message.id}
@@ -163,8 +165,16 @@ function MessageGroup({ group, mine, showAvatar }) {
             {message.body}
           </div>
         ))}
-        <span className="px-1 text-[10px] text-neutral-400">
-          {mine ? 'You' : group.sender_name} · {formatTime(last.created_at)}
+        <span className="flex items-center gap-1 px-1 text-[10px] text-neutral-400">
+          <span>
+            {mine ? 'You' : group.sender_name} · {formatTime(last.created_at)}
+          </span>
+          {mine &&
+            (seen ? (
+              <CheckCheck className="h-3.5 w-3.5 text-brand-500" aria-label="Seen" />
+            ) : (
+              <Check className="h-3.5 w-3.5" aria-label="Sent" />
+            ))}
         </span>
       </div>
     </div>
@@ -317,12 +327,11 @@ export default function SupportWidget() {
   const hasMessages = groups.length > 0
   const thread = (
     <>
-      <div ref={scrollerRef} className={`flex-1 overflow-y-auto px-4 py-3 ${expanded ? 'bg-neutral-50' : ''}`}>
-        <div
-          className={`flex min-h-full flex-col gap-3 ${expanded ? 'mx-auto w-full max-w-2xl' : ''} ${
-            hasMessages ? 'justify-end' : ''
-          }`}
-        >
+      <div
+        ref={scrollerRef}
+        className={`flex-1 overflow-y-auto ${expanded ? 'bg-neutral-50 px-6 py-4' : 'px-4 py-3'}`}
+      >
+        <div className={`flex min-h-full w-full flex-col gap-3 ${hasMessages ? 'justify-end' : ''}`}>
           {status === 'loading' && <MessageSkeleton />}
           {status === 'error' && <p className="text-sm text-red-600">{error}</p>}
           {status === 'ready' && !hasMessages && (
@@ -346,8 +355,8 @@ export default function SupportWidget() {
         </div>
       </div>
 
-      <form onSubmit={handleSend} className="border-t border-neutral-200 bg-white p-3">
-        <div className={expanded ? 'mx-auto w-full max-w-2xl' : ''}>
+      <form onSubmit={handleSend} className={`border-t border-neutral-200 bg-white ${expanded ? 'px-6 py-3' : 'p-3'}`}>
+        <div className="w-full">
           {sendError && <p className="mb-2 text-xs text-red-600">{sendError}</p>}
           <div className="flex items-end gap-2 rounded-lg border border-neutral-200 bg-neutral-50 px-3 py-2 transition focus-within:border-brand-500 focus-within:bg-white focus-within:ring-2 focus-within:ring-brand-500/20">
             <textarea

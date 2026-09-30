@@ -18,6 +18,79 @@ import {
 
 const MAX_COLORS = 8;
 
+// Popular web font families offered alongside the ones the theme options API returns.
+const FONT_FAMILIES = [
+  // Sans-serif
+  "Arial",
+  "Helvetica",
+  "Inter",
+  "Roboto",
+  "Open Sans",
+  "Lato",
+  "Montserrat",
+  "Poppins",
+  "Nunito",
+  "Nunito Sans",
+  "Raleway",
+  "Source Sans 3",
+  "Work Sans",
+  "DM Sans",
+  "Manrope",
+  "Rubik",
+  "Mulish",
+  "Outfit",
+  "Plus Jakarta Sans",
+  "Figtree",
+  "Barlow",
+  "Quicksand",
+  "Karla",
+  "IBM Plex Sans",
+  "Noto Sans",
+  "Ubuntu",
+  "Verdana",
+  "Tahoma",
+  "Trebuchet MS",
+  "Segoe UI",
+  // Serif
+  "Playfair Display",
+  "Merriweather",
+  "Lora",
+  "PT Serif",
+  "Libre Baskerville",
+  "Crimson Text",
+  "EB Garamond",
+  "Cormorant Garamond",
+  "Source Serif 4",
+  "Noto Serif",
+  "DM Serif Display",
+  "Georgia",
+  "Times New Roman",
+  // Display & handwriting
+  "Oswald",
+  "Bebas Neue",
+  "Anton",
+  "Archivo Black",
+  "Abril Fatface",
+  "Pacifico",
+  "Lobster",
+  "Dancing Script",
+  "Caveat",
+  "Great Vibes",
+  // Monospace
+  "Roboto Mono",
+  "Fira Code",
+  "JetBrains Mono",
+  "Source Code Pro",
+  "Courier New",
+];
+
+// API fonts first, then the rest of the list, without duplicates.
+function mergeFonts(apiFonts, savedFont) {
+  return [
+    ...new Set([...(apiFonts || []), savedFont, ...FONT_FAMILIES].filter(Boolean)),
+  ];
+}
+
 const themeModes = [
   {
     key: "upload",
@@ -161,7 +234,7 @@ export default function ThemesPage() {
       .then(([options, profile]) => {
         if (cancelled) return;
         setToneOptions(options?.brand_tones || []);
-        setFontOptions(options?.fonts || []);
+        setFontOptions(mergeFonts(options?.fonts, profile?.custom_font));
 
         setCompanyName(profile?.company_name || "");
         setCompanyDescription(profile?.company_description || "");
@@ -171,7 +244,9 @@ export default function ThemesPage() {
         setBrandTone(profile?.brand_tone || options?.brand_tones?.[0] || "");
         setTargetAudience(profile?.target_audience || "");
         setBrandColors(parseColors(profile?.custom_color));
-        setCustomFont(profile?.custom_font || options?.fonts?.[0] || "");
+        setCustomFont(
+          profile?.custom_font || options?.fonts?.[0] || FONT_FAMILIES[0],
+        );
         setStatus("ready");
       })
       .catch((err) => {
@@ -591,8 +666,8 @@ export default function ThemesPage() {
             )}
           </div>
         ) : (
-          <div className="mt-4 flex flex-col gap-4 border-t border-neutral-200 pt-4 md:flex-row md:items-start">
-            <div className="w-full md:max-w-md">
+          <div className="mt-4 grid grid-cols-1 items-start gap-3 border-t border-neutral-200 pt-4 sm:grid-cols-2">
+            <div>
               <label
                 htmlFor="brand-color-hex"
                 className="mb-1.5 block text-xs font-medium text-neutral-500"
@@ -665,7 +740,7 @@ export default function ThemesPage() {
                 </p>
               )}
             </div>
-            <div className="w-full md:w-64">
+            <div>
               <label className="mb-1.5 block text-xs font-medium text-neutral-500">
                 Font
               </label>

@@ -3,7 +3,6 @@ import { Link } from 'react-router-dom'
 import { ArrowRight, Gift } from 'lucide-react'
 import MarketingPage from './MarketingPage'
 import { SignupForm } from './pieces'
-import ReferFriendModal from './ReferFriendModal'
 import { PinterestIcon, ThreadsIcon, TikTokIcon } from '../../components/SocialIcons'
 import { MODULES, moduleIcon } from './navData'
 import { ICONS } from './icons'
@@ -138,7 +137,6 @@ function Counter({ target, suffix = '', decimals = 0 }) {
 }
 
 export default function HomePage() {
-  const [referOpen, setReferOpen] = useState(false)
 
   return (
     <MarketingPage active="home">
@@ -209,17 +207,14 @@ export default function HomePage() {
             </p>
             <SignupForm location="home_hero" className="reveal reveal-d3" />
             <div className="reveal reveal-d3">
-              <button
-                type="button"
+              <Link
+                to="/login"
                 className="refer-note"
-                onClick={() => {
-                  trackEvent('cta_click', { cta_label: 'Refer a Friend', cta_location: 'home_hero' })
-                  setReferOpen(true)
-                }}
+                onClick={() => trackEvent('cta_click', { cta_label: 'Refer a Friend', cta_location: 'home_hero' })}
               >
                 <Gift size={14} strokeWidth={2.2} />
                 <span>Refer a friend</span> and get more credits
-              </button>
+              </Link>
             </div>
             <div style={{ fontSize: 12, color: 'var(--muted)', marginBottom: 26 }} className="reveal reveal-d3">
               Free to start · No credit card required
@@ -588,7 +583,6 @@ export default function HomePage() {
         </div>
       </section>
 
-      {referOpen && <ReferFriendModal location="home_hero" onClose={() => setReferOpen(false)} />}
     </MarketingPage>
   )
 }

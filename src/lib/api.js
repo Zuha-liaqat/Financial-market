@@ -40,11 +40,17 @@ export async function apiLogin(email, password) {
   return token
 }
 
-export async function apiSignup({ full_name, email, password, confirm_password }) {
+export async function apiSignup({ full_name, email, password, confirm_password, referrer_id }) {
   const res = await fetch(`${API_BASE_URL}/api/auth/signup`, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ full_name, email, password, confirm_password }),
+    body: JSON.stringify({
+      full_name,
+      email,
+      password,
+      confirm_password,
+      ...(referrer_id ? { referrer_id } : {}),
+    }),
   })
   const body = await res.json().catch(() => null)
   if (!res.ok) {
@@ -156,12 +162,13 @@ export async function apiSaveCredentials({ platform, client_id, client_secret, c
   return body
 }
 
-export async function apiConnectInstagram(companyId) {
+// Starts a one-click OAuth connection (Instagram, LinkedIn) and returns the provider's authorization URL.
+export async function apiConnectPlatform(platform, companyId) {
   const query = companyId ? `?company_id=${companyId}` : ''
-  const res = await authorizedRequest(`/api/credentials/instagram/connect${query}`)
+  const res = await authorizedRequest(`/api/credentials/${platform}/connect${query}`)
   const body = await res.json().catch(() => null)
   if (!res.ok) {
-    throw new Error(extractErrorMessage(body, 'Failed to start Instagram connection'))
+    throw new Error(extractErrorMessage(body, 'Failed to start the connection'))
   }
   return body
 }
@@ -219,6 +226,7 @@ export async function apiGeneratePost({
   date,
   start_time,
   images,
+  documents,
   company_id,
 }) {
   const formData = new FormData()
@@ -231,6 +239,7 @@ export async function apiGeneratePost({
   if (start_time) formData.append('start_time', start_time)
   if (company_id) formData.append('company_id', company_id)
   ;(images || []).forEach((file) => formData.append('images', file))
+  ;(documents || []).forEach((file) => formData.append('documents', file))
 
   const res = await authorizedRequest('/api/posts/generate', {
     method: 'POST',
@@ -393,6 +402,7 @@ export async function apiGenerateBlog({
   date,
   start_time,
   image,
+  documents,
   company_id,
 }) {
   const formData = new FormData()
@@ -406,6 +416,7 @@ export async function apiGenerateBlog({
   if (start_time) formData.append('start_time', start_time)
   if (company_id) formData.append('company_id', company_id)
   if (image) formData.append('image', image)
+  ;(documents || []).forEach((file) => formData.append('documents', file))
 
   const res = await authorizedRequest('/api/blogs/generate', {
     method: 'POST',
@@ -767,6 +778,37 @@ export async function apiAdminListReferrals() {
   const body = await res.json().catch(() => null)
   if (!res.ok) {
     throw new Error(extractErrorMessage(body, 'Failed to load referrals'))
+  }
+  return body
+}
+
+export async function apiGetCompanyReferralLink() {
+  const res = await authorizedRequest('/api/company/referral-link')
+  const body = await res.json().catch(() => null)
+  if (!res.ok) {
+    throw new Error(extractErrorMessage(body, 'Failed to load referral link'))
+  }
+  return body
+}
+
+export async function apiSendCompanyReferral(email) {
+  const res = await authorizedRequest('/api/company/referrals/send', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ email }),
+  })
+  const body = await res.json().catch(() => null)
+  if (!res.ok) {
+    throw new Error(extractErrorMessage(body, 'Failed to send invite'))
+  }
+  return body
+}
+
+export async function apiGetSuperAdminDashboard({ recent_limit = 5 } = {}) {
+  const res = await authorizedRequest(`/api/dashboard/super-admin?recent_limit=${recent_limit}`)
+  const body = await res.json().catch(() => null)
+  if (!res.ok) {
+    throw new Error(extractErrorMessage(body, 'Failed to load dashboard'))
   }
   return body
 }

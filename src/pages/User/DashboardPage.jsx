@@ -10,7 +10,11 @@ import {
   Star,
   TriangleAlert,
 } from "lucide-react";
-import { apiGetDashboard, apiVerifyPaymentSession } from "../../lib/api";
+import {
+  apiGetDashboard,
+  apiListPlatformCredentials,
+  apiVerifyPaymentSession,
+} from "../../lib/api";
 import { takeCheckoutSession } from "../../data/subscriptionPlans";
 import {
   platformDisplay,
@@ -389,6 +393,7 @@ function PanelSkeleton({ rows = 3 }) {
 export default function DashboardPage() {
   const [searchParams, setSearchParams] = useSearchParams();
   const [dashboard, setDashboard] = useState(null);
+  const [connectedKeys, setConnectedKeys] = useState([]);
   const [status, setStatus] = useState("loading");
   const [error, setError] = useState("");
 
@@ -409,10 +414,19 @@ export default function DashboardPage() {
   useEffect(() => {
     let cancelled = false;
     setStatus("loading");
-    apiGetDashboard()
-      .then((data) => {
+    Promise.all([
+      apiGetDashboard(),
+      // If this fails the channel cards just show no connected accounts.
+      apiListPlatformCredentials().catch(() => []),
+    ])
+      .then(([data, credentials]) => {
         if (cancelled) return;
         setDashboard(data);
+        setConnectedKeys(
+          (credentials || [])
+            .filter((c) => c.is_connected)
+            .map((c) => c.platform),
+        );
         setStatus("ready");
       })
       .catch((err) => {
@@ -453,7 +467,23 @@ export default function DashboardPage() {
   const oldestAwaiting = formatRelativeTime(stats.oldest_awaiting_at);
   const nextScheduled = formatScheduledLabel(stats.next_scheduled_at);
 
-  const shareSlices = platforms.filter((p) => p.total > 0).sort((a, b) => b.total - a.total);
+  // The channel cards only list accounts the company has connected, including ones with no content yet.
+  const connectedPlatforms = connectedKeys.map((key) => {
+    const name = platformDisplay(key);
+    return (
+      platforms.find((p) => p.name === name) || {
+        platform: key,
+        name,
+        drafted: 0,
+        scheduled: 0,
+        published: 0,
+        total: 0,
+        color: platformMeta(name).color,
+      }
+    );
+  });
+
+  const shareSlices = connectedPlatforms.filter((p) => p.total > 0).sort((a, b) => b.total - a.total);
   const shareTotal = sum(shareSlices, "total");
 
   return (
@@ -554,16 +584,16 @@ export default function DashboardPage() {
           />
           {loading ? (
             <PanelSkeleton rows={2} />
-          ) : platforms.length === 0 ? (
+          ) : connectedPlatforms.length === 0 ? (
             <div className="rounded-xl border border-dashed border-neutral-200 p-8 text-center text-sm text-neutral-400">
-              No channel activity yet.{" "}
+              No connected channels yet.{" "}
               <Link to="/integrations" className="font-semibold text-brand-600 hover:underline">
                 Connect a channel
               </Link>
             </div>
           ) : (
             <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
-              {platforms.map((p) => {
+              {connectedPlatforms.map((p) => {
                 const publishedPct = p.total ? Math.round((p.published / p.total) * 100) : 0;
                 return (
                   <div key={p.platform} className="rounded-xl border border-neutral-200 p-4">

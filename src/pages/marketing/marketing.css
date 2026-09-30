@@ -207,7 +207,7 @@
 .fm-home .hero-signup:focus-within { border-color: var(--navy); }
 .fm-home .hero-signup .btn { flex-shrink: 0; }
 .fm-home .refer-note {
-  display: inline-flex; align-items: center; gap: 6px; margin: 0 0 10px; padding: 0; border: 0; background: none;
+  display: inline-flex; align-items: center; gap: 6px; margin: 0 0 10px; padding: 0; border: 0; background: none; text-decoration: none;
   font: inherit; font-size: 13px; font-weight: 600; color: var(--orange-deep); cursor: pointer;
 }
 .fm-home .refer-note span { text-decoration: underline; text-underline-offset: 3px; }

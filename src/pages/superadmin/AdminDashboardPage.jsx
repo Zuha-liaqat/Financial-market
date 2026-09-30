@@ -2,19 +2,18 @@ import { useEffect, useState } from 'react'
 import { Link } from 'react-router-dom'
 import { ArrowRight } from 'lucide-react'
 import { avatarColors } from '../../data/companies'
-import { apiAdminListPlans, apiListUsers } from '../../lib/api'
+import { apiGetSuperAdminDashboard, apiListUsers } from '../../lib/api'
 import { formatRelativeTime } from '../../lib/posts'
 import { ErrorToast } from '../../components/Toast'
 import SpacedRow from '../../components/SpacedRow'
-import ChannelBadges, { sampleChannelsFor } from '../../components/ChannelBadges'
+import ChannelBadges from '../../components/ChannelBadges'
 
 const RECENT_LIMIT = 5
-const WEEK_MS = 7 * 24 * 60 * 60 * 1000
-const PAID_PLAN_STATUSES = new Set(['succeeded', 'active', 'paid'])
 
 const statusStyles = {
   Active: 'bg-emerald-50 text-emerald-600 ring-1 ring-emerald-200',
   Inactive: 'bg-neutral-100 text-neutral-500 ring-1 ring-neutral-200',
+  Suspended: 'bg-red-50 text-red-600 ring-1 ring-red-200',
 }
 
 function getInitials(name) {
@@ -32,19 +31,6 @@ function UpArrow() {
       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M12 19V5m0 0l-6 6m6-6l6 6" />
     </svg>
   )
-}
-
-function isPaidPlan(plan) {
-  return Boolean(plan) && plan.plan_code !== 'free' && PAID_PLAN_STATUSES.has(String(plan.status).toLowerCase())
-}
-
-// Monthly value of what the company actually paid; yearly payments are spread over 12 months.
-function monthlyRevenueFor(user) {
-  const plan = user.plan
-  if (!isPaidPlan(plan)) return 0
-  const amount = Number(plan.amount) || 0
-  const label = `${plan.plan_name || ''} ${plan.product_name || ''}`.toLowerCase()
-  return label.includes('yearly') ? amount / 12 : amount
 }
 
 function StatSkeleton() {
@@ -90,18 +76,24 @@ function RecentRowSkeleton() {
 }
 
 export default function AdminDashboardPage() {
-  const [companies, setCompanies] = useState([])
-  const [plans, setPlans] = useState([])
+  const [data, setData] = useState(null)
+  const [channelsById, setChannelsById] = useState({})
   const [status, setStatus] = useState('loading')
   const [error, setError] = useState('')
 
   useEffect(() => {
     let cancelled = false
-    Promise.all([apiListUsers(), apiAdminListPlans().catch(() => [])])
-      .then(([users, planList]) => {
+    // recent_companies has no connected_accounts, so they are looked up from the users list.
+    apiListUsers()
+      .then((users) => {
         if (cancelled) return
-        setCompanies((users || []).filter((u) => !u.is_superuser && u.role !== 'superadmin'))
-        setPlans(planList || [])
+        setChannelsById(Object.fromEntries((users || []).map((u) => [u.id, u.connected_accounts || []])))
+      })
+      .catch(() => {})
+    apiGetSuperAdminDashboard({ recent_limit: RECENT_LIMIT })
+      .then((body) => {
+        if (cancelled) return
+        setData(body)
         setStatus('ready')
       })
       .catch((err) => {
@@ -114,21 +106,19 @@ export default function AdminDashboardPage() {
     }
   }, [])
 
-  const weekAgo = Date.now() - WEEK_MS
-  const joinedThisWeek = companies.filter((c) => c.created_at && new Date(c.created_at).getTime() >= weekAgo).length
-  const activeCount = companies.filter((c) => c.is_active).length
-  const revenue = Math.round(
-    companies.filter((c) => c.is_active).reduce((sum, c) => sum + monthlyRevenueFor(c), 0),
-  )
-  const payingCount = companies.filter((c) => c.is_active && isPaidPlan(c.plan)).length
-  const recent = [...companies]
-    .sort((a, b) => new Date(b.created_at || 0) - new Date(a.created_at || 0))
-    .slice(0, RECENT_LIMIT)
+  const totalCompanies = data?.total_companies ?? 0
+  const joinedThisWeek = data?.new_companies_this_week ?? 0
+  const revenue = Math.round(data?.monthly_revenue ?? 0)
+  const paidPlans = data?.paid_plans ?? 0
+  const freePlans = data?.free_plans ?? 0
+  const activeCount = data?.active_companies ?? 0
+  const suspendedCount = data?.suspended_companies ?? 0
+  const recent = data?.recent_companies ?? []
 
   const statCards = [
     {
       label: 'Total Companies',
-      value: companies.length,
+      value: totalCompanies,
       detail: joinedThisWeek ? (
         <span className="inline-flex items-center gap-1">
           <UpArrow />
@@ -142,19 +132,21 @@ export default function AdminDashboardPage() {
     {
       label: 'Monthly Revenue',
       value: `$${revenue.toLocaleString('en-US')}`,
-      detail: `From ${payingCount} paid plan${payingCount === 1 ? '' : 's'}`,
+      detail: `From ${paidPlans} paid plan${paidPlans === 1 ? '' : 's'}`,
       detailColor: 'text-neutral-400',
     },
     {
       label: 'Active Companies',
       value: activeCount,
-      detail: `Of ${companies.length} compan${companies.length === 1 ? 'y' : 'ies'}`,
-      detailColor: 'text-neutral-400',
+      detail: suspendedCount
+        ? `${suspendedCount} suspended`
+        : `Of ${totalCompanies} compan${totalCompanies === 1 ? 'y' : 'ies'}`,
+      detailColor: suspendedCount ? 'text-red-500' : 'text-neutral-400',
     },
     {
       label: 'Paid Plans',
-      value: payingCount,
-      detail: `${activeCount - payingCount} on Free`,
+      value: paidPlans,
+      detail: `${freePlans} on Free`,
       detailColor: 'text-neutral-400',
     },
   ]
@@ -212,16 +204,24 @@ export default function AdminDashboardPage() {
               )}
               {recent.map((c, i) => {
                 const name = c.name || c.email || 'Unnamed'
-                const companyStatus = c.is_active ? 'Active' : 'Inactive'
+                const companyStatus = c.status || (c.is_active ? 'Active' : 'Inactive')
                 return (
                   <SpacedRow key={c.id} className="border-b border-neutral-100 last:border-0">
                     <td className="px-4 py-3.5">
                       <div className="flex items-center gap-3">
-                        <div
-                          className={`flex h-9 w-9 shrink-0 items-center justify-center rounded-full text-xs font-bold text-white ${avatarColors[i % avatarColors.length]}`}
-                        >
-                          {getInitials(name)}
-                        </div>
+                        {c.avatar_url ? (
+                          <img
+                            src={c.avatar_url}
+                            alt=""
+                            className="h-9 w-9 shrink-0 rounded-full object-cover"
+                          />
+                        ) : (
+                          <div
+                            className={`flex h-9 w-9 shrink-0 items-center justify-center rounded-full text-xs font-bold text-white ${avatarColors[i % avatarColors.length]}`}
+                          >
+                            {getInitials(name)}
+                          </div>
+                        )}
                         <div className="min-w-0">
                           <p className="truncate font-medium text-black">{name}</p>
                           {c.email && c.email !== name && (
@@ -231,17 +231,17 @@ export default function AdminDashboardPage() {
                       </div>
                     </td>
                     <td className="px-3 py-3.5">
-                      <ChannelBadges channels={sampleChannelsFor(c.id)} />
+                      <ChannelBadges accounts={c.connected_accounts || channelsById[c.id] || []} />
                     </td>
                     <td className="px-3 py-3.5 text-neutral-600">
-                      {plans.find((p) => p.code === c.plan?.plan_code)?.name || c.plan?.plan_name || 'Free'}
+                      {c.plan_name || 'Free'}
                     </td>
                     <td className="whitespace-nowrap px-3 py-3.5 text-neutral-500">
-                      {formatRelativeTime(c.created_at) || '—'}
+                      {formatRelativeTime(c.joined_at) || '—'}
                     </td>
                     <td className="px-3 py-3.5">
                       <span
-                        className={`inline-flex rounded-full px-2.5 py-1 text-xs font-semibold ${statusStyles[companyStatus]}`}
+                        className={`inline-flex rounded-full px-2.5 py-1 text-xs font-semibold ${statusStyles[companyStatus] || statusStyles.Inactive}`}
                       >
                         {companyStatus}
                       </span>

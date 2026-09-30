@@ -1,3 +1,18 @@
+export const CREDITS_PER_POST = 20
+export const FREE_STARTING_CREDITS = 100
+
+
+export function toCreditFeature(feature, isFree) {
+  const match = /generate\s+(\d+|unlimited)\s+posts?\s+per\s+month/i.exec(feature)
+  if (!match) return feature
+  if (isFree) {
+    return `${FREE_STARTING_CREDITS} free credits to start (${FREE_STARTING_CREDITS / CREDITS_PER_POST} posts)`
+  }
+  if (match[1].toLowerCase() === 'unlimited') return 'Unlimited credits per month'
+  const posts = Number(match[1])
+  return `${(posts * CREDITS_PER_POST).toLocaleString('en-US')} credits per month (${posts} posts)`
+}
+
 // Fallback shown on the public pricing page when the plans API can't be
 // reached. The live values come from /api/subscriptions/plans.
 export const defaultSubscriptionPlans = [
@@ -9,7 +24,7 @@ export const defaultSubscriptionPlans = [
     yearlyPrice: 0,
     description: 'For solo creators just getting started.',
     features: [
-      'Generate 5 posts per month',
+      '100 free credits to start (5 posts)',
       'Up to 1 business',
       'System notifications',
       'Post approval queue',
@@ -26,7 +41,7 @@ export const defaultSubscriptionPlans = [
     yearlyPrice: 470,
     description: 'For growing teams managing a couple of brands.',
     features: [
-      'Generate 100 posts per month',
+      '2,000 credits per month (100 posts)',
       'Up to 2 businesses',
       'System notifications',
       'Whatsapp/Slack/Teams/Email notifications',
@@ -46,7 +61,7 @@ export const defaultSubscriptionPlans = [
     yearlyPrice: 950,
     description: 'For agencies managing multiple clients.',
     features: [
-      'Generate 200 posts per month',
+      '4,000 credits per month (200 posts)',
       'Up to 5 businesses',
       'System notifications',
       'Whatsapp/Slack/Teams/Email notifications',
@@ -66,7 +81,7 @@ export const defaultSubscriptionPlans = [
     yearlyPrice: 2870,
     description: 'For large teams that need maximum scale.',
     features: [
-      'Generate unlimited posts per month',
+      'Unlimited credits per month',
       'Up to the maximum number of businesses',
       'System notifications',
       'Whatsapp/Slack/Teams/Email notifications',
@@ -119,7 +134,7 @@ export function normalizePlan(plan) {
     currency: plan.currency || 'usd',
     postsPerMonth: plan.posts_per_month ?? 0,
     businesses: plan.businesses ?? 0,
-    features: plan.features || [],
+    features: (plan.features || []).map((f) => toCreditFeature(f, (plan.monthly_price ?? 0) === 0)),
     isCurrent: Boolean(plan.is_current),
     isActive: plan.is_active ?? true,
   }

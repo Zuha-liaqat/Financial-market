@@ -22,6 +22,7 @@ import NotificationsPage from './pages/User/NotificationsPage'
 import SettingsPage from './pages/User/SettingsPage'
 import IntegrationsPage from './pages/User/IntegrationsPage'
 import DocumentationPage from './pages/User/DocumentationPage'
+import ReferAndEarnPage from './pages/User/ReferAndEarnPage'
 import CompaniesPage from './pages/superadmin/CompaniesPage'
 import SubscriptionsPage from './pages/User/SubscriptionsPage'
 import ManageSubscriptionsPage from './pages/superadmin/ManageSubscriptionsPage'
@@ -81,6 +82,14 @@ function App() {
           <Route path="/notifications" element={<NotificationsPage />} />
           <Route path="/integrations" element={<IntegrationsPage />} />
           <Route path="/documentation" element={<DocumentationPage />} />
+          <Route
+            path="/refer-and-earn"
+            element={
+              <RequireNotSuperAdmin>
+                <ReferAndEarnPage />
+              </RequireNotSuperAdmin>
+            }
+          />
           <Route
             path="/super-admin/companies"
             element={

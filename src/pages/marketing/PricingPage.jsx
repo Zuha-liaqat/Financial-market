@@ -3,7 +3,12 @@ import { useNavigate } from 'react-router-dom'
 import { Feather, Rocket, Crown, Gem, Check } from 'lucide-react'
 import MarketingPage from './MarketingPage'
 import { CtaBannerSection } from './pieces'
-import { defaultSubscriptionPlans, normalizePlan } from '../../data/subscriptionPlans'
+import {
+  CREDITS_PER_POST,
+  FREE_STARTING_CREDITS,
+  defaultSubscriptionPlans,
+  normalizePlan,
+} from '../../data/subscriptionPlans'
 import { apiGetPublicSubscriptionPlans } from '../../lib/api'
 import { trackEvent } from '../../lib/analytics'
 
@@ -111,6 +116,9 @@ export default function PricingPage() {
           </h1>
           <p className="lead reveal reveal-d2" style={{ maxWidth: 560, margin: '0 auto' }}>
             Start free. Upgrade when your team, or your publishing schedule, grows.
+          </p>
+          <p className="reveal reveal-d2 mt-4 inline-flex items-center rounded-full bg-amber-50 px-3 py-1 text-xs font-semibold text-amber-700 ring-1 ring-amber-200">
+            Each post uses {CREDITS_PER_POST} credits · New accounts get {FREE_STARTING_CREDITS} free credits
           </p>
         </div>
       </section>

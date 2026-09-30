@@ -12,6 +12,8 @@ import {
 } from "lucide-react";
 import {
   normalizePlan,
+  CREDITS_PER_POST,
+  FREE_STARTING_CREDITS,
   rememberCheckoutSession,
   STRIPE_SESSION_PLACEHOLDER,
   takeCheckoutSession,
@@ -226,6 +228,10 @@ export default function SubscriptionsPage() {
         <p className="mx-auto mt-2 max-w-lg text-sm text-neutral-500">
           Simple, transparent pricing that scales with your business. Cancel
           anytime.
+        </p>
+        <p className="mx-auto mt-3 inline-flex items-center gap-2 rounded-full bg-amber-50 px-3 py-1 text-xs font-semibold text-amber-700 ring-1 ring-amber-200">
+          Each post uses {CREDITS_PER_POST} credits · New accounts get{" "}
+          {FREE_STARTING_CREDITS} free credits
         </p>
         {checkoutError && (
           <p className="mx-auto mt-3 max-w-lg text-sm font-medium text-red-600">

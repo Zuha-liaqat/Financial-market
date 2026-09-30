@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import {
-  apiConnectInstagram,
+  apiConnectPlatform,
   apiGetCurrentUser,
   apiListPlatformCredentials,
   apiSaveCredentials,
@@ -49,6 +49,9 @@ const blogIntegration = (key, name, description, icon) => ({
   action: "Enable",
   icon,
 });
+
+// Platforms that connect with one click through OAuth instead of the credentials form.
+const OAUTH_PLATFORMS = ["instagram", "linkedin"];
 
 const integrations = [
   {
@@ -402,8 +405,8 @@ export default function IntegrationsPage() {
   const [configureTarget, setConfigureTarget] = useState(null);
   const [companyId, setCompanyId] = useState(null);
   const [statusLoading, setStatusLoading] = useState(true);
-  const [connectingInstagram, setConnectingInstagram] = useState(false);
-  const [instagramError, setInstagramError] = useState("");
+  const [connectingPlatform, setConnectingPlatform] = useState(null);
+  const [connectError, setConnectError] = useState("");
 
   function loadConnectedStatus() {
     apiListPlatformCredentials()
@@ -437,24 +440,29 @@ export default function IntegrationsPage() {
     setConfigureTarget(null);
   }
 
-  async function handleConnectInstagram() {
-    setInstagramError("");
-    setConnectingInstagram(true);
+  async function handleOAuthConnect(integration) {
+    setConnectError("");
+    setConnectingPlatform(integration.key);
     try {
-      const result = await apiConnectInstagram(companyId ?? undefined);
+      const result = await apiConnectPlatform(
+        integration.key,
+        companyId ?? undefined,
+      );
       if (!result?.authorization_url) {
-        throw new Error("Instagram did not return an authorization URL.");
+        throw new Error(
+          `${integration.name} did not return an authorization URL.`,
+        );
       }
       window.location.href = result.authorization_url;
     } catch (err) {
-      setInstagramError(err.message);
-      setConnectingInstagram(false);
+      setConnectError(err.message);
+      setConnectingPlatform(null);
     }
   }
 
   function handleIntegrationAction(integration) {
-    if (integration.key === "instagram") {
-      handleConnectInstagram();
+    if (OAUTH_PLATFORMS.includes(integration.key)) {
+      handleOAuthConnect(integration);
       return;
     }
     setConfigureTarget(integration);
@@ -491,8 +499,7 @@ export default function IntegrationsPage() {
                   onToggle={() => handleIntegrationAction(integration)}
                   onConfigure={() => handleIntegrationAction(integration)}
                   statusLoading={
-                    statusLoading ||
-                    (integration.key === "instagram" && connectingInstagram)
+                    statusLoading || connectingPlatform === integration.key
                   }
                 />
               ))}
@@ -500,9 +507,9 @@ export default function IntegrationsPage() {
         </section>
       ))}
 
-      {instagramError && (
+      {connectError && (
         <div className="rounded-lg border border-red-200 bg-red-50 px-4 py-2.5 text-sm text-red-600">
-          {instagramError}
+          {connectError}
         </div>
       )}
 

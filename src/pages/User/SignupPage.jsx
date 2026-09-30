@@ -20,6 +20,12 @@ export default function SignupPage() {
   const planCode = searchParams.get("plan");
   const billingCycle =
     searchParams.get("cycle") === "yearly" ? "yearly" : "monthly";
+  // Set when the visitor arrives from a referral link (?referrer_id=4). Anything else is ignored.
+  const referrerParam = Number(searchParams.get("referrer_id"));
+  const referrerId =
+    Number.isInteger(referrerParam) && referrerParam > 0
+      ? referrerParam
+      : undefined;
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
   const [form, setForm] = useState({
@@ -57,6 +63,7 @@ export default function SignupPage() {
         email: form.email.trim(),
         password: form.password,
         confirm_password: form.confirmPassword,
+        referrer_id: referrerId,
       });
       setSuperAdminStatus(false);
       setCurrentUserEmail(form.email.trim());

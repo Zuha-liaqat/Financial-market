@@ -2,9 +2,9 @@ import { useEffect, useRef, useState } from 'react'
 import { Link, NavLink, useNavigate } from 'react-router-dom'
 import {
   Bell,
-  BookOpen,
   Building2,
   CalendarDays,
+  CircleHelp,
   CreditCard,
   FileText,
   Gift,
@@ -23,7 +23,7 @@ import {
 import Logo from './Logo'
 import { isSuperAdmin, logout as clearSuperAdmin } from '../data/auth'
 import { apiListPlatformCredentials } from '../lib/api'
-import { PinterestIcon, ThreadsIcon, TikTokIcon } from './SocialIcons'
+import { socialChannels } from './channelIcons'
 
 const navItems = [
   { to: '/dashboard', label: 'Dashboard', icon: LayoutDashboard, color: '#3a5f87' },
@@ -49,73 +49,19 @@ const accountItems = [
   { to: '/themes', label: 'Themes/Brands', icon: Palette, color: '#ea580c', hideForSuperAdmin: true },
   { to: '/notifications', label: 'Notifications', icon: Bell, color: '#2563eb', hideForSuperAdmin: true },
   { to: '/super-admin/subscriptions', label: 'Plans and Billing', icon: CreditCard, color: '#0d9488', hideForSuperAdmin: true },
-  { to: '/documentation', label: 'Documentation', icon: BookOpen, color: '#64748b', hideForSuperAdmin: true },
 ]
 
+const referItem = {
+  to: '/refer-and-earn',
+  label: 'Refer & Earn',
+  icon: Gift,
+  color: '#ea580c',
+  hint: {
+    title: 'Earn 100 credits',
+    text: 'Invite a friend with your referral link. When they sign up, 100 credits are added to your account.',
+  },
+}
 const settingsItem = { to: '/settings', label: 'Settings', icon: Settings, color: '#475569' }
-
-const channels = [
-  {
-    key: 'instagram',
-    label: 'Instagram',
-    icon: (
-      <svg className="h-3.5 w-3.5" viewBox="0 0 24 24" fill="none" stroke="#fff" strokeWidth="2">
-        <rect x="3" y="3" width="18" height="18" rx="5" />
-        <circle cx="12" cy="12" r="4" />
-        <circle cx="17.5" cy="6.5" r="1" fill="#fff" />
-      </svg>
-    ),
-    bg: 'bg-linear-to-br from-amber-400 via-pink-500 to-violet-600',
-  },
-  {
-    key: 'facebook',
-    label: 'Facebook',
-    icon: (
-      <svg className="h-3.5 w-3.5" viewBox="0 0 24 24" fill="#fff">
-        <path d="M14 8h3V4h-3c-2.8 0-4.5 1.8-4.5 4.6V11H7v4h2.5v9h4v-9h3l.5-4h-3.5V8.8c0-.5.3-.8.5-.8z" />
-      </svg>
-    ),
-    bg: 'bg-[#1877F2]',
-  },
-  {
-    key: 'linkedin',
-    label: 'LinkedIn',
-    icon: (
-      <svg className="h-3.5 w-3.5" viewBox="0 0 24 24" fill="#fff">
-        <path d="M4.98 3.5C3.88 3.5 3 4.38 3 5.48c0 1.1.88 2 1.98 2h.02C6.1 7.48 7 6.6 7 5.48 7 4.38 6.1 3.5 4.98 3.5zM3.5 8.75h3v11.75h-3zM9.5 8.75h2.9v1.6h.04c.4-.76 1.4-1.6 2.9-1.6 3.1 0 3.66 2 3.66 4.6v6.65h-3v-5.9c0-1.4-.03-3.2-1.95-3.2-1.96 0-2.26 1.53-2.26 3.1v6h-3z" />
-      </svg>
-    ),
-    bg: 'bg-[#0A66C2]',
-  },
-  {
-    key: 'twitter',
-    label: 'X / Twitter',
-    icon: (
-      <svg className="h-3 w-3" viewBox="0 0 24 24" fill="#fff">
-        <path d="M18.9 2H22l-7.6 8.7L23.3 22H16.6l-5.2-6.8L5.4 22H2.3l8.1-9.3L1.4 2h6.9l4.7 6.2L18.9 2z" />
-      </svg>
-    ),
-    bg: 'bg-black',
-  },
-  {
-    key: 'threads',
-    label: 'Threads',
-    icon: <ThreadsIcon className="h-3.5 w-3.5" color="#fff" />,
-    bg: 'bg-black',
-  },
-  {
-    key: 'tiktok',
-    label: 'TikTok',
-    icon: <TikTokIcon className="h-3.5 w-3.5" color="#fff" />,
-    bg: 'bg-[#111820]',
-  },
-  {
-    key: 'pinterest',
-    label: 'Pinterest',
-    icon: <PinterestIcon className="h-3.5 w-3.5" color="#fff" />,
-    bg: 'bg-[#E60023]',
-  },
-]
 
 // Closes a popover when the user clicks outside it or presses Escape.
 function useDismiss(ref, open, onDismiss) {
@@ -150,6 +96,31 @@ function IconTile({ icon: IconComponent, color, active, size = 'h-8 w-8' }) {
   )
 }
 
+// Question-mark icon that shows a short explanation above it on hover.
+function HintBubble({ hint }) {
+  return (
+    <span className="group/hint relative flex">
+      <CircleHelp
+        className="h-4 w-4 text-neutral-400 transition group-hover/hint:text-brand-600"
+        aria-label={`${hint.title}. ${hint.text}`}
+      />
+      <span
+        role="tooltip"
+        className="pointer-events-none invisible absolute bottom-full right-0 z-50 mb-2 w-52 translate-y-1 rounded-xl border border-orange-200 bg-orange-50 px-3.5 py-3 text-left opacity-0 shadow-xl shadow-orange-900/10 transition duration-150 group-hover/hint:visible group-hover/hint:translate-y-0 group-hover/hint:opacity-100"
+      >
+        <span className="flex items-center gap-2 text-sm font-bold text-neutral-900">
+          <span className="flex h-6 w-6 items-center justify-center rounded-md bg-white text-orange-600 ring-1 ring-orange-200">
+            <Gift className="h-3.5 w-3.5" />
+          </span>
+          {hint.title}
+        </span>
+        <span className="mt-1.5 block text-xs leading-relaxed font-normal text-neutral-600">{hint.text}</span>
+        <span className="absolute -bottom-[5px] right-1 h-2.5 w-2.5 rotate-45 border-r border-b border-orange-200 bg-orange-50" />
+      </span>
+    </span>
+  )
+}
+
 function SidebarLink({ item, onClick }) {
   return (
     <NavLink to={item.to} onClick={onClick}>
@@ -163,7 +134,8 @@ function SidebarLink({ item, onClick }) {
         >
           {isActive && <span className="absolute -left-3 top-1.5 bottom-1.5 w-1 rounded-r-full bg-brand-600" />}
           <IconTile icon={item.icon} color={item.color} active={isActive} />
-          {item.label}
+          <span className="flex-1">{item.label}</span>
+          {item.hint && <HintBubble hint={item.hint} />}
         </span>
       )}
     </NavLink>
@@ -192,7 +164,7 @@ export default function Sidebar({ open = false, onClose = () => { } }) {
     (item) => !item.hideForSuperAdmin || !superAdmin,
   )
   const visibleAccountItems = accountItems.filter((item) => !item.hideForSuperAdmin || !superAdmin)
-  const connectedChannels = channels.filter((c) => connected[c.key])
+  const connectedChannels = socialChannels.filter((c) => connected[c.key])
 
   useEffect(() => {
     if (!superAdmin) {
@@ -349,6 +321,7 @@ export default function Sidebar({ open = false, onClose = () => { } }) {
         </nav>
 
         <div className="space-y-0.5 border-t border-neutral-200 p-3">
+          {!superAdmin && <SidebarLink item={referItem} onClick={onClose} />}
           <SidebarLink item={settingsItem} onClick={onClose} />
           <button
             type="button"

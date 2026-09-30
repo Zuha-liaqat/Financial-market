@@ -1,8 +1,9 @@
 import { useEffect, useMemo, useRef, useState } from 'react'
+import Pagination from '../../components/Pagination'
 import { createPortal } from 'react-dom'
 import ConfirmDialog from '../../components/ConfirmDialog'
 import SpacedRow from '../../components/SpacedRow'
-import ChannelBadges, { sampleChannelsFor } from '../../components/ChannelBadges'
+import ChannelBadges from '../../components/ChannelBadges'
 import { avatarColors } from '../../data/companies'
 import { apiDeleteUser, apiListUsers } from '../../lib/api'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '../../components/ui/select'
@@ -38,28 +39,6 @@ function getInitials(name) {
     .slice(0, 2)
     .map((w) => w[0]?.toUpperCase() ?? '')
     .join('')
-}
-
-function getPageNumbers(page, totalPages) {
-  const pages = []
-  const add = (p) => {
-    if (!pages.includes(p)) pages.push(p)
-  }
-
-  add(1)
-  for (let p = page - 1; p <= page + 1; p++) {
-    if (p > 1 && p < totalPages) add(p)
-  }
-  if (totalPages > 1) add(totalPages)
-
-  const withGaps = []
-  let prev = 0
-  for (const p of pages.sort((a, b) => a - b)) {
-    if (prev && p - prev > 1) withGaps.push('…')
-    withGaps.push(p)
-    prev = p
-  }
-  return withGaps
 }
 
 function ActionsMenu({ onDelete }) {
@@ -180,7 +159,7 @@ export default function CompaniesPage() {
             status: u.is_active ? 'Active' : 'Inactive',
             joinedDate: u.created_at,
             avatarColor: avatarColors[idx % avatarColors.length],
-            channels: sampleChannelsFor(u.id),
+            channels: u.connected_accounts || [],
           }))
         setCompanies(list)
         setLoadState('ready')
@@ -317,7 +296,7 @@ export default function CompaniesPage() {
                     </div>
                   </td>
                   <td className="px-3 py-3.5">
-                    <ChannelBadges channels={company.channels} />
+                    <ChannelBadges accounts={company.channels} />
                   </td>
                   <td className="px-3 py-3.5">
                     <span
@@ -351,53 +330,7 @@ export default function CompaniesPage() {
         )}
 
         {filtered.length > 0 && (
-          <div className="flex flex-wrap items-center justify-between gap-3 border-t border-neutral-100 px-4 py-3">
-            <p className="text-xs text-neutral-500">
-              Showing {(page - 1) * PAGE_SIZE + 1}–{Math.min(page * PAGE_SIZE, filtered.length)} of {filtered.length}
-            </p>
-            <div className="flex items-center gap-1">
-              <button
-                onClick={() => setPage((p) => Math.max(1, p - 1))}
-                disabled={page === 1}
-                className="flex h-8 w-8 items-center justify-center rounded-md border border-neutral-200 text-neutral-500 transition hover:border-brand-300 hover:bg-brand-50 hover:text-brand-600 disabled:cursor-not-allowed disabled:opacity-40 disabled:hover:border-neutral-200 disabled:hover:bg-transparent disabled:hover:text-neutral-500"
-                aria-label="Previous page"
-              >
-                <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.75} d="M15.75 19.5L8.25 12l7.5-7.5" />
-                </svg>
-              </button>
-              {getPageNumbers(page, totalPages).map((p, i) =>
-                p === '…' ? (
-                  <span key={`gap-${i}`} className="flex h-8 w-8 items-center justify-center text-xs text-neutral-400">
-                    …
-                  </span>
-                ) : (
-                  <button
-                    key={p}
-                    onClick={() => setPage(p)}
-                    aria-current={p === page ? 'page' : undefined}
-                    className={`flex h-8 w-8 items-center justify-center rounded-md text-xs font-semibold transition ${
-                      p === page
-                        ? 'bg-brand-500 text-white shadow-sm'
-                        : 'text-neutral-600 hover:bg-brand-50 hover:text-brand-600'
-                    }`}
-                  >
-                    {p}
-                  </button>
-                ),
-              )}
-              <button
-                onClick={() => setPage((p) => Math.min(totalPages, p + 1))}
-                disabled={page === totalPages}
-                className="flex h-8 w-8 items-center justify-center rounded-md border border-neutral-200 text-neutral-500 transition hover:border-brand-300 hover:bg-brand-50 hover:text-brand-600 disabled:cursor-not-allowed disabled:opacity-40 disabled:hover:border-neutral-200 disabled:hover:bg-transparent disabled:hover:text-neutral-500"
-                aria-label="Next page"
-              >
-                <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.75} d="M8.25 4.5l7.5 7.5-7.5 7.5" />
-                </svg>
-              </button>
-            </div>
-          </div>
+          <Pagination page={page} pageSize={PAGE_SIZE} total={filtered.length} onChange={setPage} />
         )}
       </div>
 

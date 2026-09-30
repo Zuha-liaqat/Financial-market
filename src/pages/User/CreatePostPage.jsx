@@ -1,7 +1,19 @@
 import { useState, useRef, useEffect } from "react";
+import { Upload } from "lucide-react";
 import { addNotification } from "../../data/notifications";
 import { apiGeneratePost } from "../../lib/api";
 import { showGlobalToast } from "../../lib/toastBus";
+import {
+  ATTACHMENT_ACCEPT,
+  releaseAttachment,
+  toAttachments,
+} from "../../lib/attachments";
+import AttachmentThumb from "../../components/AttachmentThumb";
+import {
+  PinterestIcon,
+  ThreadsIcon,
+  TikTokIcon,
+} from "../../components/SocialIcons";
 
 const DRAFT_KEY = "create_post_draft";
 
@@ -88,6 +100,9 @@ const platformIcons = {
       <path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-5.214-6.817L4.99 21.75H1.68l7.73-8.835L1.254 2.25H8.08l4.713 6.231zm-1.161 17.52h1.833L7.084 4.126H5.117z" />
     </svg>
   ),
+  Threads: <ThreadsIcon className="h-6 w-6" />,
+  TikTok: <TikTokIcon className="h-6 w-6" />,
+  Pinterest: <PinterestIcon className="h-6 w-6" />,
 };
 
 const sectionIcons = {
@@ -299,26 +314,14 @@ export default function CreatePostPage() {
   }
 
   function addFiles(files) {
-    const validFiles = files.filter(
-      (f) => f.type.startsWith("image/") && f.size <= 5 * 1024 * 1024,
-    );
-    if (validFiles.length === 0) return;
-
-    const newFiles = validFiles.map((file) => ({
-      id: Date.now() + Math.random(),
-      name: file.name,
-      size: file.size,
-      file,
-      preview: URL.createObjectURL(file),
-    }));
-
+    const newFiles = toAttachments(files);
+    if (newFiles.length === 0) return;
     setUploadedFiles((prev) => [...prev, ...newFiles]);
   }
 
   function removeFile(id) {
     setUploadedFiles((prev) => {
-      const file = prev.find((f) => f.id === id);
-      if (file) URL.revokeObjectURL(file.preview);
+      releaseAttachment(prev.find((f) => f.id === id));
       return prev.filter((f) => f.id !== id);
     });
   }
@@ -360,7 +363,12 @@ export default function CreatePostPage() {
         hashtags: tags.join(","),
         date: scheduleDate,
         start_time: scheduleTime,
-        images: uploadedFiles.map((f) => f.file),
+        images: uploadedFiles
+          .filter((f) => f.kind === "image")
+          .map((f) => f.file),
+        documents: uploadedFiles
+          .filter((f) => f.kind === "document")
+          .map((f) => f.file),
       });
 
       const firstPost = Array.isArray(result?.posts) ? result.posts[0] : null;
@@ -453,18 +461,15 @@ export default function CreatePostPage() {
                 ref={dropdownRef}
                 className="flex flex-wrap items-center gap-2"
               >
-                {/* Add Image */}
+                {/* Add image or document */}
                 <button
                   type="button"
                   onClick={() => fileInputRef.current?.click()}
-                  aria-label="Add image"
+                  aria-label="Add image or document"
+                  title="Add image or document"
                   className="flex h-9 w-9 shrink-0 cursor-pointer items-center justify-center rounded-lg border border-neutral-200 bg-white transition hover:bg-neutral-50"
                 >
-                  <img
-                    src="/image2.png"
-                    alt=""
-                    className="h-5 w-5 object-contain"
-                  />
+                  <Upload className="h-5 w-5 text-brand-500" strokeWidth={2} />
                 </button>
 
                 {/* Reference URL */}
@@ -625,37 +630,11 @@ export default function CreatePostPage() {
               {uploadedFiles.length > 0 && (
                 <div className="flex flex-wrap items-center gap-4 bg-white px-1 pb-1 pt-2">
                   {uploadedFiles.map((file) => (
-                    <div key={file.id} className="relative h-16 w-16 shrink-0">
-                      <div className="h-full w-full overflow-hidden rounded-xl bg-white ring-1 ring-neutral-200">
-                        <img
-                          src={file.preview}
-                          alt={file.name}
-                          className="h-full w-full object-cover"
-                        />
-                      </div>
-                      <button
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          removeFile(file.id);
-                        }}
-                        aria-label="Remove image"
-                        className="absolute -right-1.5 -top-1.5 flex h-5 w-5 cursor-pointer items-center justify-center rounded-full bg-brand-500 text-white shadow-sm ring-2 ring-white transition hover:bg-brand-600"
-                      >
-                        <svg
-                          className="h-3 w-3"
-                          fill="none"
-                          viewBox="0 0 24 24"
-                          stroke="currentColor"
-                        >
-                          <path
-                            strokeLinecap="round"
-                            strokeLinejoin="round"
-                            strokeWidth={2.5}
-                            d="M6 18L18 6M6 6l12 12"
-                          />
-                        </svg>
-                      </button>
-                    </div>
+                    <AttachmentThumb
+                      key={file.id}
+                      attachment={file}
+                      onRemove={removeFile}
+                    />
                   ))}
                 </div>
               )}
@@ -669,7 +648,7 @@ export default function CreatePostPage() {
           <input
             ref={fileInputRef}
             type="file"
-            accept="image/*"
+            accept={ATTACHMENT_ACCEPT}
             multiple
             onChange={handleFileSelect}
             className="hidden"

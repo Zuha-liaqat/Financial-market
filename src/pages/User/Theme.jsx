@@ -1,4 +1,5 @@
 import { useEffect, useState } from "react";
+import { FileText, Plus, Upload, X } from "lucide-react";
 import {
   Select,
   SelectContent,
@@ -15,78 +16,32 @@ import {
   apiUploadBrandLogo,
 } from "../../lib/api";
 
-const visualStyleMeta = {
-  minimalist: {
-    label: "Minimalist",
-    description: "Clean layouts, generous whitespace, quiet color.",
-    preview: (
-      <div className="relative flex h-full w-full items-center justify-center bg-neutral-50">
-        <div className="w-3/4 space-y-1.5 rounded-md bg-white p-3 shadow-sm ring-1 ring-neutral-200">
-          <div className="h-1.5 w-2/3 rounded-full bg-neutral-800" />
-          <div className="h-1 w-full rounded-full bg-neutral-200" />
-          <div className="h-1 w-4/5 rounded-full bg-neutral-200" />
-          <div className="mt-1.5 flex gap-1">
-            <span className="h-2 w-2 rounded-full bg-brand-400" />
-            <span className="h-2 w-2 rounded-full bg-neutral-300" />
-            <span className="h-2 w-2 rounded-full bg-neutral-300" />
-          </div>
-        </div>
-      </div>
-    ),
+const MAX_COLORS = 8;
+
+const themeModes = [
+  {
+    key: "upload",
+    title: "Upload your theme",
+    description: "Already have brand guidelines? Upload them as an image or PDF.",
   },
-  bold: {
-    label: "Bold",
-    description: "Punchy gradients and confident, high-contrast type.",
-    preview: (
-      <div className="relative flex h-full w-full items-center justify-center overflow-hidden bg-gradient-to-br from-brand-400 via-fuchsia-500 to-violet-600">
-        <div className="absolute -right-4 -top-6 h-20 w-20 rotate-12 rounded-2xl bg-white/15" />
-        <div className="absolute -bottom-6 -left-4 h-16 w-16 -rotate-12 rounded-full bg-white/15" />
-        <p className="relative text-lg font-black italic tracking-tight text-white">
-          BOLD
-        </p>
-      </div>
-    ),
+  {
+    key: "custom",
+    title: "Don't have a theme? Choose your own",
+    description: "Pick your brand colors and font.",
   },
-  futuristic: {
-    label: "Futuristic",
-    description: "Dark, glowing, technical — built for robotics content.",
-    preview: (
-      <div className="relative flex h-full w-full items-center justify-center overflow-hidden bg-gradient-to-br from-[#020617] via-[#0c1526] to-brand-900">
-        <div
-          className="absolute inset-0 opacity-25"
-          style={{
-            backgroundImage:
-              "radial-gradient(rgba(76,202,225,0.7) 1px, transparent 1px)",
-            backgroundSize: "10px 10px",
-          }}
-        />
-        <div className="absolute inset-x-0 top-1/2 h-px bg-gradient-to-r from-transparent via-brand-300/80 to-transparent" />
-        <span className="absolute left-2 top-2 h-3 w-3 border-l-2 border-t-2 border-brand-400/70" />
-        <span className="absolute right-2 top-2 h-3 w-3 border-r-2 border-t-2 border-brand-400/70" />
-        <span className="absolute bottom-2 left-2 h-3 w-3 border-b-2 border-l-2 border-brand-400/70" />
-        <span className="absolute bottom-2 right-2 h-3 w-3 border-b-2 border-r-2 border-brand-400/70" />
-        <div className="relative flex h-10 w-10 items-center justify-center">
-          <span className="absolute inset-0 rounded-full bg-brand-400/30 blur-md" />
-          <span className="absolute inset-2 rounded-full border border-brand-300/60" />
-          <span className="h-2.5 w-2.5 rounded-full bg-brand-300 shadow-[0_0_10px_3px_rgba(76,202,225,0.9)]" />
-        </div>
-      </div>
-    ),
-  },
-  custom: {
-    label: "Custom",
-    description: "Set your own color theme, text style, and font.",
-    preview: (
-      <div className="relative flex h-full w-full items-center justify-center bg-neutral-50">
-        <div className="flex items-center gap-1.5">
-          <span className="h-5 w-5 rounded-full bg-brand-400" />
-          <span className="h-5 w-5 rounded-full bg-fuchsia-400" />
-          <span className="h-5 w-5 rounded-full bg-emerald-400" />
-        </div>
-      </div>
-    ),
-  },
-};
+];
+
+function isHexColor(value) {
+  return /^#[0-9a-f]{6}$/i.test(value.trim());
+}
+
+// custom_color holds a single hex colour today. Splitting on commas keeps older or future multi-colour values readable.
+function parseColors(value) {
+  return (value || "")
+    .split(",")
+    .map((c) => c.trim().toLowerCase())
+    .filter(isHexColor);
+}
 
 function SectionCard({ icon, chip, title, children }) {
   return (
@@ -142,18 +97,15 @@ function ThemeSkeleton() {
               <div className="h-8 w-24 animate-pulse rounded-md bg-neutral-100" />
             </div>
           </div>
-          <FieldSkeleton />
+          <div className="grid grid-cols-1 gap-3 sm:grid-cols-3">
+            <FieldSkeleton />
+            <FieldSkeleton />
+            <FieldSkeleton />
+          </div>
           <div>
             <div className="mb-1.5 h-3 w-32 animate-pulse rounded bg-neutral-200" />
             <div className="h-20 w-full animate-pulse rounded-lg bg-neutral-100" />
           </div>
-        </div>
-      </SectionSkeleton>
-
-      <SectionSkeleton chip="bg-sky-100">
-        <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
-          <FieldSkeleton />
-          <FieldSkeleton />
         </div>
       </SectionSkeleton>
 
@@ -165,16 +117,9 @@ function ThemeSkeleton() {
       </SectionSkeleton>
 
       <SectionSkeleton chip="bg-violet-100">
-        <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-4">
-          {Array.from({ length: 4 }).map((_, i) => (
-            <div key={i} className="overflow-hidden rounded-lg border-2 border-neutral-200">
-              <div className="h-24 w-full animate-pulse bg-neutral-100" />
-              <div className="space-y-1.5 px-2.5 py-2">
-                <div className="h-3.5 w-16 animate-pulse rounded bg-neutral-200" />
-                <div className="h-2.5 w-full animate-pulse rounded bg-neutral-100" />
-              </div>
-            </div>
-          ))}
+        <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
+          <FieldSkeleton />
+          <FieldSkeleton />
         </div>
       </SectionSkeleton>
 
@@ -191,19 +136,19 @@ export default function ThemesPage() {
   const [loadError, setLoadError] = useState("");
   const [toneOptions, setToneOptions] = useState([]);
   const [fontOptions, setFontOptions] = useState([]);
-  const [visualStyleKeys, setVisualStyleKeys] = useState([]);
 
   const [companyName, setCompanyName] = useState("");
   const [companyDescription, setCompanyDescription] = useState("");
   const [logoUrl, setLogoUrl] = useState(null);
   const [logoUploading, setLogoUploading] = useState(false);
-  const [contactEmail, setContactEmail] = useState("");
+  const [website, setWebsite] = useState("");
   const [contactPhone, setContactPhone] = useState("");
   const [brandTone, setBrandTone] = useState("");
   const [targetAudience, setTargetAudience] = useState("");
-  const [visualStyle, setVisualStyle] = useState("minimalist");
-  const [customColor, setCustomColor] = useState("#4f46e5");
-  const [customText, setCustomText] = useState("");
+  const [themeMode, setThemeMode] = useState("custom");
+  const [themeFile, setThemeFile] = useState(null);
+  const [brandColors, setBrandColors] = useState([]);
+  const [colorDraft, setColorDraft] = useState("");
   const [customFont, setCustomFont] = useState("");
   const [savingDraft, setSavingDraft] = useState(false);
   const [savingComplete, setSavingComplete] = useState(false);
@@ -217,18 +162,15 @@ export default function ThemesPage() {
         if (cancelled) return;
         setToneOptions(options?.brand_tones || []);
         setFontOptions(options?.fonts || []);
-        setVisualStyleKeys(options?.visual_styles || []);
 
         setCompanyName(profile?.company_name || "");
         setCompanyDescription(profile?.company_description || "");
         setLogoUrl(profile?.logo_url || null);
-        setContactEmail(profile?.contact_email || "");
+        setWebsite(profile?.website_url || "");
         setContactPhone(profile?.contact_mobile || "");
         setBrandTone(profile?.brand_tone || options?.brand_tones?.[0] || "");
         setTargetAudience(profile?.target_audience || "");
-        setVisualStyle(profile?.visual_style || "minimalist");
-        setCustomColor(profile?.custom_color || "#4f46e5");
-        setCustomText(profile?.custom_text_style || "");
+        setBrandColors(parseColors(profile?.custom_color));
         setCustomFont(profile?.custom_font || options?.fonts?.[0] || "");
         setStatus("ready");
       })
@@ -258,6 +200,19 @@ export default function ThemesPage() {
     }
   }
 
+  function addColor() {
+    const color = colorDraft.trim().toLowerCase();
+    if (!isHexColor(color) || brandColors.length >= MAX_COLORS) return;
+    if (!brandColors.includes(color)) {
+      setBrandColors((prev) => [...prev, color]);
+    }
+    setColorDraft("");
+  }
+
+  function removeColor(color) {
+    setBrandColors((prev) => prev.filter((c) => c !== color));
+  }
+
   async function handleSave(complete) {
     if (complete && (!companyName.trim() || !companyDescription.trim())) {
       setSaveError(
@@ -272,14 +227,14 @@ export default function ThemesPage() {
       const profile = await apiSaveBrandProfile({
         company_name: companyName || null,
         company_description: companyDescription || null,
-        contact_email: contactEmail || null,
+        website_url: website || null,
         contact_mobile: contactPhone || null,
         brand_tone: brandTone || null,
         target_audience: targetAudience || null,
-        visual_style: visualStyle || null,
-        custom_color: visualStyle === "custom" ? customColor : null,
-        custom_text_style: visualStyle === "custom" ? customText : null,
-        custom_font: visualStyle === "custom" ? customFont : null,
+        visual_style: "custom",
+        // The API accepts one hex colour, so only the first (primary) brand colour is saved for now.
+        custom_color: brandColors[0] || null,
+        custom_font: customFont || null,
         status: complete ? "complete" : "draft",
       });
       if (profile?.logo_url) setLogoUrl(profile.logo_url);
@@ -419,20 +374,54 @@ export default function ThemesPage() {
               </label>
             </div>
           </div>
-          <div>
-            <label
-              htmlFor="company-name"
-              className="mb-1.5 block text-xs font-medium text-neutral-500"
-            >
-              Company Name
-            </label>
-            <input
-              id="company-name"
-              value={companyName}
-              onChange={(e) => setCompanyName(e.target.value)}
-              placeholder="e.g. Financial Market"
-              className={inputClass}
-            />
+          <div className="grid grid-cols-1 gap-3 sm:grid-cols-3">
+            <div>
+              <label
+                htmlFor="company-name"
+                className="mb-1.5 block text-xs font-medium text-neutral-500"
+              >
+                Company Name
+              </label>
+              <input
+                id="company-name"
+                value={companyName}
+                onChange={(e) => setCompanyName(e.target.value)}
+                placeholder="e.g. Financial Market"
+                className={inputClass}
+              />
+            </div>
+            <div>
+              <label
+                htmlFor="company-website"
+                className="mb-1.5 block text-xs font-medium text-neutral-500"
+              >
+                Website
+              </label>
+              <input
+                id="company-website"
+                type="url"
+                value={website}
+                onChange={(e) => setWebsite(e.target.value)}
+                placeholder="e.g. https://financialmarket.com"
+                className={inputClass}
+              />
+            </div>
+            <div>
+              <label
+                htmlFor="contact-phone"
+                className="mb-1.5 block text-xs font-medium text-neutral-500"
+              >
+                Mobile Number
+              </label>
+              <input
+                id="contact-phone"
+                type="tel"
+                value={contactPhone}
+                onChange={(e) => setContactPhone(e.target.value)}
+                placeholder="e.g. +1 555 123 4567"
+                className={inputClass}
+              />
+            </div>
           </div>
           <div>
             <label
@@ -448,61 +437,6 @@ export default function ThemesPage() {
               placeholder="Describe your company's mission, products, and unique value proposition..."
               rows={3}
               className={`resize-none ${inputClass}`}
-            />
-          </div>
-        </div>
-      </SectionCard>
-
-      <SectionCard
-        icon={
-          <svg
-            className="h-4 w-4 text-sky-600"
-            fill="none"
-            viewBox="0 0 24 24"
-            stroke="currentColor"
-          >
-            <path
-              strokeLinecap="round"
-              strokeLinejoin="round"
-              strokeWidth={1.75}
-              d="M2.25 6.75c0-.621.504-1.125 1.125-1.125h17.25c.621 0 1.125.504 1.125 1.125v10.5c0 .621-.504 1.125-1.125 1.125H3.375A1.125 1.125 0 012.25 17.25V6.75zm0 0l9.75 6.75 9.75-6.75"
-            />
-          </svg>
-        }
-        chip="bg-sky-100"
-        title="CONTACT DETAILS"
-      >
-        <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
-          <div>
-            <label
-              htmlFor="contact-email"
-              className="mb-1.5 block text-xs font-medium text-neutral-500"
-            >
-              Email
-            </label>
-            <input
-              id="contact-email"
-              type="email"
-              value={contactEmail}
-              onChange={(e) => setContactEmail(e.target.value)}
-              placeholder="e.g. hello@pixmoving.com"
-              className={inputClass}
-            />
-          </div>
-          <div>
-            <label
-              htmlFor="contact-phone"
-              className="mb-1.5 block text-xs font-medium text-neutral-500"
-            >
-              Mobile Number
-            </label>
-            <input
-              id="contact-phone"
-              type="tel"
-              value={contactPhone}
-              onChange={(e) => setContactPhone(e.target.value)}
-              placeholder="e.g. +1 555 123 4567"
-              className={inputClass}
             />
           </div>
         </div>
@@ -580,96 +514,156 @@ export default function ThemesPage() {
           </svg>
         }
         chip="bg-violet-100"
-        title="VISUAL STYLE"
+        title="VISUAL/BRANDING"
       >
-        <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-4">
-          {visualStyleKeys.map((key) => {
-            const meta = visualStyleMeta[key];
-            if (!meta) return null;
-            const active = visualStyle === key;
+        <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
+          {themeModes.map((mode) => {
+            const active = themeMode === mode.key;
             return (
               <button
-                key={key}
+                key={mode.key}
                 type="button"
-                onClick={() => setVisualStyle(key)}
-                className={`group flex cursor-pointer flex-col overflow-hidden rounded-lg border-2 text-left transition ${
+                onClick={() => setThemeMode(mode.key)}
+                className={`flex cursor-pointer items-start gap-3 rounded-lg border-2 p-3 text-left transition ${
                   active
-                    ? "border-brand-500 ring-2 ring-brand-100"
+                    ? "border-brand-500 bg-brand-50/50"
                     : "border-neutral-200 hover:border-neutral-300"
                 }`}
               >
-                <div className="relative h-24 w-full">
-                  {meta.preview}
+                <span
+                  className={`mt-0.5 flex h-4 w-4 shrink-0 items-center justify-center rounded-full border-2 ${
+                    active ? "border-brand-500" : "border-neutral-300"
+                  }`}
+                >
                   {active && (
-                    <span className="absolute right-1.5 top-1.5 flex h-5 w-5 items-center justify-center rounded-full bg-brand-500 text-white shadow-sm">
-                      <svg
-                        className="h-3 w-3"
-                        fill="none"
-                        viewBox="0 0 24 24"
-                        stroke="currentColor"
-                      >
-                        <path
-                          strokeLinecap="round"
-                          strokeLinejoin="round"
-                          strokeWidth={3}
-                          d="M4.5 12.75l6 6 9-13.5"
-                        />
-                      </svg>
-                    </span>
+                    <span className="h-2 w-2 rounded-full bg-brand-500" />
                   )}
-                </div>
-                <div className="px-2.5 py-2">
-                  <p className="text-sm font-semibold text-black">
-                    {meta.label}
-                  </p>
-                  <p className="mt-0.5 text-xs text-neutral-400">
-                    {meta.description}
-                  </p>
-                </div>
+                </span>
+                <span>
+                  <span className="block text-sm font-semibold text-black">
+                    {mode.title}
+                  </span>
+                  <span className="mt-0.5 block text-xs text-neutral-500">
+                    {mode.description}
+                  </span>
+                </span>
               </button>
             );
           })}
         </div>
 
-        {visualStyle === "custom" && (
-          <div className="mt-4 grid grid-cols-1 gap-3 border-t border-neutral-200 pt-4 sm:grid-cols-3">
-            <div>
+        {themeMode === "upload" ? (
+          <div className="mt-4 border-t border-neutral-200 pt-4">
+            {themeFile ? (
+              <div className="flex items-center gap-3 rounded-lg border border-neutral-200 bg-neutral-50 px-3 py-2.5">
+                <FileText className="h-5 w-5 shrink-0 text-brand-500" />
+                <span className="min-w-0 flex-1 truncate text-sm text-neutral-700">
+                  {themeFile.name}
+                </span>
+                <button
+                  type="button"
+                  onClick={() => setThemeFile(null)}
+                  aria-label="Remove theme file"
+                  className="cursor-pointer rounded p-1 text-neutral-400 transition hover:bg-neutral-200 hover:text-neutral-700"
+                >
+                  <X className="h-4 w-4" />
+                </button>
+              </div>
+            ) : (
+              <label className="flex cursor-pointer flex-col items-center justify-center gap-1.5 rounded-lg border-2 border-dashed border-neutral-300 bg-neutral-50 px-4 py-8 text-center transition hover:border-brand-400 hover:bg-brand-50/40">
+                <Upload className="h-6 w-6 text-neutral-400" />
+                <span className="text-sm font-semibold text-neutral-700">
+                  Click to upload your theme
+                </span>
+                <span className="text-xs text-neutral-400">
+                  Brand guidelines as an image or PDF
+                </span>
+                <input
+                  type="file"
+                  accept="image/*,.pdf"
+                  onChange={(e) => {
+                    setThemeFile(e.target.files?.[0] || null);
+                    e.target.value = "";
+                  }}
+                  className="hidden"
+                />
+              </label>
+            )}
+          </div>
+        ) : (
+          <div className="mt-4 grid grid-cols-1 gap-4 border-t border-neutral-200 pt-4 sm:grid-cols-3">
+            <div className="sm:col-span-2">
               <label
-                htmlFor="custom-color"
+                htmlFor="brand-color-hex"
                 className="mb-1.5 block text-xs font-medium text-neutral-500"
               >
-                Color Theme
+                Brand Colors
               </label>
-              <div className="flex items-center gap-2">
+              <div className="flex max-w-md items-center gap-2">
                 <input
-                  id="custom-color"
                   type="color"
-                  value={customColor}
-                  onChange={(e) => setCustomColor(e.target.value)}
+                  value={isHexColor(colorDraft) ? colorDraft : "#000000"}
+                  onChange={(e) => setColorDraft(e.target.value)}
+                  aria-label="Pick a color"
                   className="h-10.5 w-11 shrink-0 cursor-pointer rounded-lg border border-neutral-200 bg-neutral-50 p-1"
                 />
                 <input
-                  value={customColor}
-                  onChange={(e) => setCustomColor(e.target.value)}
-                  placeholder="#4F46E5"
+                  id="brand-color-hex"
+                  value={colorDraft}
+                  onChange={(e) => setColorDraft(e.target.value)}
+                  onKeyDown={(e) => {
+                    if (e.key === "Enter") {
+                      e.preventDefault();
+                      addColor();
+                    }
+                  }}
+                  placeholder="#1A4467"
                   className={inputClass}
                 />
+                <button
+                  type="button"
+                  onClick={addColor}
+                  disabled={
+                    !isHexColor(colorDraft) || brandColors.length >= MAX_COLORS
+                  }
+                  className="flex h-10.5 shrink-0 cursor-pointer items-center gap-1.5 rounded-lg bg-brand-500 px-3 text-xs font-semibold text-white transition hover:bg-brand-600 disabled:cursor-not-allowed disabled:opacity-50"
+                >
+                  <Plus className="h-3.5 w-3.5" strokeWidth={2.5} />
+                  Add
+                </button>
               </div>
-            </div>
-            <div>
-              <label
-                htmlFor="custom-text"
-                className="mb-1.5 block text-xs font-medium text-neutral-500"
-              >
-                Text
-              </label>
-              <input
-                id="custom-text"
-                value={customText}
-                onChange={(e) => setCustomText(e.target.value)}
-                placeholder="e.g. Confident, punchy headlines"
-                className={inputClass}
-              />
+
+              {brandColors.length > 0 ? (
+                <div className="mt-3 flex flex-wrap items-center gap-2">
+                  {brandColors.map((color) => (
+                    <div
+                      key={color}
+                      className="flex items-center gap-2 rounded-lg border border-neutral-200 bg-neutral-50 py-1 pl-1 pr-2"
+                    >
+                      <span
+                        className="h-7 w-7 rounded-md ring-1 ring-black/10"
+                        style={{ backgroundColor: color }}
+                      />
+                      <span className="font-mono text-xs uppercase text-neutral-600">
+                        {color}
+                      </span>
+                      <button
+                        type="button"
+                        onClick={() => removeColor(color)}
+                        aria-label={`Remove color ${color}`}
+                        className="cursor-pointer rounded p-0.5 text-neutral-400 transition hover:bg-neutral-200 hover:text-neutral-700"
+                      >
+                        <X className="h-3.5 w-3.5" />
+                      </button>
+                    </div>
+                  ))}
+                </div>
+              ) : (
+                <p className="mt-3 text-xs text-neutral-400">
+                  No colors added yet. Pick a color or type its hex code, then
+                  click Add.
+                </p>
+              )}
             </div>
             <div>
               <label className="mb-1.5 block text-xs font-medium text-neutral-500">

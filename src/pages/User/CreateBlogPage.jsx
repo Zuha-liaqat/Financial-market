@@ -1,7 +1,14 @@
 import { useState, useRef, useEffect } from "react";
+import { Upload } from "lucide-react";
 import { addNotification } from "../../data/notifications";
 import { apiGenerateBlog } from "../../lib/api";
 import { showGlobalToast } from "../../lib/toastBus";
+import {
+  ATTACHMENT_ACCEPT,
+  releaseAttachment,
+  toAttachments,
+} from "../../lib/attachments";
+import AttachmentThumb from "../../components/AttachmentThumb";
 
 const DRAFT_KEY = "create_blog_draft";
 
@@ -225,31 +232,28 @@ export default function CreateBlogPage() {
     addFiles(files);
   }
 
+  // A blog has one cover image, so a new image replaces the old one. Documents are added alongside it.
   function addFiles(files) {
-    const validFiles = files.filter(
-      (f) => f.type.startsWith("image/") && f.size <= 5 * 1024 * 1024,
-    );
-    if (validFiles.length === 0) return;
+    const added = toAttachments(files);
+    const [newImage, ...extraImages] = added.filter((f) => f.kind === "image");
+    const newDocuments = added.filter((f) => f.kind === "document");
+    extraImages.forEach(releaseAttachment);
+    if (!newImage && newDocuments.length === 0) return;
 
-    const file = validFiles[0];
     setUploadedFiles((prev) => {
-      prev.forEach((f) => URL.revokeObjectURL(f.preview));
+      if (!newImage) return [...prev, ...newDocuments];
+      prev.filter((f) => f.kind === "image").forEach(releaseAttachment);
       return [
-        {
-          id: Date.now() + Math.random(),
-          name: file.name,
-          size: file.size,
-          file,
-          preview: URL.createObjectURL(file),
-        },
+        newImage,
+        ...prev.filter((f) => f.kind === "document"),
+        ...newDocuments,
       ];
     });
   }
 
   function removeFile(id) {
     setUploadedFiles((prev) => {
-      const file = prev.find((f) => f.id === id);
-      if (file) URL.revokeObjectURL(file.preview);
+      releaseAttachment(prev.find((f) => f.id === id));
       return prev.filter((f) => f.id !== id);
     });
   }
@@ -292,7 +296,10 @@ export default function CreateBlogPage() {
         reference_url: referenceUrl || undefined,
         date: scheduleDate,
         start_time: scheduleTime,
-        image: uploadedFiles[0]?.file,
+        image: uploadedFiles.find((f) => f.kind === "image")?.file,
+        documents: uploadedFiles
+          .filter((f) => f.kind === "document")
+          .map((f) => f.file),
       });
 
       const firstBlog = Array.isArray(result?.blogs) ? result.blogs[0] : null;
@@ -379,18 +386,15 @@ export default function CreateBlogPage() {
                 ref={dropdownRef}
                 className="flex flex-wrap items-center gap-2"
               >
-                {/* Add Image */}
+                {/* Add image or document */}
                 <button
                   type="button"
                   onClick={() => fileInputRef.current?.click()}
-                  aria-label="Add image"
+                  aria-label="Add image or document"
+                  title="Add image or document"
                   className="flex h-9 w-9 shrink-0 cursor-pointer items-center justify-center rounded-lg border border-neutral-200 bg-white transition hover:bg-neutral-50"
                 >
-                  <img
-                    src="/image2.png"
-                    alt=""
-                    className="h-5 w-5 object-contain"
-                  />
+                  <Upload className="h-5 w-5 text-brand-500" strokeWidth={2} />
                 </button>
 
                 {/* Reference URL */}
@@ -551,37 +555,11 @@ export default function CreateBlogPage() {
               {uploadedFiles.length > 0 && (
                 <div className="flex flex-wrap items-center gap-4 bg-white px-1 pb-1 pt-2">
                   {uploadedFiles.map((file) => (
-                    <div key={file.id} className="relative h-16 w-16 shrink-0">
-                      <div className="h-full w-full overflow-hidden rounded-xl bg-white ring-1 ring-neutral-200">
-                        <img
-                          src={file.preview}
-                          alt={file.name}
-                          className="h-full w-full object-cover"
-                        />
-                      </div>
-                      <button
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          removeFile(file.id);
-                        }}
-                        aria-label="Remove image"
-                        className="absolute -right-1.5 -top-1.5 flex h-5 w-5 cursor-pointer items-center justify-center rounded-full bg-brand-500 text-white shadow-sm ring-2 ring-white transition hover:bg-brand-600"
-                      >
-                        <svg
-                          className="h-3 w-3"
-                          fill="none"
-                          viewBox="0 0 24 24"
-                          stroke="currentColor"
-                        >
-                          <path
-                            strokeLinecap="round"
-                            strokeLinejoin="round"
-                            strokeWidth={2.5}
-                            d="M6 18L18 6M6 6l12 12"
-                          />
-                        </svg>
-                      </button>
-                    </div>
+                    <AttachmentThumb
+                      key={file.id}
+                      attachment={file}
+                      onRemove={removeFile}
+                    />
                   ))}
                 </div>
               )}
@@ -595,7 +573,8 @@ export default function CreateBlogPage() {
           <input
             ref={fileInputRef}
             type="file"
-            accept="image/*"
+            accept={ATTACHMENT_ACCEPT}
+            multiple
             onChange={handleFileSelect}
             className="hidden"
           />

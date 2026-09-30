@@ -1,7 +1,19 @@
 import { useState, useRef, useEffect, useCallback, useMemo } from "react";
+import { Upload } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { apiGeneratePlan, apiGetPlanner } from "../../lib/api";
 import { mapPlannerItem } from "../../lib/posts";
+import {
+  ATTACHMENT_ACCEPT,
+  releaseAttachment,
+  toAttachments,
+} from "../../lib/attachments";
+import AttachmentThumb from "../../components/AttachmentThumb";
+import {
+  PinterestIcon,
+  ThreadsIcon,
+  TikTokIcon,
+} from "../../components/SocialIcons";
 
 const toneOptions = [
   "Professional",
@@ -75,6 +87,9 @@ const platformData = {
       <path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-5.214-6.817L4.99 21.75H1.68l7.73-8.835L1.254 2.25H8.08l4.713 6.231zm-1.161 17.52h1.833L7.084 4.126H5.117z" />
     </svg>
   ),
+  Threads: <ThreadsIcon className="h-6 w-6" />,
+  TikTok: <TikTokIcon className="h-6 w-6" />,
+  Pinterest: <PinterestIcon className="h-6 w-6" />,
 };
 
 function MonogramIcon({ letter, bg }) {
@@ -88,8 +103,7 @@ function MonogramIcon({ letter, bg }) {
   );
 }
 
-const queuePlatformIcons = {
-  ...platformData,
+const blogPlatformData = {
   Website: (
     <svg
       className="h-6 w-6 text-brand-500"
@@ -109,6 +123,28 @@ const queuePlatformIcons = {
   WordPress: <MonogramIcon letter="W" bg="#21759B" />,
   Blogger: <MonogramIcon letter="B" bg="#F57D00" />,
   Wix: <MonogramIcon letter="Wx" bg="#0C6EFC" />,
+};
+
+const queuePlatformIcons = { ...platformData, ...blogPlatformData };
+
+// Settings for each tab of the generate form.
+const contentTypes = {
+  post: {
+    label: "Post",
+    plural: "Posts",
+    platforms: platformData,
+    defaultPlatform: "Instagram",
+    placeholder:
+      "Describe the posts in detail. e.g., 'Write professional LinkedIn posts announcing our new autonomous coffee cart fleet in Tokyo...'",
+  },
+  blog: {
+    label: "Blog",
+    plural: "Blogs",
+    platforms: blogPlatformData,
+    defaultPlatform: "Website",
+    placeholder:
+      "Describe the blogs in detail. e.g., 'Write in-depth articles about how our autonomous coffee carts are changing city mornings in Tokyo...'",
+  },
 };
 
 const statusMeta = {
@@ -162,6 +198,7 @@ function GenerateView({
   const [urlDraft, setUrlDraft] = useState("");
   const [showUrlInput, setShowUrlInput] = useState(false);
   const [frequency, setFrequency] = useState(period === "monthly" ? 20 : 5);
+  const [contentType, setContentType] = useState("post");
   const [selectedPlatforms, setSelectedPlatforms] = useState(["Instagram"]);
   const [selectedThemes, setSelectedThemes] = useState([
     "Product Innovation",
@@ -184,7 +221,14 @@ function GenerateView({
   }, []);
 
   const periodLabel = period === "monthly" ? "Month" : "Week";
-  const freqLabel = `${frequency} Posts / ${periodLabel}`;
+  const typeConfig = contentTypes[contentType];
+  const freqLabel = `${frequency} ${typeConfig.plural} / ${periodLabel}`;
+
+  function changeContentType(type) {
+    if (type === contentType) return;
+    setContentType(type);
+    setSelectedPlatforms([contentTypes[type].defaultPlatform]);
+  }
 
   function togglePlatform(p) {
     setSelectedPlatforms((prev) =>
@@ -210,19 +254,8 @@ function GenerateView({
   }
 
   function addFiles(files) {
-    const validFiles = files.filter(
-      (f) => f.type.startsWith("image/") && f.size <= 5 * 1024 * 1024,
-    );
-    if (validFiles.length === 0) return;
-
-    const newFiles = validFiles.map((file) => ({
-      id: Date.now() + Math.random(),
-      name: file.name,
-      size: file.size,
-      file,
-      preview: URL.createObjectURL(file),
-    }));
-
+    const newFiles = toAttachments(files);
+    if (newFiles.length === 0) return;
     setUploadedFiles((prev) => [...prev, ...newFiles]);
   }
 
@@ -233,8 +266,7 @@ function GenerateView({
 
   function removeFile(id) {
     setUploadedFiles((prev) => {
-      const file = prev.find((f) => f.id === id);
-      if (file) URL.revokeObjectURL(file.preview);
+      releaseAttachment(prev.find((f) => f.id === id));
       return prev.filter((f) => f.id !== id);
     });
   }
@@ -279,12 +311,36 @@ function GenerateView({
         </button>
         <div>
           <h1 className="text-xl font-bold text-black">
-            Generate {period === "monthly" ? "Monthly" : "Weekly"} Strategy
+            Generate {period === "monthly" ? "Monthly" : "Weekly"}{" "}
+            {typeConfig.label} Strategy
           </h1>
           <p className="text-sm text-neutral-500">
             AI-driven content planning based on your Brand & Voice Identity.
           </p>
         </div>
+      </div>
+
+      <div
+        role="tablist"
+        aria-label="Content type"
+        className="flex w-fit items-center gap-1.5 rounded-lg bg-neutral-100 p-1 ring-1 ring-neutral-200"
+      >
+        {Object.entries(contentTypes).map(([type, config]) => (
+          <button
+            key={type}
+            type="button"
+            role="tab"
+            aria-selected={contentType === type}
+            onClick={() => changeContentType(type)}
+            className={`rounded-md px-4 py-2 text-xs font-semibold transition ${
+              contentType === type
+                ? "bg-brand-500 text-white shadow-sm"
+                : "bg-transparent text-neutral-500 hover:bg-brand-50 hover:text-brand-700"
+            }`}
+          >
+            {config.label}
+          </button>
+        ))}
       </div>
 
       <div className="grid grid-cols-1 gap-3 lg:grid-cols-2">
@@ -314,7 +370,7 @@ function GenerateView({
               <textarea
                 value={prompt}
                 onChange={(e) => setPrompt(e.target.value)}
-                placeholder="Describe the posts in detail. e.g., 'Write professional LinkedIn posts announcing our new autonomous coffee cart fleet in Tokyo...'"
+                placeholder={typeConfig.placeholder}
                 rows={11}
                 className={`w-full resize-none rounded-lg border border-neutral-200 bg-white px-4 pt-3 pb-3 text-sm text-neutral-700 outline-none placeholder:text-neutral-400 focus:border-brand-500 focus:ring-2 focus:ring-brand-500/20 ${
                   uploadedFiles.length > 0 ? "sm:pb-28" : "sm:pb-12"
@@ -323,7 +379,7 @@ function GenerateView({
               <input
                 ref={fileInputRef}
                 type="file"
-                accept="image/*"
+                accept={ATTACHMENT_ACCEPT}
                 multiple
                 onChange={handleFileSelect}
                 className="hidden"
@@ -337,18 +393,15 @@ function GenerateView({
                 }`}
               >
                 <div className="flex flex-wrap items-center gap-2">
-                  {/* Add Image */}
+                  {/* Add image or document */}
                   <button
                     type="button"
                     onClick={() => fileInputRef.current?.click()}
-                    aria-label="Add image"
+                    aria-label="Add image or document"
+                    title="Add image or document"
                     className="flex h-9 w-9 shrink-0 cursor-pointer items-center justify-center rounded-lg border border-neutral-200 bg-white transition hover:bg-neutral-50"
                   >
-                    <img
-                      src="/image2.png"
-                      alt=""
-                      className="h-5 w-5 object-contain"
-                    />
+                    <Upload className="h-5 w-5 text-brand-500" strokeWidth={2} />
                   </button>
                   {/* Reference URL */}
                   <div
@@ -497,40 +550,11 @@ function GenerateView({
                 {uploadedFiles.length > 0 && (
                   <div className="flex flex-wrap items-center gap-4 bg-white px-1 pb-1 pt-2">
                     {uploadedFiles.map((file) => (
-                      <div
+                      <AttachmentThumb
                         key={file.id}
-                        className="relative h-16 w-16 shrink-0"
-                      >
-                        <div className="h-full w-full overflow-hidden rounded-xl bg-white ring-1 ring-neutral-200">
-                          <img
-                            src={file.preview}
-                            alt={file.name}
-                            className="h-full w-full object-cover"
-                          />
-                        </div>
-                        <button
-                          onClick={(e) => {
-                            e.stopPropagation();
-                            removeFile(file.id);
-                          }}
-                          aria-label="Remove image"
-                          className="absolute -right-1.5 -top-1.5 flex h-5 w-5 cursor-pointer items-center justify-center rounded-full bg-brand-500 text-white shadow-sm ring-2 ring-white transition hover:bg-brand-600"
-                        >
-                          <svg
-                            className="h-3 w-3"
-                            fill="none"
-                            viewBox="0 0 24 24"
-                            stroke="currentColor"
-                          >
-                            <path
-                              strokeLinecap="round"
-                              strokeLinejoin="round"
-                              strokeWidth={2.5}
-                              d="M6 18L18 6M6 6l12 12"
-                            />
-                          </svg>
-                        </button>
-                      </div>
+                        attachment={file}
+                        onRemove={removeFile}
+                      />
                     ))}
                   </div>
                 )}
@@ -592,7 +616,7 @@ function GenerateView({
           <div className="rounded-lg border border-neutral-200 bg-neutral-50 p-4">
             <div className="mb-3 flex items-center justify-between">
               <label className="text-xs font-bold tracking-wide text-neutral-800">
-                POST FREQUENCY
+                {typeConfig.label.toUpperCase()} FREQUENCY
               </label>
               <span className="rounded-full bg-brand-50 px-3 py-1 text-xs font-semibold text-brand-700">
                 {freqLabel}
@@ -617,7 +641,7 @@ function GenerateView({
               PLATFORMS
             </label>
             <div className="flex flex-wrap gap-3">
-              {Object.entries(platformData).map(([name, icon]) => {
+              {Object.entries(typeConfig.platforms).map(([name, icon]) => {
                 const active = selectedPlatforms.includes(name);
                 return (
                   <label
@@ -735,7 +759,9 @@ function GenerateView({
               />
             </svg>
           )}
-          {generating ? "GENERATING…" : "Generate & Preview Posts"}
+          {generating
+            ? "GENERATING…"
+            : `Generate & Preview ${typeConfig.plural}`}
         </button>
         <button
           onClick={onBack}

@@ -591,15 +591,15 @@ export default function ThemesPage() {
             )}
           </div>
         ) : (
-          <div className="mt-4 grid grid-cols-1 gap-4 border-t border-neutral-200 pt-4 sm:grid-cols-3">
-            <div className="sm:col-span-2">
+          <div className="mt-4 flex flex-col gap-4 border-t border-neutral-200 pt-4 md:flex-row md:items-start">
+            <div className="w-full md:max-w-md">
               <label
                 htmlFor="brand-color-hex"
                 className="mb-1.5 block text-xs font-medium text-neutral-500"
               >
                 Brand Colors
               </label>
-              <div className="flex max-w-md items-center gap-2">
+              <div className="flex items-center gap-2">
                 <input
                   type="color"
                   value={isHexColor(colorDraft) ? colorDraft : "#000000"}
@@ -665,7 +665,7 @@ export default function ThemesPage() {
                 </p>
               )}
             </div>
-            <div>
+            <div className="w-full md:w-64">
               <label className="mb-1.5 block text-xs font-medium text-neutral-500">
                 Font
               </label>

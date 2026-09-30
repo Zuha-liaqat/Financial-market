@@ -152,16 +152,6 @@ const integrations = [
     icon: <ThreadsIcon className="h-6 w-6" />,
   },
   {
-    key: "tiktok",
-    name: "TikTok",
-    status: "INACTIVE",
-    description:
-      "Publish approved short-form videos and captions to your TikTok account.",
-    meta: { type: "none", text: "Not configured" },
-    action: "Enable",
-    icon: <TikTokIcon className="h-6 w-6" />,
-  },
-  {
     key: "pinterest",
     name: "Pinterest",
     status: "INACTIVE",
@@ -170,6 +160,17 @@ const integrations = [
     meta: { type: "none", text: "Not configured" },
     action: "Enable",
     icon: <PinterestIcon className="h-6 w-6" />,
+  },
+  {
+    key: "tiktok",
+    name: "TikTok",
+    comingSoon: true,
+    status: "INACTIVE",
+    description:
+      "Publish approved short-form videos and captions to your TikTok account.",
+    meta: { type: "none", text: "Not configured" },
+    action: "Enable",
+    icon: <TikTokIcon className="h-6 w-6" />,
   },
   blogIntegration(
     "website",
@@ -250,6 +251,30 @@ function IntegrationCard({
   statusLoading,
 }) {
   const disconnected = integration.status === "DISCONNECTED";
+
+  if (integration.comingSoon) {
+    return (
+      <div className="flex flex-col rounded-lg border border-dashed border-neutral-300 bg-neutral-50/60 p-4">
+        <div className="flex items-start justify-between">
+          <span className="flex h-9 w-9 items-center justify-center rounded-lg bg-white opacity-70 ring-1 ring-neutral-200">
+            {integration.icon}
+          </span>
+          <span className="rounded-full bg-amber-50 px-2.5 py-1 text-[10px] font-semibold tracking-wide text-amber-600 ring-1 ring-amber-200">
+            COMING SOON
+          </span>
+        </div>
+        <p className="mt-3 text-sm font-semibold text-neutral-700">
+          {integration.name}
+        </p>
+        <p className="mt-1 flex-1 text-xs leading-relaxed text-neutral-500">
+          {integration.description}
+        </p>
+        <div className="mt-4 border-t border-neutral-100 pt-3 text-xs font-medium text-neutral-400">
+          Available soon
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="flex flex-col rounded-lg border border-neutral-200 bg-white p-4 shadow-sm">

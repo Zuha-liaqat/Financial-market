@@ -1,4 +1,5 @@
 import { useState, useRef, useEffect, useCallback, useMemo } from "react";
+import CreditsBar from "../../components/CreditsBar";
 import { Upload } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { apiGeneratePlan, apiGetPlanner } from "../../lib/api";
@@ -319,6 +320,8 @@ function GenerateView({
           </p>
         </div>
       </div>
+
+      <CreditsBar />
 
       <div
         role="tablist"

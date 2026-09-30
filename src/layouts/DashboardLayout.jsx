@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react'
 import { Outlet } from 'react-router-dom'
 import Sidebar from '../components/Sidebar'
 import Topbar from '../components/Topbar'
+import SupportWidget from '../components/SupportWidget'
 import { SuccessToast } from '../components/Toast'
 import { subscribeGlobalToast } from '../lib/toastBus'
 
@@ -27,6 +28,7 @@ export default function DashboardLayout() {
         </main>
       </div>
       <GlobalToast />
+      <SupportWidget />
     </div>
   )
 }

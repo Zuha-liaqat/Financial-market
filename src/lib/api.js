@@ -766,3 +766,67 @@ export async function apiAdminListReferrals() {
   }
   return body
 }
+
+// --- Support chat -----------------------------------------------------------
+// The WebSocket client lives outside this module but needs the same base URL and
+// token, and a browser can't put an Authorization header on a WebSocket, so both
+// are exposed here rather than duplicating the localStorage key elsewhere.
+export function getApiBaseUrl() {
+  return API_BASE_URL
+}
+
+export function getApiToken() {
+  return getToken()
+}
+
+export async function apiGetSupportThread(companyId) {
+  const query = companyId ? `?company_id=${companyId}` : ''
+  const res = await authorizedRequest(`/api/support/messages${query}`)
+  const body = await res.json().catch(() => null)
+  if (!res.ok) {
+    throw new Error(extractErrorMessage(body, 'Failed to load the support chat'))
+  }
+  return body
+}
+
+export async function apiSendSupportMessage({ body: text }, companyId) {
+  const query = companyId ? `?company_id=${companyId}` : ''
+  const res = await authorizedRequest(`/api/support/messages${query}`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ body: text }),
+  })
+  const body = await res.json().catch(() => null)
+  if (!res.ok) {
+    throw new Error(extractErrorMessage(body, 'Failed to send the message'))
+  }
+  return body
+}
+
+export async function apiMarkSupportRead(companyId) {
+  const query = companyId ? `?company_id=${companyId}` : ''
+  const res = await authorizedRequest(`/api/support/messages/read${query}`, { method: 'POST' })
+  const body = await res.json().catch(() => null)
+  if (!res.ok) {
+    throw new Error(extractErrorMessage(body, 'Failed to mark the chat as read'))
+  }
+  return body
+}
+
+export async function apiGetSupportUnreadCount() {
+  const res = await authorizedRequest('/api/support/unread-count')
+  const body = await res.json().catch(() => null)
+  if (!res.ok) {
+    throw new Error(extractErrorMessage(body, 'Failed to load the unread count'))
+  }
+  return body?.unread_count || 0
+}
+
+export async function apiAdminListSupportConversations() {
+  const res = await authorizedRequest('/api/support/conversations')
+  const body = await res.json().catch(() => null)
+  if (!res.ok) {
+    throw new Error(extractErrorMessage(body, 'Failed to load support conversations'))
+  }
+  return body
+}

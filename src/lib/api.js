@@ -1,5 +1,3 @@
-import { SUPER_ADMIN_EMAIL, SUPER_ADMIN_PASSWORD } from '../data/auth'
-
 const API_BASE_URL = import.meta.env.VITE_API_BASE_URL
 const TOKEN_KEY = 'api_access_token'
 
@@ -42,17 +40,11 @@ export async function apiLogin(email, password) {
   return token
 }
 
-export async function apiSignup({ full_name, email, password, confirm_password, referrer_id }) {
+export async function apiSignup({ full_name, email, password, confirm_password }) {
   const res = await fetch(`${API_BASE_URL}/api/auth/signup`, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({
-      full_name,
-      email,
-      password,
-      confirm_password,
-      ...(referrer_id ? { referrer_id } : {}),
-    }),
+    body: JSON.stringify({ full_name, email, password, confirm_password }),
   })
   const body = await res.json().catch(() => null)
   if (!res.ok) {
@@ -66,10 +58,16 @@ export async function apiSignup({ full_name, email, password, confirm_password, 
   return token
 }
 
+// This used to sign in as the super admin whenever there was no token, using
+// credentials that shipped in the bundle - so anyone who opened the site, or
+// simply read the JavaScript, held a super admin session. A request made
+// without a login now fails instead.
 async function ensureAuthToken() {
-  const existing = getToken()
-  if (existing) return existing
-  return apiLogin(SUPER_ADMIN_EMAIL, SUPER_ADMIN_PASSWORD)
+  const token = getToken()
+  if (!token) {
+    throw new Error('You are signed out. Please sign in again.')
+  }
+  return token
 }
 
 async function authorizedRequest(path, options = {}, { retry = true } = {}) {
@@ -158,13 +156,12 @@ export async function apiSaveCredentials({ platform, client_id, client_secret, c
   return body
 }
 
-// Starts a one-click OAuth connection (Instagram, LinkedIn) and returns the provider's authorization URL.
-export async function apiConnectPlatform(platform, companyId) {
+export async function apiConnectInstagram(companyId) {
   const query = companyId ? `?company_id=${companyId}` : ''
-  const res = await authorizedRequest(`/api/credentials/${platform}/connect${query}`)
+  const res = await authorizedRequest(`/api/credentials/instagram/connect${query}`)
   const body = await res.json().catch(() => null)
   if (!res.ok) {
-    throw new Error(extractErrorMessage(body, 'Failed to start the connection'))
+    throw new Error(extractErrorMessage(body, 'Failed to start Instagram connection'))
   }
   return body
 }
@@ -222,7 +219,6 @@ export async function apiGeneratePost({
   date,
   start_time,
   images,
-  documents,
   company_id,
 }) {
   const formData = new FormData()
@@ -235,7 +231,6 @@ export async function apiGeneratePost({
   if (start_time) formData.append('start_time', start_time)
   if (company_id) formData.append('company_id', company_id)
   ;(images || []).forEach((file) => formData.append('images', file))
-  ;(documents || []).forEach((file) => formData.append('documents', file))
 
   const res = await authorizedRequest('/api/posts/generate', {
     method: 'POST',
@@ -398,7 +393,6 @@ export async function apiGenerateBlog({
   date,
   start_time,
   image,
-  documents,
   company_id,
 }) {
   const formData = new FormData()
@@ -412,7 +406,6 @@ export async function apiGenerateBlog({
   if (start_time) formData.append('start_time', start_time)
   if (company_id) formData.append('company_id', company_id)
   if (image) formData.append('image', image)
-  ;(documents || []).forEach((file) => formData.append('documents', file))
 
   const res = await authorizedRequest('/api/blogs/generate', {
     method: 'POST',
@@ -778,33 +771,66 @@ export async function apiAdminListReferrals() {
   return body
 }
 
-export async function apiGetCompanyReferralLink() {
-  const res = await authorizedRequest('/api/company/referral-link')
+// --- Support chat -----------------------------------------------------------
+// The WebSocket client lives outside this module but needs the same base URL and
+// token, and a browser can't put an Authorization header on a WebSocket, so both
+// are exposed here rather than duplicating the localStorage key elsewhere.
+export function getApiBaseUrl() {
+  return API_BASE_URL
+}
+
+export function getApiToken() {
+  return getToken()
+}
+
+export async function apiGetSupportThread(companyId) {
+  const query = companyId ? `?company_id=${companyId}` : ''
+  const res = await authorizedRequest(`/api/support/messages${query}`)
   const body = await res.json().catch(() => null)
   if (!res.ok) {
-    throw new Error(extractErrorMessage(body, 'Failed to load referral link'))
+    throw new Error(extractErrorMessage(body, 'Failed to load the support chat'))
   }
   return body
 }
 
-export async function apiSendCompanyReferral(email) {
-  const res = await authorizedRequest('/api/company/referrals/send', {
+export async function apiSendSupportMessage({ body: text }, companyId) {
+  const query = companyId ? `?company_id=${companyId}` : ''
+  const res = await authorizedRequest(`/api/support/messages${query}`, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ email }),
+    body: JSON.stringify({ body: text }),
   })
   const body = await res.json().catch(() => null)
   if (!res.ok) {
-    throw new Error(extractErrorMessage(body, 'Failed to send invite'))
+    throw new Error(extractErrorMessage(body, 'Failed to send the message'))
   }
   return body
 }
 
-export async function apiGetSuperAdminDashboard({ recent_limit = 5 } = {}) {
-  const res = await authorizedRequest(`/api/dashboard/super-admin?recent_limit=${recent_limit}`)
+export async function apiMarkSupportRead(companyId) {
+  const query = companyId ? `?company_id=${companyId}` : ''
+  const res = await authorizedRequest(`/api/support/messages/read${query}`, { method: 'POST' })
   const body = await res.json().catch(() => null)
   if (!res.ok) {
-    throw new Error(extractErrorMessage(body, 'Failed to load dashboard'))
+    throw new Error(extractErrorMessage(body, 'Failed to mark the chat as read'))
+  }
+  return body
+}
+
+export async function apiGetSupportUnreadCount() {
+  const res = await authorizedRequest('/api/support/unread-count')
+  const body = await res.json().catch(() => null)
+  if (!res.ok) {
+    throw new Error(extractErrorMessage(body, 'Failed to load the unread count'))
+  }
+  return body?.unread_count || 0
+}
+
+export async function apiAdminListSupportConversations() {
+  const res = await authorizedRequest('/api/support/conversations')
+  const body = await res.json().catch(() => null)
+  if (!res.ok) {
+    throw new Error(extractErrorMessage(body, 'Failed to load support conversations'))
   }
   return body
 }

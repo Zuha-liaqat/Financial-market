@@ -11,6 +11,10 @@ import {
 
 // How often the REST fallback re-reads the conversation when the socket is not up.
 const THREAD_POLL_MS = 4000
+// A slower read that keeps running even with a live socket. A serverless host
+// can put two people on different instances, where both sockets are open and
+// neither can see the other; without this the conversation would simply stop.
+const LIVE_SAFETY_POLL_MS = 15000
 // The unread badge and the inbox list always poll; they are cheap and only need
 // to be roughly live.
 const BADGE_POLL_MS = 20000
@@ -58,7 +62,12 @@ export function useSupportThread({ companyId = null, myRole = 'company', active 
       try {
         const thread = await apiGetSupportThread(companyId)
         setMessages((previous) => mergeById(previous, thread?.messages || []))
-        setOtherOnline(Boolean(thread?.other_online))
+        // While the socket is up it is the authority on presence: an HTTP call
+        // can land on an instance that knows nothing about the other side and
+        // would flip the dot to offline for no reason.
+        if (socketRef.current?.readyState !== WebSocket.OPEN) {
+          setOtherOnline(Boolean(thread?.other_online))
+        }
         setStatus('ready')
         setError('')
         return thread
@@ -180,10 +189,11 @@ export function useSupportThread({ companyId = null, myRole = 'company', active 
     }
   }, [active, companyId, myRole])
 
-  // REST fallback: only runs while the socket is not carrying the conversation.
+  // Polls quickly when there is no socket, and slowly alongside one as a net for
+  // the case where both ends are connected but cannot reach each other.
   useEffect(() => {
-    if (!active || isLive) return
-    const timer = setInterval(() => load({ quiet: true }), THREAD_POLL_MS)
+    if (!active) return
+    const timer = setInterval(() => load({ quiet: true }), isLive ? LIVE_SAFETY_POLL_MS : THREAD_POLL_MS)
     return () => clearInterval(timer)
   }, [active, isLive, load])
 

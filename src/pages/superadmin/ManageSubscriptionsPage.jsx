@@ -4,7 +4,7 @@ import { normalizePlan } from '../../data/subscriptionPlans'
 import { apiAdminListPlans, apiAdminUpdatePlan } from '../../lib/api'
 import { showGlobalToast } from '../../lib/toastBus'
 
-// Keyed by plan name, same as the plan themes on the user-facing pages.
+
 const planIcons = {
   Free: { icon: Feather, wrap: 'bg-neutral-100 text-neutral-500' },
   Pro: { icon: Rocket, wrap: 'bg-brand-100 text-brand-600' },

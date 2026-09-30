@@ -1,5 +1,3 @@
-import { SUPER_ADMIN_EMAIL, SUPER_ADMIN_PASSWORD } from '../data/auth'
-
 const API_BASE_URL = import.meta.env.VITE_API_BASE_URL
 const TOKEN_KEY = 'api_access_token'
 
@@ -60,10 +58,16 @@ export async function apiSignup({ full_name, email, password, confirm_password }
   return token
 }
 
+// This used to sign in as the super admin whenever there was no token, using
+// credentials that shipped in the bundle - so anyone who opened the site, or
+// simply read the JavaScript, held a super admin session. A request made
+// without a login now fails instead.
 async function ensureAuthToken() {
-  const existing = getToken()
-  if (existing) return existing
-  return apiLogin(SUPER_ADMIN_EMAIL, SUPER_ADMIN_PASSWORD)
+  const token = getToken()
+  if (!token) {
+    throw new Error('You are signed out. Please sign in again.')
+  }
+  return token
 }
 
 async function authorizedRequest(path, options = {}, { retry = true } = {}) {

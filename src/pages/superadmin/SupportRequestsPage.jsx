@@ -65,6 +65,11 @@ export default function SupportRequestsPage() {
   // Ids that arrived while this page was open, so a new row can announce itself.
   const [freshIds, setFreshIds] = useState(() => new Set())
   const knownIds = useRef(null)
+  // Bumped whenever a status is changed or a row is deleted. A read that was
+  // already in flight when that happened is answering about the state before
+  // it, so applying it would flip the row back for a moment before the next
+  // read corrects it - which is the flicker this prevents.
+  const mutations = useRef(0)
   const [selected, setSelected] = useState(() => new Set())
   // Either one row, or the whole selection.
   const [pendingDelete, setPendingDelete] = useState(null)
@@ -73,8 +78,10 @@ export default function SupportRequestsPage() {
 
   const load = useCallback(async ({ quiet = false } = {}) => {
     if (!quiet) setStatus((current) => (current === 'ready' ? current : 'loading'))
+    const startedAt = mutations.current
     try {
       const body = await apiAdminListSupportRequests()
+      if (startedAt !== mutations.current) return
       const rows = body?.requests || []
 
       // The first load is the baseline; anything unseen after that is new.
@@ -131,6 +138,7 @@ export default function SupportRequestsPage() {
     async (ids, next) => {
       // Shown straight away, then confirmed by the reload - a status change is
       // not worth a spinner.
+      mutations.current += 1
       setRequests((current) =>
         current.map((r) => (ids.includes(r.id) ? { ...r, status: next } : r)),
       )
@@ -192,6 +200,7 @@ export default function SupportRequestsPage() {
     setDeleting(true)
     setDeleteError('')
     try {
+      mutations.current += 1
       if (pendingDelete.kind === 'one') {
         await apiAdminDeleteSupportRequest(pendingDelete.id)
         setSelected((current) => {

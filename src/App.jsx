@@ -30,6 +30,7 @@ import ManageSubscriptionsPage from './pages/superadmin/ManageSubscriptionsPage'
 import AdminDashboardPage from './pages/superadmin/AdminDashboardPage'
 import ReferralsPage from './pages/superadmin/ReferralsPage'
 import SupportRequestsPage from './pages/superadmin/SupportRequestsPage'
+import SupportRequestDetailPage from './pages/superadmin/SupportRequestDetailPage'
 import DashboardLayout from './layouts/DashboardLayout'
 import RequireSuperAdmin from './components/RequireSuperAdmin'
 import RequireNotSuperAdmin from './components/RequireNotSuperAdmin'
@@ -137,6 +138,14 @@ function App() {
             element={
               <RequireSuperAdmin>
                 <SupportRequestsPage />
+              </RequireSuperAdmin>
+            }
+          />
+          <Route
+            path="/super-admin/support-requests/:id"
+            element={
+              <RequireSuperAdmin>
+                <SupportRequestDetailPage />
               </RequireSuperAdmin>
             }
           />

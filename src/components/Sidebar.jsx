@@ -23,6 +23,7 @@ import {
 } from 'lucide-react'
 import Logo from './Logo'
 import { isSuperAdmin, logout as clearSuperAdmin } from '../data/auth'
+import { apiAdminGetOpenSupportCount } from '../lib/api'
 import { apiListPlatformCredentials, CONNECTIONS_CHANGED_EVENT } from '../lib/api'
 import { socialChannels } from './channelIcons'
 
@@ -126,7 +127,7 @@ function HintBubble({ hint }) {
   )
 }
 
-function SidebarLink({ item, onClick }) {
+function SidebarLink({ item, onClick, badge = 0 }) {
   return (
     <NavLink to={item.to} onClick={onClick}>
       {({ isActive }) => (
@@ -140,6 +141,11 @@ function SidebarLink({ item, onClick }) {
           {isActive && <span className="absolute -left-3 top-1.5 bottom-1.5 w-1 rounded-r-full bg-brand-600" />}
           <IconTile icon={item.icon} color={item.color} active={isActive} />
           <span className="flex-1">{item.label}</span>
+          {badge > 0 && (
+            <span className="flex h-5 min-w-5 items-center justify-center rounded-full bg-brand-500 px-1.5 text-[10px] font-semibold text-white">
+              {badge > 99 ? '99+' : badge}
+            </span>
+          )}
           {item.hint && <HintBubble hint={item.hint} />}
         </span>
       )}
@@ -159,6 +165,7 @@ function SectionLabel({ children, action }) {
 export default function Sidebar({ open = false, onClose = () => { } }) {
   const navigate = useNavigate()
   const [superAdmin] = useState(() => isSuperAdmin())
+  const [openSupportCount, setOpenSupportCount] = useState(0)
   const [connected, setConnected] = useState({})
   const [newOpen, setNewOpen] = useState(false)
   const newRef = useRef(null)
@@ -170,6 +177,27 @@ export default function Sidebar({ open = false, onClose = () => { } }) {
   )
   const visibleAccountItems = accountItems.filter((item) => !item.hideForSuperAdmin || !superAdmin)
   const connectedChannels = socialChannels.filter((c) => connected[c.key])
+
+  // The badge is only for the Super Admin, who is the one these requests land on.
+  useEffect(() => {
+    if (!superAdmin) return undefined
+    let cancelled = false
+
+    function readCount() {
+      apiAdminGetOpenSupportCount()
+        .then((count) => {
+          if (!cancelled) setOpenSupportCount(count)
+        })
+        .catch(() => {})
+    }
+
+    readCount()
+    const timer = setInterval(readCount, 30000)
+    return () => {
+      cancelled = true
+      clearInterval(timer)
+    }
+  }, [superAdmin])
 
   useEffect(() => {
     if (superAdmin) return undefined
@@ -269,7 +297,12 @@ export default function Sidebar({ open = false, onClose = () => { } }) {
               <SectionLabel>Management</SectionLabel>
               <div className="space-y-0.5">
                 {managementItems.map((item) => (
-                  <SidebarLink key={item.to} item={item} onClick={onClose} />
+                  <SidebarLink
+                    key={item.to}
+                    item={item}
+                    onClick={onClose}
+                    badge={item.to === '/super-admin/support-requests' ? openSupportCount : 0}
+                  />
                 ))}
               </div>
             </div>

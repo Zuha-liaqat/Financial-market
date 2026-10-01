@@ -982,3 +982,21 @@ export async function apiAdminSetSupportRequestsStatus(ids, status) {
   }
   return body
 }
+
+export async function apiAdminGetSupportRequest(requestId) {
+  const res = await authorizedRequest(`/api/support-requests/${requestId}`)
+  const body = await res.json().catch(() => null)
+  if (!res.ok) {
+    throw new Error(extractErrorMessage(body, 'Failed to load the request'))
+  }
+  return body
+}
+
+export async function apiAdminGetOpenSupportCount() {
+  const res = await authorizedRequest('/api/support-requests/open-count')
+  const body = await res.json().catch(() => null)
+  if (!res.ok) {
+    throw new Error(extractErrorMessage(body, 'Failed to load the open request count'))
+  }
+  return body?.open || 0
+}

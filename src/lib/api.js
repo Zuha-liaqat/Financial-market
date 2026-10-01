@@ -876,3 +876,26 @@ export async function apiAdminListSupportConversations() {
   }
   return body
 }
+
+// --- Support form ------------------------------------------------------------
+export async function apiSubmitSupportRequest({ name, email, message }) {
+  const res = await authorizedRequest('/api/support-requests/', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ name, email, message }),
+  })
+  const body = await res.json().catch(() => null)
+  if (!res.ok) {
+    throw new Error(extractErrorMessage(body, 'Failed to send your message'))
+  }
+  return body
+}
+
+export async function apiAdminListSupportRequests() {
+  const res = await authorizedRequest('/api/support-requests/')
+  const body = await res.json().catch(() => null)
+  if (!res.ok) {
+    throw new Error(extractErrorMessage(body, 'Failed to load support requests'))
+  }
+  return body
+}

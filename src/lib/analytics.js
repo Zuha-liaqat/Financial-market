@@ -24,6 +24,8 @@ const PAGE_TITLES = [
   { pattern: /^\/integrations$/, title: 'Integrations' },
   { pattern: /^\/super-admin\/companies$/, title: 'Super Admin - Companies' },
   { pattern: /^\/super-admin\/subscriptions$/, title: 'Subscriptions' },
+  { pattern: /^\/support$/, title: 'Support' },
+  { pattern: /^\/super-admin\/support-requests$/, title: 'Support Requests' },
   { pattern: /^\/settings$/, title: 'Settings' },
 ]
 

@@ -20,6 +20,7 @@ import CalendarPage from './pages/User/CalendarPage'
 import PlannerPage from './pages/User/PlannerPage'
 import NotificationsPage from './pages/User/NotificationsPage'
 import SettingsPage from './pages/User/SettingsPage'
+import SupportPage from './pages/User/SupportPage'
 import IntegrationsPage from './pages/User/IntegrationsPage'
 import DocumentationPage from './pages/User/DocumentationPage'
 import ReferAndEarnPage from './pages/User/ReferAndEarnPage'
@@ -28,6 +29,7 @@ import SubscriptionsPage from './pages/User/SubscriptionsPage'
 import ManageSubscriptionsPage from './pages/superadmin/ManageSubscriptionsPage'
 import AdminDashboardPage from './pages/superadmin/AdminDashboardPage'
 import ReferralsPage from './pages/superadmin/ReferralsPage'
+import SupportRequestsPage from './pages/superadmin/SupportRequestsPage'
 import DashboardLayout from './layouts/DashboardLayout'
 import RequireSuperAdmin from './components/RequireSuperAdmin'
 import RequireNotSuperAdmin from './components/RequireNotSuperAdmin'
@@ -120,6 +122,22 @@ function App() {
               <RequireNotSuperAdmin>
                 <SubscriptionsPage />
               </RequireNotSuperAdmin>
+            }
+          />
+          <Route
+            path="/support"
+            element={
+              <RequireNotSuperAdmin>
+                <SupportPage />
+              </RequireNotSuperAdmin>
+            }
+          />
+          <Route
+            path="/super-admin/support-requests"
+            element={
+              <RequireSuperAdmin>
+                <SupportRequestsPage />
+              </RequireSuperAdmin>
             }
           />
           <Route path="/settings" element={<SettingsPage />} />

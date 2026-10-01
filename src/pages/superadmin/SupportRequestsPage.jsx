@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
-import { ChevronDown, LifeBuoy, RefreshCw, Search, Trash2, X } from 'lucide-react'
+import { useNavigate } from 'react-router-dom'
+import { ChevronRight, LifeBuoy, RefreshCw, Search, Trash2, X } from 'lucide-react'
 import {
   apiAdminDeleteSupportRequest,
   apiAdminDeleteSupportRequests,
@@ -51,13 +52,13 @@ function RowSkeleton() {
 }
 
 export default function SupportRequestsPage() {
+  const navigate = useNavigate()
   const [requests, setRequests] = useState([])
   const [total, setTotal] = useState(0)
   const [status, setStatus] = useState('loading')
   const [error, setError] = useState('')
   const [query, setQuery] = useState('')
   const [statusFilter, setStatusFilter] = useState('all')
-  const [openId, setOpenId] = useState(null)
   // Ids that arrived while this page was open, so a new row can announce itself.
   const [freshIds, setFreshIds] = useState(() => new Set())
   const knownIds = useRef(null)
@@ -343,15 +344,13 @@ export default function SupportRequestsPage() {
               )}
 
               {visible.map((row) => {
-                const open = openId === row.id
                 const fresh = freshIds.has(row.id)
                 const checked = selected.has(row.id)
                 return (
                   <tr
                     key={row.id}
                     onClick={() => {
-                      setOpenId(open ? null : row.id)
-                      // Reading it is what clears the highlight.
+                      // Opening it is what clears the highlight.
                       if (fresh) {
                         setFreshIds((current) => {
                           const next = new Set(current)
@@ -359,6 +358,7 @@ export default function SupportRequestsPage() {
                           return next
                         })
                       }
+                      navigate(`/super-admin/support-requests/${row.id}`)
                     }}
                     className={`cursor-pointer border-b border-neutral-100 align-top transition last:border-0 hover:bg-neutral-50 ${
                       checked ? 'bg-brand-50/40' : fresh ? 'bg-brand-50/60' : ''
@@ -399,10 +399,10 @@ export default function SupportRequestsPage() {
                     </td>
                     <td className="px-3 py-3.5 text-neutral-600">{row.company_name || '—'}</td>
                     <td className="max-w-md px-3 py-3.5 text-neutral-700">
-                      <span className={open ? 'block whitespace-pre-wrap' : 'block truncate'}>{row.message}</span>
+                      <span className="block truncate">{row.message}</span>
                       <span className="mt-1 flex items-center gap-1 text-[11px] font-medium text-neutral-400">
-                        <ChevronDown className={`h-3 w-3 transition ${open ? 'rotate-180' : ''}`} />
-                        {open ? 'Hide' : 'Read full message'}
+                        <ChevronRight className="h-3 w-3" />
+                        Open the full request
                       </span>
                     </td>
                     <td className="px-3 py-3.5 whitespace-nowrap text-neutral-500">{formatWhen(row.created_at)}</td>

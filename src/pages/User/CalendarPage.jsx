@@ -1,4 +1,5 @@
 import { useMemo, useState, useRef, useEffect } from "react";
+import { BloggerIcon, MediumIcon, WixIcon, WordPressIcon } from "../../components/BlogIcons";
 import { useNavigate } from "react-router-dom";
 import { CalendarDays, ChevronLeft, ChevronRight, Plus, X } from "lucide-react";
 import {
@@ -115,26 +116,10 @@ const platformLogos = {
       </svg>
     </span>
   ),
-  Medium: (
-    <span className="flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-black text-[9px] font-bold text-white">
-      M
-    </span>
-  ),
-  WordPress: (
-    <span className="flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-[#21759B] text-[9px] font-bold text-white">
-      W
-    </span>
-  ),
-  Blogger: (
-    <span className="flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-[#F57D00] text-[9px] font-bold text-white">
-      B
-    </span>
-  ),
-  Wix: (
-    <span className="flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-[#0C6EFC] text-[8px] font-bold text-white">
-      Wx
-    </span>
-  ),
+  Medium: <MediumIcon className="h-5 w-5 shrink-0" />,
+  WordPress: <WordPressIcon className="h-5 w-5 shrink-0" />,
+  Blogger: <BloggerIcon className="h-5 w-5 shrink-0" />,
+  Wix: <WixIcon className="h-5 w-5 shrink-0" />,
 };
 
 const schedulePlatforms = ["LinkedIn", "Instagram", "Twitter"];

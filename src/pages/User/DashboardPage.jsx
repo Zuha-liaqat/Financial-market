@@ -1,4 +1,5 @@
 import { useEffect, useId, useState } from "react";
+import { BloggerIcon, MediumIcon, WixIcon, WordPressIcon } from "../../components/BlogIcons";
 import { Link, useSearchParams } from "react-router-dom";
 import {
   ArrowRight,
@@ -87,10 +88,10 @@ const PLATFORM_META = {
       </svg>
     ),
   },
-  Medium: { color: "#000000", letter: "M" },
-  WordPress: { color: "#21759B", letter: "W" },
-  Blogger: { color: "#F57D00", letter: "B" },
-  Wix: { color: "#0C6EFC", letter: "Wx" },
+  Medium: { color: "#000000", glyph: <MediumIcon color="#fff" className="h-[55%] w-[55%]" /> },
+  WordPress: { color: "#21759B", glyph: <WordPressIcon color="#fff" className="h-[60%] w-[60%]" /> },
+  Blogger: { color: "#FF5722", glyph: <BloggerIcon color="#fff" className="h-[55%] w-[55%]" /> },
+  Wix: { color: "#0C6EFC", glyph: <WixIcon color="#fff" className="h-[65%] w-[65%]" /> },
 };
 
 function platformMeta(name) {

@@ -1,6 +1,7 @@
 // Brand tiles for every channel: a white logo on the platform's color.
 // Used by the sidebar and by the super admin tables so a channel looks the same everywhere.
 import { PinterestIcon, ThreadsIcon, TikTokIcon } from './SocialIcons'
+import { BloggerIcon, MediumIcon, WixIcon, WordPressIcon } from './BlogIcons'
 
 export const socialChannels = [
   {
@@ -65,10 +66,6 @@ export const socialChannels = [
   },
 ]
 
-function monogram(letter) {
-  return <span className="text-[10px] leading-none font-bold text-white">{letter}</span>
-}
-
 export const blogChannels = [
   {
     key: 'website',
@@ -85,10 +82,10 @@ export const blogChannels = [
     ),
     bg: 'bg-brand-500',
   },
-  { key: 'wordpress', label: 'WordPress', icon: monogram('W'), bg: 'bg-[#21759B]' },
-  { key: 'medium', label: 'Medium', icon: monogram('M'), bg: 'bg-black' },
-  { key: 'blogger', label: 'Blogger', icon: monogram('B'), bg: 'bg-[#F57D00]' },
-  { key: 'wix', label: 'Wix', icon: monogram('Wx'), bg: 'bg-[#0C6EFC]' },
+  { key: 'wordpress', label: 'WordPress', icon: <WordPressIcon color="#fff" className="h-4 w-4" />, bg: 'bg-[#21759B]' },
+  { key: 'medium', label: 'Medium', icon: <MediumIcon color="#fff" className="h-3.5 w-3.5" />, bg: 'bg-black' },
+  { key: 'blogger', label: 'Blogger', icon: <BloggerIcon color="#fff" className="h-3.5 w-3.5" />, bg: 'bg-[#FF5722]' },
+  { key: 'wix', label: 'Wix', icon: <WixIcon color="#fff" className="h-4 w-4" />, bg: 'bg-[#0C6EFC]' },
 ]
 
 const channelsByKey = Object.fromEntries(

@@ -1,6 +1,7 @@
 import { useState } from 'react'
-import { useLocation } from 'react-router-dom'
+import { Link, useLocation } from 'react-router-dom'
 import { useCurrentUser } from '../lib/useCurrentUser'
+import HeaderCredits from './HeaderCredits'
 
 function getInitials(name) {
   return (
@@ -71,6 +72,22 @@ export default function Topbar({ onMenuClick = () => {} }) {
       </div>
 
       <div className="flex shrink-0 items-center gap-1 sm:gap-4">
+        {!superAdmin && <HeaderCredits />}
+        <Link
+          to="/notifications"
+          className="rounded-full p-1.5 text-neutral-500 transition hover:bg-neutral-100 hover:text-black"
+          aria-label="Notifications"
+          title="Notifications"
+        >
+          <svg className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path
+              strokeLinecap="round"
+              strokeLinejoin="round"
+              strokeWidth={1.75}
+              d="M14.857 17.082a23.848 23.848 0 005.454-1.31A8.967 8.967 0 0118 9.75v-.7a6 6 0 00-6-6h-.75a6 6 0 00-6 6v.75a8.967 8.967 0 01-2.311 6.022 23.848 23.848 0 005.454 1.31m5.714 0a24.255 24.255 0 01-5.714 0m5.714 0a3 3 0 11-5.714 0"
+            />
+          </svg>
+        </Link>
         {/* <button
           className="rounded-full p-2 text-neutral-500 transition hover:bg-neutral-100 hover:text-black"
           aria-label="Help"

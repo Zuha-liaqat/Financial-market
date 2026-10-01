@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react";
 import {
+  apiConnectBlogger,
   apiConnectPlatform,
   apiDisconnectPlatform,
   CONNECTIONS_CHANGED_EVENT,
@@ -8,8 +9,9 @@ import {
   apiSaveCredentials,
 } from "../../lib/api";
 import CredentialsModal from "../../components/CredentialsModal";
+import { BloggerIcon, WixIcon, WordPressIcon } from "../../components/BlogIcons";
 import ConfirmDialog from "../../components/ConfirmDialog";
-import WebsiteConnectModal from "../../components/WebsiteConnectModal";
+import { ErrorToast } from "../../components/Toast";
 import {
   PinterestIcon,
   ThreadsIcon,
@@ -31,17 +33,6 @@ const metaStyles = {
   none: "text-neutral-400",
 };
 
-function MonogramIcon({ letter, bg }) {
-  return (
-    <span
-      className="flex h-6 w-6 items-center justify-center rounded-full text-[10px] font-bold text-white"
-      style={{ backgroundColor: bg }}
-    >
-      {letter}
-    </span>
-  );
-}
-
 const blogIntegration = (key, name, description, icon) => ({
   key,
   name,
@@ -54,7 +45,12 @@ const blogIntegration = (key, name, description, icon) => ({
 });
 
 // Platforms that connect with one click through OAuth instead of the credentials form.
-const OAUTH_PLATFORMS = ["instagram", "linkedin"];
+const OAUTH_PLATFORMS = ["instagram", "linkedin", "blogger"];
+
+// Platforms that have their own connect endpoint; all others use apiConnectPlatform.
+const CUSTOM_OAUTH_CONNECT = {
+  blogger: apiConnectBlogger,
+};
 
 const integrations = [
   {
@@ -196,26 +192,20 @@ const integrations = [
   blogIntegration(
     "wordpress",
     "WordPress",
-    "Publish generated blog posts directly to your WordPress site.",
-    <MonogramIcon letter="W" bg="#21759B" />,
-  ),
-  blogIntegration(
-    "medium",
-    "Medium",
-    "Share approved blog posts as stories on your Medium profile or publication.",
-    <MonogramIcon letter="M" bg="#000000" />,
+    "Publish and schedule blog articles directly to your WordPress site using Application Passwords.",
+    <WordPressIcon className="h-6 w-6" />,
   ),
   blogIntegration(
     "blogger",
     "Blogger",
-    "Post generated articles straight to your Blogger blog.",
-    <MonogramIcon letter="B" bg="#F57D00" />,
+    "Connect your Google account with Blogger and publish articles to your blog automatically.",
+    <BloggerIcon className="h-6 w-6" />,
   ),
   blogIntegration(
     "wix",
     "Wix",
-    "Publish blog posts to the blog on your Wix website.",
-    <MonogramIcon letter="Wx" bg="#0C6EFC" />,
+    "Connect your Wix site and publish blog posts directly using the Wix Blog API.",
+    <WixIcon className="h-6 w-6" />,
   ),
 ];
 
@@ -254,6 +244,7 @@ function IntegrationCard({
   statusLoading,
 }) {
   const disconnected = integration.status === "DISCONNECTED";
+  const unavailable = Boolean(integration.disabled);
 
   if (integration.comingSoon) {
     return (
@@ -280,7 +271,11 @@ function IntegrationCard({
   }
 
   return (
-    <div className="flex flex-col rounded-lg border border-neutral-200 bg-white p-4 shadow-sm">
+    <div
+      className={`flex flex-col rounded-lg border bg-white p-4 shadow-sm ${
+        unavailable ? "border-neutral-200 opacity-70" : "border-neutral-200"
+      }`}
+    >
       <div className="flex items-start justify-between">
         <span className="flex h-9 w-9 items-center justify-center rounded-lg bg-neutral-50 ring-1 ring-neutral-200">
           {integration.icon}
@@ -311,7 +306,9 @@ function IntegrationCard({
             </span>
           ) : (
             <span
-              className={`rounded-full px-2.5 py-1 text-[10px] font-semibold tracking-wide ${statusStyles[integration.status]}`}
+              className={`rounded-full px-2.5 py-1 text-[10px] font-semibold tracking-wide ${
+                statusStyles[integration.status]
+              }`}
             >
               {integration.status}
             </span>
@@ -319,7 +316,7 @@ function IntegrationCard({
           <Toggle
             checked={enabled}
             onChange={onToggle}
-            disabled={statusLoading}
+            disabled={statusLoading || unavailable}
             label={integration.name}
           />
         </div>
@@ -414,10 +411,11 @@ function IntegrationCard({
             <button
               type="button"
               onClick={onConfigure}
+              disabled={unavailable}
               data-track-label={`Integrations - ${disconnected ? "Reconnect" : integration.action} ${integration.name}`}
-              className={`cursor-pointer font-semibold hover:underline ${
+              className={`cursor-pointer font-semibold hover:underline disabled:cursor-not-allowed disabled:no-underline ${
                 disconnected ? "text-red-600" : "text-brand-600"
-              }`}
+              } ${unavailable ? "text-neutral-400" : ""}`}
             >
               {disconnected ? "Reconnect" : integration.action}
             </button>
@@ -476,10 +474,10 @@ export default function IntegrationsPage() {
     setConnectError("");
     setConnectingPlatform(integration.key);
     try {
-      const result = await apiConnectPlatform(
-        integration.key,
-        companyId ?? undefined,
-      );
+      const customConnect = CUSTOM_OAUTH_CONNECT[integration.key];
+      const result = customConnect
+        ? await customConnect(companyId ?? undefined)
+        : await apiConnectPlatform(integration.key, companyId ?? undefined);
       if (!result?.authorization_url) {
         throw new Error(
           `${integration.name} did not return an authorization URL.`,
@@ -530,6 +528,9 @@ export default function IntegrationsPage() {
   }
 
   function handleIntegrationAction(integration) {
+    // Website has no setup form any more, so Enable doesn't open anything for it.
+    if (integration.key === "website") return;
+    if (integration.disabled) return;
     if (OAUTH_PLATFORMS.includes(integration.key)) {
       handleOAuthConnect(integration);
       return;
@@ -543,10 +544,12 @@ export default function IntegrationsPage() {
     return {
       ...integration,
       status: isConnected ? "ACTIVE" : "INACTIVE",
-      action: isConnected ? "Configure" : "Enable",
+      action: isConnected ? "Configure" : integration.disabled ? "Unavailable" : "Enable",
       meta: isConnected
         ? { type: "connected", text: "Connected" }
-        : { type: "none", text: "Not configured" },
+        : integration.disabled
+          ? { type: "none", text: "Unavailable" }
+          : { type: "none", text: "Not configured" },
     };
   });
 
@@ -577,9 +580,7 @@ export default function IntegrationsPage() {
       ))}
 
       {connectError && (
-        <div className="rounded-lg border border-red-200 bg-red-50 px-4 py-2.5 text-sm text-red-600">
-          {connectError}
-        </div>
+        <ErrorToast message={connectError} onClose={() => setConnectError("")} />
       )}
 
       {disconnectTarget && (
@@ -594,14 +595,7 @@ export default function IntegrationsPage() {
         />
       )}
 
-      {configureTarget?.key === "website" && (
-        <WebsiteConnectModal
-          onClose={() => setConfigureTarget(null)}
-          onSave={handleSaveCredentials}
-        />
-      )}
-
-      {configureTarget && configureTarget.key !== "website" && (
+      {configureTarget && (
         <CredentialsModal
           platform={configureTarget.key}
           platformLabel={configureTarget.name}

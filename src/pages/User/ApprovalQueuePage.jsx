@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
+import { BloggerIcon, MediumIcon, WixIcon, WordPressIcon } from "../../components/BlogIcons";
 import { useNavigate, useSearchParams } from "react-router-dom";
 import { addNotification } from "../../data/notifications";
 import PostPreviewModal from "../../components/PostPreviewModal";
@@ -138,12 +139,12 @@ const platformIcons = {
       />
     </svg>
   ),
-  Medium: <MonogramIcon letter="M" bg="#000000" />,
-  WordPress: <MonogramIcon letter="W" bg="#21759B" />,
-  Blogger: <MonogramIcon letter="B" bg="#F57D00" />,
+  Medium: <MediumIcon className="h-6 w-6" />,
+  WordPress: <WordPressIcon className="h-6 w-6" />,
+  Blogger: <BloggerIcon className="h-6 w-6" />,
   Substack: <MonogramIcon letter="S" bg="#FF6719" />,
   Ghost: <MonogramIcon letter="G" bg="#15171A" />,
-  Wix: <MonogramIcon letter="Wx" bg="#0C6EFC" />,
+  Wix: <WixIcon className="h-6 w-6" />,
 };
 
 const statusStyles = {

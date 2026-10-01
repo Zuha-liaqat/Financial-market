@@ -15,24 +15,40 @@ function planName(code) {
 }
 
 // The signed-in company's plan and credit balance for the create pages.
-// The plan comes from the account; credits per plan are fixed here, and usage
-// isn't tracked by the API yet, so the balance is shown as full.
+// The plan and referral credits come from the account; credits per plan are fixed
+// here, and usage isn't tracked by the API yet, so the balance is shown as full.
 export function useCredits() {
-  const [planCode, setPlanCode] = useState(null)
+  const [account, setAccount] = useState(null)
 
   useEffect(() => {
     let cancelled = false
     apiGetCurrentUser()
-      .then((me) => !cancelled && setPlanCode(me?.plan?.plan_code || 'free'))
-      .catch(() => !cancelled && setPlanCode('free'))
+      .then(
+        (me) =>
+          !cancelled &&
+          setAccount({
+            planCode: me?.plan?.plan_code || 'free',
+            referralCredits: Number(me?.referral_credits) || 0,
+          }),
+      )
+      .catch(() => !cancelled && setAccount({ planCode: 'free', referralCredits: 0 }))
     return () => {
       cancelled = true
     }
   }, [])
 
-  if (!planCode) return { status: 'loading' }
+  if (!account) return { status: 'loading' }
 
-  const code = planCode in PLAN_CREDITS ? planCode : 'free'
-  const total = PLAN_CREDITS[code]
-  return { status: 'ready', planName: planName(code), total, remaining: total }
+  const code = account.planCode in PLAN_CREDITS ? account.planCode : 'free'
+  const planCredits = PLAN_CREDITS[code]
+  // Referral credits are added on top of the plan's credits; an unlimited plan stays unlimited.
+  const total = planCredits === null ? null : planCredits + account.referralCredits
+  return {
+    status: 'ready',
+    planName: planName(code),
+    planCredits,
+    referralCredits: account.referralCredits,
+    total,
+    remaining: total,
+  }
 }

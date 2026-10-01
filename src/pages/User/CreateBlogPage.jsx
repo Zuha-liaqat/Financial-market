@@ -1,5 +1,5 @@
 import { useState, useRef, useEffect } from "react";
-import CreditsBar from "../../components/CreditsBar";
+import { BloggerIcon, MediumIcon, WixIcon, WordPressIcon } from "../../components/BlogIcons";
 import { Upload } from "lucide-react";
 import { addNotification } from "../../data/notifications";
 import { apiGenerateBlog } from "../../lib/api";
@@ -39,17 +39,6 @@ const tagColors = [
   "bg-sky-100 text-sky-700",
 ];
 
-function MonogramIcon({ letter, bg }) {
-  return (
-    <span
-      className="flex h-6 w-6 shrink-0 items-center justify-center rounded-full text-[11px] font-bold text-white"
-      style={{ backgroundColor: bg }}
-    >
-      {letter}
-    </span>
-  );
-}
-
 const platformIcons = {
   Website: (
     <svg
@@ -67,10 +56,10 @@ const platformIcons = {
       />
     </svg>
   ),
-  Medium: <MonogramIcon letter="M" bg="#000000" />,
-  WordPress: <MonogramIcon letter="W" bg="#21759B" />,
-  Blogger: <MonogramIcon letter="B" bg="#F57D00" />,
-  Wix: <MonogramIcon letter="Wx" bg="#0C6EFC" />,
+  Medium: <MediumIcon className="h-6 w-6" />,
+  WordPress: <WordPressIcon className="h-6 w-6" />,
+  Blogger: <BloggerIcon className="h-6 w-6" />,
+  Wix: <WixIcon className="h-6 w-6" />,
 };
 
 const sectionIcons = {
@@ -328,8 +317,6 @@ export default function CreateBlogPage() {
 
   return (
     <div className="space-y-3">
-      <CreditsBar />
-
       {generateError && (
         <div className="rounded-lg border border-red-200 bg-red-50 px-4 py-2.5 text-sm text-red-600">
           {generateError}

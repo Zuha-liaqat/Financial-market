@@ -1,5 +1,5 @@
 import { useState, useRef, useEffect, useCallback, useMemo } from "react";
-import CreditsBar from "../../components/CreditsBar";
+import { BloggerIcon, MediumIcon, WixIcon, WordPressIcon } from "../../components/BlogIcons";
 import { Upload } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { apiGeneratePlan, apiGetPlanner } from "../../lib/api";
@@ -93,17 +93,6 @@ const platformData = {
   Pinterest: <PinterestIcon className="h-6 w-6" />,
 };
 
-function MonogramIcon({ letter, bg }) {
-  return (
-    <span
-      className="flex h-6 w-6 shrink-0 items-center justify-center rounded-full text-[11px] font-bold text-white"
-      style={{ backgroundColor: bg }}
-    >
-      {letter}
-    </span>
-  );
-}
-
 const blogPlatformData = {
   Website: (
     <svg
@@ -120,10 +109,10 @@ const blogPlatformData = {
       />
     </svg>
   ),
-  Medium: <MonogramIcon letter="M" bg="#000000" />,
-  WordPress: <MonogramIcon letter="W" bg="#21759B" />,
-  Blogger: <MonogramIcon letter="B" bg="#F57D00" />,
-  Wix: <MonogramIcon letter="Wx" bg="#0C6EFC" />,
+  Medium: <MediumIcon className="h-6 w-6" />,
+  WordPress: <WordPressIcon className="h-6 w-6" />,
+  Blogger: <BloggerIcon className="h-6 w-6" />,
+  Wix: <WixIcon className="h-6 w-6" />,
 };
 
 const queuePlatformIcons = { ...platformData, ...blogPlatformData };
@@ -320,8 +309,6 @@ function GenerateView({
           </p>
         </div>
       </div>
-
-      <CreditsBar />
 
       <div
         role="tablist"

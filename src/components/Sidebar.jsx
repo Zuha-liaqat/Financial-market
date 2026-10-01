@@ -22,7 +22,7 @@ import {
 } from 'lucide-react'
 import Logo from './Logo'
 import { isSuperAdmin, logout as clearSuperAdmin } from '../data/auth'
-import { apiListPlatformCredentials } from '../lib/api'
+import { apiListPlatformCredentials, CONNECTIONS_CHANGED_EVENT } from '../lib/api'
 import { socialChannels } from './channelIcons'
 
 const navItems = [
@@ -167,11 +167,15 @@ export default function Sidebar({ open = false, onClose = () => { } }) {
   const connectedChannels = socialChannels.filter((c) => connected[c.key])
 
   useEffect(() => {
-    if (!superAdmin) {
+    if (superAdmin) return undefined
+    function loadConnected() {
       apiListPlatformCredentials()
         .then((list) => setConnected(Object.fromEntries((list || []).map((p) => [p.platform, p.is_connected]))))
         .catch(() => {})
     }
+    loadConnected()
+    window.addEventListener(CONNECTIONS_CHANGED_EVENT, loadConnected)
+    return () => window.removeEventListener(CONNECTIONS_CHANGED_EVENT, loadConnected)
   }, [superAdmin])
 
   function closeAll() {

@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react'
 import {
+  apiConnectSlackNotifications,
   apiDisconnectNotificationChannel,
   apiListNotificationChannels,
   apiSaveNotificationChannel,
@@ -48,8 +49,9 @@ const channelMeta = {
   },
   slack: {
     name: 'Slack',
-    webhookPlaceholder: 'https://hooks.slack.com/services/…',
-    webhookHelp: 'Found under Slack → Apps → Incoming Webhooks.',
+    // Connects through Slack's own sign-in page instead of a pasted webhook URL.
+    oauth: true,
+    oauthHelp: "You'll be sent to Slack to pick the workspace and channel for notifications.",
     icon: (
       <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-neutral-50 ring-1 ring-neutral-200">
         <svg className="h-5 w-5" viewBox="0 0 122.8 122.8">
@@ -116,7 +118,8 @@ function ChannelCardSkeleton() {
 
 function ChannelCard({ channel, onChange }) {
   const meta = channelMeta[channel.provider]
-  const needsWebhook = channel.provider !== 'whatsapp'
+  const usesOAuth = Boolean(meta.oauth)
+  const needsWebhook = channel.provider !== 'whatsapp' && !usesOAuth
   const needsTarget = channel.provider === 'whatsapp'
 
   const [target, setTarget] = useState(channel.target || '')
@@ -149,6 +152,20 @@ function ChannelCard({ channel, onChange }) {
     } catch (err) {
       setSaveError(err.message)
     } finally {
+      setSaving(false)
+    }
+  }
+
+  async function handleOAuthConnect() {
+    setSaving(true)
+    setSaveError('')
+    try {
+      const result = await apiConnectSlackNotifications()
+      const url = result?.authorization_url || result?.url || result?.auth_url
+      if (!url) throw new Error(`${meta.name} did not return an authorization URL.`)
+      window.location.href = url
+    } catch (err) {
+      setSaveError(err.message)
       setSaving(false)
     }
   }
@@ -262,18 +279,35 @@ function ChannelCard({ channel, onChange }) {
         </div>
       )}
 
-      <button
-        onClick={handleSave}
-        disabled={saving}
-        data-track-label={`${meta.name} - ${channel.is_connected ? 'Save' : 'Connect'}`}
-        className={`mt-4 shrink-0 cursor-pointer rounded-md px-3 py-1.5 text-xs font-semibold transition disabled:cursor-not-allowed disabled:opacity-50 ${
-          channel.is_connected
-            ? 'text-neutral-600 ring-1 ring-neutral-200 hover:bg-neutral-50'
-            : 'bg-brand-500 text-white hover:bg-brand-600'
-        }`}
-      >
-        {saving ? 'Saving…' : channel.is_connected ? 'Save Changes' : 'Connect'}
-      </button>
+      {usesOAuth && !channel.is_connected && (
+        <p className="mt-4 text-[11px] text-neutral-400">{meta.oauthHelp}</p>
+      )}
+
+      {usesOAuth ? (
+        !channel.is_connected && (
+          <button
+            onClick={handleOAuthConnect}
+            disabled={saving}
+            data-track-label={`${meta.name} - Connect`}
+            className="mt-3 shrink-0 cursor-pointer rounded-md bg-brand-500 px-3 py-1.5 text-xs font-semibold text-white transition hover:bg-brand-600 disabled:cursor-not-allowed disabled:opacity-50"
+          >
+            {saving ? 'Redirecting…' : `Connect with ${meta.name}`}
+          </button>
+        )
+      ) : (
+        <button
+          onClick={handleSave}
+          disabled={saving}
+          data-track-label={`${meta.name} - ${channel.is_connected ? 'Save' : 'Connect'}`}
+          className={`mt-4 shrink-0 cursor-pointer rounded-md px-3 py-1.5 text-xs font-semibold transition disabled:cursor-not-allowed disabled:opacity-50 ${
+            channel.is_connected
+              ? 'text-neutral-600 ring-1 ring-neutral-200 hover:bg-neutral-50'
+              : 'bg-brand-500 text-white hover:bg-brand-600'
+          }`}
+        >
+          {saving ? 'Saving…' : channel.is_connected ? 'Save Changes' : 'Connect'}
+        </button>
+      )}
       {saveError && <ErrorToast message={saveError} onClose={() => setSaveError('')} />}
 
       <div className="mt-4 space-y-2.5">

@@ -1,11 +1,14 @@
 import { useEffect, useState } from "react";
 import {
   apiConnectPlatform,
+  apiDisconnectPlatform,
+  CONNECTIONS_CHANGED_EVENT,
   apiGetCurrentUser,
   apiListPlatformCredentials,
   apiSaveCredentials,
 } from "../../lib/api";
 import CredentialsModal from "../../components/CredentialsModal";
+import ConfirmDialog from "../../components/ConfirmDialog";
 import WebsiteConnectModal from "../../components/WebsiteConnectModal";
 import {
   PinterestIcon,
@@ -432,6 +435,9 @@ export default function IntegrationsPage() {
   const [statusLoading, setStatusLoading] = useState(true);
   const [connectingPlatform, setConnectingPlatform] = useState(null);
   const [connectError, setConnectError] = useState("");
+  const [disconnectTarget, setDisconnectTarget] = useState(null);
+  const [disconnecting, setDisconnecting] = useState(false);
+  const [disconnectError, setDisconnectError] = useState("");
 
   function loadConnectedStatus() {
     apiListPlatformCredentials()
@@ -462,6 +468,7 @@ export default function IntegrationsPage() {
       return;
     }
     loadConnectedStatus();
+    window.dispatchEvent(new Event(CONNECTIONS_CHANGED_EVENT));
     setConfigureTarget(null);
   }
 
@@ -483,6 +490,43 @@ export default function IntegrationsPage() {
       setConnectError(err.message);
       setConnectingPlatform(null);
     }
+  }
+
+  function closeDisconnectDialog() {
+    setDisconnectTarget(null);
+    setDisconnectError("");
+  }
+
+  async function confirmDisconnect() {
+    const target = disconnectTarget;
+    setDisconnecting(true);
+    setDisconnectError("");
+    try {
+      const result = await apiDisconnectPlatform(
+        target.key,
+        companyId ?? undefined,
+      );
+      setConnectedMap((prev) => ({
+        ...prev,
+        [target.key]: Boolean(result?.is_connected),
+      }));
+      window.dispatchEvent(new Event(CONNECTIONS_CHANGED_EVENT));
+      closeDisconnectDialog();
+      loadConnectedStatus();
+    } catch (err) {
+      setDisconnectError(err.message);
+    } finally {
+      setDisconnecting(false);
+    }
+  }
+
+  // Turning a connected channel off asks to disconnect it; turning it on starts the connect flow.
+  function handleToggle(integration) {
+    if (connectedMap[integration.key]) {
+      setDisconnectTarget(integration);
+      return;
+    }
+    handleIntegrationAction(integration);
   }
 
   function handleIntegrationAction(integration) {
@@ -521,7 +565,7 @@ export default function IntegrationsPage() {
                   key={integration.key}
                   integration={integration}
                   enabled={Boolean(connectedMap[integration.key])}
-                  onToggle={() => handleIntegrationAction(integration)}
+                  onToggle={() => handleToggle(integration)}
                   onConfigure={() => handleIntegrationAction(integration)}
                   statusLoading={
                     statusLoading || connectingPlatform === integration.key
@@ -536,6 +580,18 @@ export default function IntegrationsPage() {
         <div className="rounded-lg border border-red-200 bg-red-50 px-4 py-2.5 text-sm text-red-600">
           {connectError}
         </div>
+      )}
+
+      {disconnectTarget && (
+        <ConfirmDialog
+          title={`Disconnect ${disconnectTarget.name}`}
+          message={`Approved content will stop publishing to ${disconnectTarget.name}. You can connect it again at any time.`}
+          confirmLabel={disconnecting ? "Disconnecting…" : "Disconnect"}
+          confirming={disconnecting}
+          error={disconnectError}
+          onCancel={closeDisconnectDialog}
+          onConfirm={confirmDisconnect}
+        />
       )}
 
       {configureTarget?.key === "website" && (

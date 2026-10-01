@@ -173,6 +173,21 @@ export async function apiConnectPlatform(platform, companyId) {
   return body
 }
 
+export async function apiDisconnectPlatform(platform, companyId) {
+  const query = companyId ? `?company_id=${companyId}` : ''
+  const res = await authorizedRequest(`/api/credentials/disconnect/${platform}${query}`, {
+    method: 'DELETE',
+  })
+  const body = await res.json().catch(() => null)
+  if (!res.ok) {
+    throw new Error(extractErrorMessage(body, 'Failed to disconnect'))
+  }
+  return body
+}
+
+// Fired after a channel is connected or disconnected so other parts of the page (the sidebar) can refresh.
+export const CONNECTIONS_CHANGED_EVENT = 'platform-connections-changed'
+
 export async function apiListNotificationChannels(companyId) {
   const query = companyId ? `?company_id=${companyId}` : ''
   const res = await authorizedRequest(`/api/notifications/channels${query}`)
@@ -203,6 +218,17 @@ export async function apiDisconnectNotificationChannel(provider, companyId) {
   const body = await res.json().catch(() => null)
   if (!res.ok) {
     throw new Error(extractErrorMessage(body, 'Failed to disconnect channel'))
+  }
+  return body
+}
+
+// Starts Slack's OAuth flow for notifications and returns the URL to send the user to.
+export async function apiConnectSlackNotifications(companyId) {
+  const query = companyId ? `?company_id=${companyId}` : ''
+  const res = await authorizedRequest(`/api/notifications/oauth/slack/connect${query}`)
+  const body = await res.json().catch(() => null)
+  if (!res.ok) {
+    throw new Error(extractErrorMessage(body, 'Failed to start the Slack connection'))
   }
   return body
 }

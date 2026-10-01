@@ -108,7 +108,7 @@ export default function SupportRequestDetailPage() {
 
   if (status === 'loading') {
     return (
-      <div className="mx-auto max-w-3xl space-y-3">
+      <div className="space-y-3">
         <div className="h-8 w-40 animate-pulse rounded bg-neutral-200" />
         <div className="h-48 animate-pulse rounded-lg bg-neutral-100" />
         <div className="h-64 animate-pulse rounded-lg bg-neutral-100" />
@@ -118,7 +118,7 @@ export default function SupportRequestDetailPage() {
 
   if (status === 'error' || !request) {
     return (
-      <div className="mx-auto max-w-3xl">
+      <div>
         <Link
           to="/super-admin/support-requests"
           className="mb-4 inline-flex items-center gap-1.5 text-sm font-medium text-neutral-600 hover:text-black"
@@ -139,7 +139,7 @@ export default function SupportRequestDetailPage() {
   const closed = request.status === 'closed'
 
   return (
-    <div className="mx-auto max-w-3xl">
+    <div>
       <div className="mb-4 flex flex-wrap items-center justify-between gap-3">
         <Link
           to="/super-admin/support-requests"

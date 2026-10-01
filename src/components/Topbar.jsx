@@ -30,6 +30,8 @@ const pageTitles = [
   { match: '/super-admin/referrals', label: 'Referrals' },
   { match: '/documentation', label: 'Documentation' },
   { match: '/refer-and-earn', label: 'Refer & Earn' },
+  { match: '/super-admin/support-requests', label: 'Support Requests' },
+  { match: '/support', label: 'Support' },
   { match: '/settings', label: 'Settings' },
 ]
 

@@ -15,6 +15,7 @@ import {
   Palette,
   Plug,
   Plus,
+  LifeBuoy,
   Settings,
   NotebookPen,
   SquarePen,
@@ -43,6 +44,7 @@ const managementItems = [
   { to: '/super-admin/companies', label: 'Companies', icon: Building2, color: '#0284c7' },
   { to: '/super-admin/plans', label: 'Subscriptions', icon: CreditCard, color: '#7c3aed' },
   { to: '/super-admin/referrals', label: 'Referrals', icon: Gift, color: '#ea580c' },
+  { to: '/super-admin/support-requests', label: 'Support Requests', icon: LifeBuoy, color: '#0891b2' },
 ]
 
 const accountItems = [
@@ -61,6 +63,9 @@ const referItem = {
     text: 'Invite a friend with your referral link. When they sign up, 100 credits are added to your account.',
   },
 }
+// Sits directly above Settings. The Super Admin does not see it - they are the
+// ones these requests go to.
+const supportItem = { to: '/support', label: 'Support', icon: LifeBuoy, color: '#0891b2' }
 const settingsItem = { to: '/settings', label: 'Settings', icon: Settings, color: '#475569' }
 
 // Closes a popover when the user clicks outside it or presses Escape.
@@ -326,6 +331,7 @@ export default function Sidebar({ open = false, onClose = () => { } }) {
 
         <div className="space-y-0.5 border-t border-neutral-200 p-3">
           {!superAdmin && <SidebarLink item={referItem} onClick={onClose} />}
+          {!superAdmin && <SidebarLink item={supportItem} onClick={onClose} />}
           <SidebarLink item={settingsItem} onClick={onClose} />
           <button
             type="button"

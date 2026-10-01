@@ -902,3 +902,74 @@ export async function apiAdminListSupportConversations() {
   }
   return body
 }
+
+// --- Support form ------------------------------------------------------------
+export async function apiSubmitSupportRequest({ name, email, message }) {
+  const res = await authorizedRequest('/api/support-requests/', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ name, email, message }),
+  })
+  const body = await res.json().catch(() => null)
+  if (!res.ok) {
+    throw new Error(extractErrorMessage(body, 'Failed to send your message'))
+  }
+  return body
+}
+
+export async function apiAdminListSupportRequests() {
+  const res = await authorizedRequest('/api/support-requests/')
+  const body = await res.json().catch(() => null)
+  if (!res.ok) {
+    throw new Error(extractErrorMessage(body, 'Failed to load support requests'))
+  }
+  return body
+}
+
+export async function apiAdminDeleteSupportRequest(requestId) {
+  const res = await authorizedRequest(`/api/support-requests/${requestId}`, { method: 'DELETE' })
+  const body = await res.json().catch(() => null)
+  if (!res.ok) {
+    throw new Error(extractErrorMessage(body, 'Failed to delete the request'))
+  }
+  return body
+}
+
+export async function apiAdminDeleteSupportRequests(ids) {
+  const res = await authorizedRequest('/api/support-requests/delete', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ ids }),
+  })
+  const body = await res.json().catch(() => null)
+  if (!res.ok) {
+    throw new Error(extractErrorMessage(body, 'Failed to delete the requests'))
+  }
+  return body
+}
+
+export async function apiAdminSetSupportRequestStatus(requestId, status) {
+  const res = await authorizedRequest(`/api/support-requests/${requestId}`, {
+    method: 'PATCH',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ status }),
+  })
+  const body = await res.json().catch(() => null)
+  if (!res.ok) {
+    throw new Error(extractErrorMessage(body, 'Failed to update the status'))
+  }
+  return body
+}
+
+export async function apiAdminSetSupportRequestsStatus(ids, status) {
+  const res = await authorizedRequest('/api/support-requests/status', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ ids, status }),
+  })
+  const body = await res.json().catch(() => null)
+  if (!res.ok) {
+    throw new Error(extractErrorMessage(body, 'Failed to update the statuses'))
+  }
+  return body
+}

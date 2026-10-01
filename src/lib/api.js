@@ -899,3 +899,25 @@ export async function apiAdminListSupportRequests() {
   }
   return body
 }
+
+export async function apiAdminDeleteSupportRequest(requestId) {
+  const res = await authorizedRequest(`/api/support-requests/${requestId}`, { method: 'DELETE' })
+  const body = await res.json().catch(() => null)
+  if (!res.ok) {
+    throw new Error(extractErrorMessage(body, 'Failed to delete the request'))
+  }
+  return body
+}
+
+export async function apiAdminDeleteSupportRequests(ids) {
+  const res = await authorizedRequest('/api/support-requests/delete', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ ids }),
+  })
+  const body = await res.json().catch(() => null)
+  if (!res.ok) {
+    throw new Error(extractErrorMessage(body, 'Failed to delete the requests'))
+  }
+  return body
+}

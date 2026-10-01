@@ -1,12 +1,17 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
-import { ChevronDown, LifeBuoy, RefreshCw, Search, X } from 'lucide-react'
+import { ChevronDown, LifeBuoy, RefreshCw, Search, Trash2, X } from 'lucide-react'
+import {
+  apiAdminDeleteSupportRequest,
+  apiAdminDeleteSupportRequests,
+  apiAdminListSupportRequests,
+} from '../../lib/api'
+import ConfirmDialog from '../../components/ConfirmDialog'
+import { ErrorToast } from '../../components/Toast'
 
 // A request is not a conversation, so a few seconds behind is fine - and a poll
 // is steadier here than a socket, which on a serverless host usually lands on a
 // different instance from the one that saved the request.
 const POLL_MS = 10000
-import { apiAdminListSupportRequests } from '../../lib/api'
-import { ErrorToast } from '../../components/Toast'
 
 function formatWhen(value) {
   if (!value) return '—'
@@ -28,7 +33,7 @@ function initials(name) {
 function RowSkeleton() {
   return (
     <tr className="border-b border-neutral-100">
-      {[...Array(5)].map((_, i) => (
+      {[...Array(7)].map((_, i) => (
         <td key={i} className="px-4 py-4">
           <div className="h-3 animate-pulse rounded bg-neutral-200" />
         </td>
@@ -47,6 +52,11 @@ export default function SupportRequestsPage() {
   // Ids that arrived while this page was open, so a new row can announce itself.
   const [freshIds, setFreshIds] = useState(() => new Set())
   const knownIds = useRef(null)
+  const [selected, setSelected] = useState(() => new Set())
+  // Either one row, or the whole selection.
+  const [pendingDelete, setPendingDelete] = useState(null)
+  const [deleting, setDeleting] = useState(false)
+  const [deleteError, setDeleteError] = useState('')
 
   const load = useCallback(async ({ quiet = false } = {}) => {
     if (!quiet) setStatus((current) => (current === 'ready' ? current : 'loading'))
@@ -66,6 +76,8 @@ export default function SupportRequestsPage() {
         knownIds.current = ids
       }
 
+      // Drop anything that has since been deleted, so the count never lies.
+      setSelected((current) => new Set([...current].filter((id) => ids.has(id))))
       setRequests(rows)
       setTotal(body?.total || 0)
       setStatus('ready')
@@ -88,6 +100,53 @@ export default function SupportRequestsPage() {
       `${r.name || ''} ${r.email || ''} ${r.company_name || ''} ${r.message || ''}`.toLowerCase().includes(term),
     )
   }, [requests, query])
+
+  const allVisibleSelected = visible.length > 0 && visible.every((r) => selected.has(r.id))
+
+  const toggleOne = (id) => {
+    setSelected((current) => {
+      const next = new Set(current)
+      if (next.has(id)) next.delete(id)
+      else next.add(id)
+      return next
+    })
+  }
+
+  const toggleAllVisible = () => {
+    setSelected((current) => {
+      const next = new Set(current)
+      if (allVisibleSelected) visible.forEach((r) => next.delete(r.id))
+      else visible.forEach((r) => next.add(r.id))
+      return next
+    })
+  }
+
+  const confirmDelete = async () => {
+    if (!pendingDelete) return
+    setDeleting(true)
+    setDeleteError('')
+    try {
+      if (pendingDelete.kind === 'one') {
+        await apiAdminDeleteSupportRequest(pendingDelete.id)
+        setSelected((current) => {
+          const next = new Set(current)
+          next.delete(pendingDelete.id)
+          return next
+        })
+      } else {
+        await apiAdminDeleteSupportRequests(pendingDelete.ids)
+        setSelected(new Set())
+      }
+      setPendingDelete(null)
+      await load({ quiet: true })
+    } catch (err) {
+      setDeleteError(err.message || 'Failed to delete')
+    } finally {
+      setDeleting(false)
+    }
+  }
+
+  const deleteCount = pendingDelete?.kind === 'one' ? 1 : pendingDelete?.ids.length || 0
 
   return (
     <div>
@@ -140,16 +199,53 @@ export default function SupportRequestsPage() {
         </div>
       </div>
 
+      {selected.size > 0 && (
+        <div className="mb-3 flex items-center justify-between gap-3 rounded-lg border border-brand-200 bg-brand-50/70 px-4 py-2.5">
+          <p className="text-sm font-medium text-brand-800">
+            {selected.size} selected
+          </p>
+          <div className="flex items-center gap-2">
+            <button
+              type="button"
+              onClick={() => setSelected(new Set())}
+              className="rounded-md px-3 py-1.5 text-xs font-medium text-neutral-600 ring-1 ring-neutral-200 transition hover:bg-white"
+            >
+              Clear
+            </button>
+            <button
+              type="button"
+              onClick={() => setPendingDelete({ kind: 'many', ids: [...selected] })}
+              className="flex items-center gap-1.5 rounded-md bg-red-600 px-3 py-1.5 text-xs font-semibold text-white transition hover:bg-red-700"
+              data-track-label="Support Requests - Bulk Delete"
+            >
+              <Trash2 className="h-3.5 w-3.5" />
+              Delete selected
+            </button>
+          </div>
+        </div>
+      )}
+
       <div className="rounded-lg border border-neutral-200 bg-white shadow-sm">
         <div className="overflow-x-auto">
-          <table className="w-full min-w-[820px] text-left text-sm">
+          <table className="w-full min-w-[900px] text-left text-sm">
             <thead>
               <tr className="border-b border-neutral-200 bg-neutral-50 text-[10px] font-semibold tracking-widest text-neutral-400">
-                <th className="px-4 py-3.5">FROM</th>
+                <th className="w-10 px-4 py-3.5">
+                  <input
+                    type="checkbox"
+                    checked={allVisibleSelected}
+                    onChange={toggleAllVisible}
+                    disabled={visible.length === 0}
+                    aria-label="Select all"
+                    className="h-4 w-4 cursor-pointer rounded border-neutral-300 accent-brand-500"
+                  />
+                </th>
+                <th className="px-3 py-3.5">FROM</th>
                 <th className="px-3 py-3.5">COMPANY</th>
                 <th className="px-3 py-3.5">MESSAGE</th>
                 <th className="px-3 py-3.5">SENT</th>
-                <th className="px-3 py-3.5 text-right">EMAILED</th>
+                <th className="px-3 py-3.5">EMAILED</th>
+                <th className="px-3 py-3.5 text-right">ACTIONS</th>
               </tr>
             </thead>
             <tbody>
@@ -157,7 +253,7 @@ export default function SupportRequestsPage() {
 
               {status === 'ready' && visible.length === 0 && (
                 <tr>
-                  <td colSpan={5} className="px-4 py-14 text-center">
+                  <td colSpan={7} className="px-4 py-14 text-center">
                     <div className="mx-auto mb-3 flex h-12 w-12 items-center justify-center rounded-full bg-neutral-100">
                       <LifeBuoy className="h-5 w-5 text-neutral-400" strokeWidth={1.5} />
                     </div>
@@ -171,6 +267,7 @@ export default function SupportRequestsPage() {
               {visible.map((row) => {
                 const open = openId === row.id
                 const fresh = freshIds.has(row.id)
+                const checked = selected.has(row.id)
                 return (
                   <tr
                     key={row.id}
@@ -186,10 +283,19 @@ export default function SupportRequestsPage() {
                       }
                     }}
                     className={`cursor-pointer border-b border-neutral-100 align-top transition last:border-0 hover:bg-neutral-50 ${
-                      fresh ? 'bg-brand-50/60' : ''
+                      checked ? 'bg-brand-50/40' : fresh ? 'bg-brand-50/60' : ''
                     }`}
                   >
-                    <td className="px-4 py-3.5">
+                    <td className="px-4 py-3.5" onClick={(event) => event.stopPropagation()}>
+                      <input
+                        type="checkbox"
+                        checked={checked}
+                        onChange={() => toggleOne(row.id)}
+                        aria-label={`Select the request from ${row.name}`}
+                        className="h-4 w-4 cursor-pointer rounded border-neutral-300 accent-brand-500"
+                      />
+                    </td>
+                    <td className="px-3 py-3.5">
                       <div className="flex items-start gap-2.5">
                         <span className="mt-0.5 flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-brand-50 text-[11px] font-semibold text-brand-700 ring-1 ring-brand-100">
                           {initials(row.name)}
@@ -222,15 +328,30 @@ export default function SupportRequestsPage() {
                       </span>
                     </td>
                     <td className="px-3 py-3.5 whitespace-nowrap text-neutral-500">{formatWhen(row.created_at)}</td>
-                    <td className="px-3 py-3.5 text-right">
+                    <td className="px-3 py-3.5">
                       <span
                         className={`inline-flex rounded-full px-2 py-0.5 text-[10px] font-semibold ${
                           row.email_sent ? 'bg-emerald-50 text-emerald-700' : 'bg-amber-50 text-amber-700'
                         }`}
-                        title={row.email_sent ? 'A copy was emailed to support' : 'Saved here, but the email did not go out'}
+                        title={
+                          row.email_sent
+                            ? 'A copy was handed to the mail server'
+                            : 'Saved here, but the email did not go out'
+                        }
                       >
                         {row.email_sent ? 'Sent' : 'Not sent'}
                       </span>
+                    </td>
+                    <td className="px-3 py-3.5 text-right" onClick={(event) => event.stopPropagation()}>
+                      <button
+                        type="button"
+                        onClick={() => setPendingDelete({ kind: 'one', id: row.id, name: row.name })}
+                        className="rounded-md p-1.5 text-neutral-400 transition hover:bg-red-50 hover:text-red-600"
+                        aria-label={`Delete the request from ${row.name}`}
+                        data-track-label="Support Requests - Delete One"
+                      >
+                        <Trash2 className="h-4 w-4" />
+                      </button>
                     </td>
                   </tr>
                 )
@@ -239,6 +360,25 @@ export default function SupportRequestsPage() {
           </table>
         </div>
       </div>
+
+      {pendingDelete && (
+        <ConfirmDialog
+          title={deleteCount === 1 ? 'Delete this request?' : `Delete ${deleteCount} requests?`}
+          message={
+            deleteCount === 1
+              ? `The request from ${pendingDelete.name || 'this sender'} will be removed for good.`
+              : `${deleteCount} requests will be removed for good.`
+          }
+          confirmLabel="Delete"
+          confirming={deleting}
+          error={deleteError}
+          onConfirm={confirmDelete}
+          onCancel={() => {
+            setPendingDelete(null)
+            setDeleteError('')
+          }}
+        />
+      )}
 
       {error && <ErrorToast message={error} onClose={() => setError('')} />}
     </div>

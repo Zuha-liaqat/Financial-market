@@ -137,9 +137,6 @@ export default function SupportRequestDetailPage() {
   }
 
   const closed = request.status === 'closed'
-  const all = request.company_requests || []
-  const others = all.filter((r) => r.id !== request.id)
-  const openCount = all.filter((r) => r.status !== 'closed').length
 
   return (
     <div>
@@ -212,59 +209,6 @@ export default function SupportRequestDetailPage() {
           <p className="mt-2 text-sm leading-relaxed whitespace-pre-wrap text-neutral-800">{request.message}</p>
         </div>
       </div>
-
-      {others.length > 0 && (
-        <div className="mt-4 rounded-lg border border-neutral-200 bg-white p-5 shadow-sm">
-          <div className="flex flex-wrap items-baseline justify-between gap-2">
-            <h2 className="text-sm font-semibold text-neutral-800">
-              Everything from {request.company_name || 'this company'}
-            </h2>
-            <p className="text-xs text-neutral-500">
-              {all.length} {all.length === 1 ? 'request' : 'requests'} · {openCount} open · {all.length - openCount} closed
-            </p>
-          </div>
-
-          <ul className="mt-3 divide-y divide-neutral-100">
-            {all.map((other) => {
-              const current = other.id === request.id
-              const done = other.status === 'closed'
-              return (
-                <li key={other.id}>
-                  <Link
-                    to={`/super-admin/support-requests/${other.id}`}
-                    className={`block rounded-lg px-3 py-3 transition ${
-                      current ? 'bg-brand-50/70' : 'hover:bg-neutral-50'
-                    }`}
-                    data-track-label="Support Request - Open Sibling"
-                  >
-                    <span className="flex items-center gap-2">
-                      <span
-                        className={`inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-[10px] font-semibold ${
-                          done ? 'bg-neutral-100 text-neutral-600' : 'bg-amber-50 text-amber-700'
-                        }`}
-                      >
-                        <span className={`h-1.5 w-1.5 rounded-full ${done ? 'bg-neutral-400' : 'bg-amber-500'}`} />
-                        {done ? 'Closed' : 'Open'}
-                      </span>
-                      <span className="text-[11px] text-neutral-400">#{other.id}</span>
-                      <span className="text-[11px] text-neutral-400">·</span>
-                      <span className="text-[11px] text-neutral-400">{formatWhen(other.created_at)}</span>
-                      {current && (
-                        <span className="ml-auto text-[10px] font-semibold tracking-wide text-brand-600 uppercase">
-                          You are here
-                        </span>
-                      )}
-                    </span>
-                    <span className="mt-1.5 block text-sm leading-relaxed whitespace-pre-wrap text-neutral-700">
-                      {other.message}
-                    </span>
-                  </Link>
-                </li>
-              )
-            })}
-          </ul>
-        </div>
-      )}
 
       <div className="mt-4 rounded-lg border border-neutral-200 bg-white p-5 shadow-sm">
         <h2 className="text-sm font-semibold text-neutral-800">History</h2>

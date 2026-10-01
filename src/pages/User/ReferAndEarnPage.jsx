@@ -1,9 +1,8 @@
 import { useEffect, useState } from 'react'
-import { Check, Coins, Copy, Gift, Send, UserCheck, Users } from 'lucide-react'
+import { Check, Clock, Coins, Copy, Gift, Send, UserCheck, Users } from 'lucide-react'
 import Pagination from '../../components/Pagination'
 import SpacedRow from '../../components/SpacedRow'
-import { sampleMyReferrals } from '../../data/referrals'
-import { apiGetCompanyReferralLink, apiSendCompanyReferral } from '../../lib/api'
+import { apiGetCompanyReferralLink, apiGetCompanyReferrals, apiSendCompanyReferral } from '../../lib/api'
 import { useCurrentUser } from '../../lib/useCurrentUser'
 
 const CREDITS_PER_JOIN = 100
@@ -22,6 +21,27 @@ const statusDotColor = {
 const inputClass =
   'w-full rounded-lg border border-neutral-200 bg-white px-3 py-2.5 text-sm text-neutral-700 outline-none placeholder:text-neutral-400 focus:border-brand-500 focus:ring-2 focus:ring-brand-500/20'
 
+const sourceLabels = {
+  email: 'Email',
+  link: 'Link',
+}
+
+function capitalize(value) {
+  if (!value) return ''
+  return value.charAt(0).toUpperCase() + value.slice(1).toLowerCase()
+}
+
+function toInviteRows(invites) {
+  return (invites || []).map((inv, i) => ({
+    id: `${i}-${inv.invited_email}`,
+    email: inv.invited_email,
+    status: capitalize(inv.status),
+    source: sourceLabels[inv.source] || capitalize(inv.source) || '—',
+    credits: inv.credits ?? 0,
+    sentAt: inv.sent_at,
+  }))
+}
+
 function formatDate(isoString) {
   if (!isoString) return '—'
   return new Date(isoString).toLocaleDateString('en-US', {
@@ -31,7 +51,7 @@ function formatDate(isoString) {
   })
 }
 
-function StatCard({ icon: Icon, label, value, chip }) {
+function StatCard({ icon: Icon, label, value, chip, loading }) {
   return (
     <div className="flex items-center gap-4 rounded-lg border border-neutral-200 bg-white p-5 shadow-sm">
       <span className={`flex h-10 w-10 shrink-0 items-center justify-center rounded-lg ${chip}`}>
@@ -39,16 +59,33 @@ function StatCard({ icon: Icon, label, value, chip }) {
       </span>
       <div>
         <p className="text-xs font-medium text-neutral-500">{label}</p>
-        <p className="mt-1 text-2xl font-semibold text-black">{value}</p>
+        {loading ? (
+          <div className="mt-2 h-6 w-12 animate-pulse rounded bg-neutral-200" />
+        ) : (
+          <p className="mt-1 text-2xl font-semibold text-black">{value}</p>
+        )}
       </div>
     </div>
   )
 }
 
+function RowSkeleton() {
+  return (
+    <SpacedRow className="border-b border-neutral-100 last:border-0">
+      {['w-44', 'w-16', 'w-12', 'w-8', 'w-20'].map((w, i) => (
+        <td key={i} className={i === 0 ? 'px-4 py-3.5' : 'px-3 py-3.5'}>
+          <div className={`h-3.5 animate-pulse rounded bg-neutral-200 ${w}`} />
+        </td>
+      ))}
+    </SpacedRow>
+  )
+}
+
 export default function ReferAndEarnPage() {
   const { user } = useCurrentUser()
-  // Static until the API returns the user's own referrals.
-  const [referrals, setReferrals] = useState(sampleMyReferrals)
+  const [summary, setSummary] = useState(null)
+  const [loadState, setLoadState] = useState('loading')
+  const [loadError, setLoadError] = useState('')
   const [friendEmail, setFriendEmail] = useState('')
   const [sending, setSending] = useState(false)
   const [error, setError] = useState('')
@@ -68,8 +105,25 @@ export default function ReferAndEarnPage() {
     }
   }, [])
 
-  const joinedCount = referrals.filter((r) => r.status === 'Joined').length
-  const totalCredits = referrals.reduce((sum, r) => sum + r.credits, 0)
+  function loadReferrals() {
+    return apiGetCompanyReferrals()
+      .then((body) => {
+        setSummary(body)
+        setLoadError('')
+        setLoadState('ready')
+      })
+      .catch((err) => {
+        setLoadError(err.message)
+        setLoadState('error')
+      })
+  }
+
+  useEffect(() => {
+    loadReferrals()
+  }, [])
+
+  const loading = loadState === 'loading'
+  const referrals = toInviteRows(summary?.invites)
   const paginated = referrals.slice((page - 1) * PAGE_SIZE, page * PAGE_SIZE)
 
   async function handleCopy() {
@@ -92,7 +146,7 @@ export default function ReferAndEarnPage() {
       setError("You can't invite your own email address.")
       return
     }
-    if (referrals.some((r) => r.referee === friend)) {
+    if (referrals.some((r) => r.email?.toLowerCase() === friend)) {
       setError('You have already invited this email.')
       return
     }
@@ -100,10 +154,7 @@ export default function ReferAndEarnPage() {
     try {
       const body = await apiSendCompanyReferral(friend)
       if (body?.referral_link) setReferralLink(body.referral_link)
-      setReferrals((prev) => [
-        { id: Date.now(), referee: friend, status: 'Pending', credits: 0, sentAt: new Date().toISOString() },
-        ...prev,
-      ])
+      await loadReferrals()
       setPage(1)
       setSentTo(friend)
       setFriendEmail('')
@@ -192,14 +243,34 @@ export default function ReferAndEarnPage() {
         {error && <p className="mt-3 rounded-lg bg-red-50 px-3 py-2 text-sm text-red-600">{error}</p>}
       </div>
 
-      <div className="grid grid-cols-1 gap-4 sm:grid-cols-3">
-        <StatCard icon={Users} label="People invited" value={referrals.length} chip="bg-sky-100 text-sky-600" />
-        <StatCard icon={UserCheck} label="Joined" value={joinedCount} chip="bg-emerald-100 text-emerald-600" />
+      <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
+        <StatCard
+          icon={Users}
+          label="People invited"
+          value={summary?.people_invited ?? 0}
+          chip="bg-sky-100 text-sky-600"
+          loading={loading}
+        />
+        <StatCard
+          icon={UserCheck}
+          label="Joined"
+          value={summary?.joined ?? 0}
+          chip="bg-emerald-100 text-emerald-600"
+          loading={loading}
+        />
+        <StatCard
+          icon={Clock}
+          label="Pending"
+          value={summary?.pending ?? 0}
+          chip="bg-orange-100 text-orange-600"
+          loading={loading}
+        />
         <StatCard
           icon={Coins}
           label="Credits earned"
-          value={totalCredits.toLocaleString('en-US')}
+          value={(summary?.credits_earned ?? 0).toLocaleString('en-US')}
           chip="bg-amber-100 text-amber-600"
+          loading={loading}
         />
       </div>
 
@@ -208,7 +279,7 @@ export default function ReferAndEarnPage() {
           <h3 className="text-sm font-bold tracking-wide text-neutral-800">YOUR INVITES</h3>
         </div>
         <div className="overflow-x-auto">
-          <table className="w-full min-w-[560px] table-even-gaps text-left text-sm">
+          <table className="w-full min-w-160 table-even-gaps text-left text-sm">
             <thead>
               <SpacedRow
                 header
@@ -216,22 +287,25 @@ export default function ReferAndEarnPage() {
               >
                 <th className="px-4 py-3.5">INVITED EMAIL</th>
                 <th className="px-3 py-3.5">STATUS</th>
+                <th className="px-3 py-3.5">SOURCE</th>
                 <th className="px-3 py-3.5">CREDITS</th>
                 <th className="px-3 py-3.5">SENT</th>
               </SpacedRow>
             </thead>
             <tbody>
+              {loading && Array.from({ length: 3 }).map((_, i) => <RowSkeleton key={i} />)}
               {paginated.map((r) => (
                 <SpacedRow key={r.id} className="border-b border-neutral-100 last:border-0">
-                  <td className="px-4 py-3.5 font-medium text-black">{r.referee}</td>
+                  <td className="px-4 py-3.5 font-medium text-black">{r.email}</td>
                   <td className="px-3 py-3.5">
                     <span
-                      className={`inline-flex items-center gap-1.5 rounded-full px-2.5 py-1 text-[10px] font-semibold tracking-wide ${statusStyles[r.status]}`}
+                      className={`inline-flex items-center gap-1.5 rounded-full px-2.5 py-1 text-[10px] font-semibold tracking-wide ${statusStyles[r.status] || statusStyles.Pending}`}
                     >
-                      <span className={`h-1.5 w-1.5 rounded-full ${statusDotColor[r.status]}`} />
-                      {r.status}
+                      <span className={`h-1.5 w-1.5 rounded-full ${statusDotColor[r.status] || statusDotColor.Pending}`} />
+                      {r.status || '—'}
                     </span>
                   </td>
+                  <td className="px-3 py-3.5 text-neutral-600">{r.source}</td>
                   <td className="px-3 py-3.5 text-neutral-600">{r.credits}</td>
                   <td className="px-3 py-3.5 whitespace-nowrap text-neutral-500">{formatDate(r.sentAt)}</td>
                 </SpacedRow>
@@ -239,7 +313,9 @@ export default function ReferAndEarnPage() {
             </tbody>
           </table>
         </div>
-        {referrals.length === 0 ? (
+        {loading ? null : loadState === 'error' ? (
+          <div className="p-10 text-center text-sm text-red-500">{loadError || "Couldn't load your invites."}</div>
+        ) : referrals.length === 0 ? (
           <div className="p-10 text-center text-sm text-neutral-400">
             No invites yet. Share your link to get started.
           </div>

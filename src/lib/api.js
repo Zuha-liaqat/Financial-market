@@ -817,6 +817,15 @@ export async function apiGetCompanyReferralLink() {
   return body
 }
 
+export async function apiGetCompanyReferrals() {
+  const res = await authorizedRequest('/api/company/referrals')
+  const body = await res.json().catch(() => null)
+  if (!res.ok) {
+    throw new Error(extractErrorMessage(body, 'Failed to load your invites'))
+  }
+  return body
+}
+
 export async function apiSendCompanyReferral(email) {
   const res = await authorizedRequest('/api/company/referrals/send', {
     method: 'POST',

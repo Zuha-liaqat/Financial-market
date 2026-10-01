@@ -89,22 +89,25 @@ export default function SupportRequestDetailPage() {
     setSaving(true)
     try {
       await apiAdminSetSupportRequestStatus(request.id, next)
-      await load()
 
+      // Said before the reload, so the notice lands with the status change
+      // rather than once the page has finished fetching itself again.
       if (next !== 'closed') {
-        setNotice('Request reopened. The company has not been emailed about this.')
-        return
+        setNoticePending(false)
+        setNotice('Request reopened.')
+      } else {
+        // What became of the email can only be said once the history knows: it
+        // goes out after the response, so there is nothing to report yet.
+        setNoticePending(true)
+        setNotice('Request closed. Telling the company by email…')
+        watchResolvedEmail(request.id).then((result) => {
+          setNoticePending(false)
+          setNotice(closedNotice(result))
+          load()
+        })
       }
 
-      // Say it is done straight away, then say what became of the email once
-      // the history knows - it is sent after the response, so it cannot be
-      // reported yet.
-      setNoticePending(true)
-          setNotice('Request closed. Telling the company by email…')
-      watchResolvedEmail(request.id).then((result) => {
-        setNotice(closedNotice(result))
-        load()
-      })
+      await load()
     } catch (err) {
       setError(err.message || 'Failed to update the status')
     } finally {

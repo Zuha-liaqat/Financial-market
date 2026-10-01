@@ -137,14 +137,12 @@ export default function SupportRequestsPage() {
       try {
         if (ids.length === 1) await apiAdminSetSupportRequestStatus(ids[0], next)
         else await apiAdminSetSupportRequestsStatus(ids, next)
-        await load({ quiet: true })
 
+        // Said before the reload, so the notice lands with the status change
+        // rather than once the list has finished fetching itself again.
         if (next !== 'closed') {
-          setNotice(
-            ids.length === 1
-              ? 'Request reopened. The company has not been emailed about this.'
-              : `${ids.length} requests reopened. No emails were sent.`,
-          )
+          setNoticePending(false)
+          setNotice(ids.length === 1 ? 'Request reopened.' : `${ids.length} requests reopened.`)
         } else if (ids.length === 1) {
           // One row can be followed to the end; a selection of twenty cannot be
           // chased without twenty more reads, so that one just says it is going.
@@ -156,8 +154,11 @@ export default function SupportRequestsPage() {
             load({ quiet: true })
           })
         } else {
+          setNoticePending(false)
           setNotice(`${ids.length} requests closed. The companies are being emailed.`)
         }
+
+        await load({ quiet: true })
       } catch (err) {
         setError(err.message || 'Failed to update the status')
         await load({ quiet: true })

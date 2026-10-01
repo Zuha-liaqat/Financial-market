@@ -921,3 +921,29 @@ export async function apiAdminDeleteSupportRequests(ids) {
   }
   return body
 }
+
+export async function apiAdminSetSupportRequestStatus(requestId, status) {
+  const res = await authorizedRequest(`/api/support-requests/${requestId}`, {
+    method: 'PATCH',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ status }),
+  })
+  const body = await res.json().catch(() => null)
+  if (!res.ok) {
+    throw new Error(extractErrorMessage(body, 'Failed to update the status'))
+  }
+  return body
+}
+
+export async function apiAdminSetSupportRequestsStatus(ids, status) {
+  const res = await authorizedRequest('/api/support-requests/status', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ ids, status }),
+  })
+  const body = await res.json().catch(() => null)
+  if (!res.ok) {
+    throw new Error(extractErrorMessage(body, 'Failed to update the statuses'))
+  }
+  return body
+}

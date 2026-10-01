@@ -4,6 +4,8 @@ import {
   apiAdminDeleteSupportRequest,
   apiAdminDeleteSupportRequests,
   apiAdminListSupportRequests,
+  apiAdminSetSupportRequestStatus,
+  apiAdminSetSupportRequestsStatus,
 } from '../../lib/api'
 import ConfirmDialog from '../../components/ConfirmDialog'
 import { ErrorToast } from '../../components/Toast'
@@ -12,6 +14,12 @@ import { ErrorToast } from '../../components/Toast'
 // is steadier here than a socket, which on a serverless host usually lands on a
 // different instance from the one that saved the request.
 const POLL_MS = 10000
+
+const FILTERS = [
+  { key: 'all', label: 'All' },
+  { key: 'open', label: 'Open' },
+  { key: 'closed', label: 'Closed' },
+]
 
 function formatWhen(value) {
   if (!value) return '—'
@@ -48,6 +56,7 @@ export default function SupportRequestsPage() {
   const [status, setStatus] = useState('loading')
   const [error, setError] = useState('')
   const [query, setQuery] = useState('')
+  const [statusFilter, setStatusFilter] = useState('all')
   const [openId, setOpenId] = useState(null)
   // Ids that arrived while this page was open, so a new row can announce itself.
   const [freshIds, setFreshIds] = useState(() => new Set())
@@ -93,13 +102,45 @@ export default function SupportRequestsPage() {
     return () => clearInterval(timer)
   }, [load])
 
+  const counts = useMemo(
+    () => ({
+      all: requests.length,
+      open: requests.filter((r) => r.status !== 'closed').length,
+      closed: requests.filter((r) => r.status === 'closed').length,
+    }),
+    [requests],
+  )
+
   const visible = useMemo(() => {
     const term = query.trim().toLowerCase()
-    if (!term) return requests
-    return requests.filter((r) =>
-      `${r.name || ''} ${r.email || ''} ${r.company_name || ''} ${r.message || ''}`.toLowerCase().includes(term),
-    )
-  }, [requests, query])
+    return requests.filter((r) => {
+      if (statusFilter === 'open' && r.status === 'closed') return false
+      if (statusFilter === 'closed' && r.status !== 'closed') return false
+      if (!term) return true
+      return `${r.name || ''} ${r.email || ''} ${r.company_name || ''} ${r.message || ''}`
+        .toLowerCase()
+        .includes(term)
+    })
+  }, [requests, query, statusFilter])
+
+  const changeStatus = useCallback(
+    async (ids, next) => {
+      // Shown straight away, then confirmed by the reload - a status change is
+      // not worth a spinner.
+      setRequests((current) =>
+        current.map((r) => (ids.includes(r.id) ? { ...r, status: next } : r)),
+      )
+      try {
+        if (ids.length === 1) await apiAdminSetSupportRequestStatus(ids[0], next)
+        else await apiAdminSetSupportRequestsStatus(ids, next)
+        await load({ quiet: true })
+      } catch (err) {
+        setError(err.message || 'Failed to update the status')
+        await load({ quiet: true })
+      }
+    },
+    [load],
+  )
 
   const allVisibleSelected = visible.length > 0 && visible.every((r) => selected.has(r.id))
 
@@ -163,7 +204,7 @@ export default function SupportRequestsPage() {
           </h1>
           <p className="mt-1 flex items-center gap-1.5 text-sm text-neutral-500">
             <span className="h-1.5 w-1.5 rounded-full bg-emerald-500" />
-            {total} {total === 1 ? 'message' : 'messages'} · updating automatically
+            {counts.open} open of {total} · updating automatically
           </p>
         </div>
         <div className="flex items-center gap-2">
@@ -199,6 +240,27 @@ export default function SupportRequestsPage() {
         </div>
       </div>
 
+      <div className="mb-3 flex items-center gap-1 rounded-lg border border-neutral-200 bg-white p-1">
+        {FILTERS.map((f) => (
+          <button
+            key={f.key}
+            type="button"
+            onClick={() => setStatusFilter(f.key)}
+            className={`rounded-md px-3 py-1.5 text-xs font-semibold transition ${
+              statusFilter === f.key
+                ? 'bg-brand-500 text-white'
+                : 'text-neutral-600 hover:bg-neutral-50'
+            }`}
+            data-track-label={`Support Requests - Filter ${f.label}`}
+          >
+            {f.label}
+            <span className={`ml-1.5 ${statusFilter === f.key ? 'text-white/70' : 'text-neutral-400'}`}>
+              {counts[f.key]}
+            </span>
+          </button>
+        ))}
+      </div>
+
       {selected.size > 0 && (
         <div className="mb-3 flex items-center justify-between gap-3 rounded-lg border border-brand-200 bg-brand-50/70 px-4 py-2.5">
           <p className="text-sm font-medium text-brand-800">
@@ -211,6 +273,22 @@ export default function SupportRequestsPage() {
               className="rounded-md px-3 py-1.5 text-xs font-medium text-neutral-600 ring-1 ring-neutral-200 transition hover:bg-white"
             >
               Clear
+            </button>
+            <button
+              type="button"
+              onClick={() => changeStatus([...selected], 'closed')}
+              className="rounded-md bg-white px-3 py-1.5 text-xs font-semibold text-neutral-700 ring-1 ring-neutral-200 transition hover:bg-neutral-50"
+              data-track-label="Support Requests - Bulk Close"
+            >
+              Mark closed
+            </button>
+            <button
+              type="button"
+              onClick={() => changeStatus([...selected], 'open')}
+              className="rounded-md bg-white px-3 py-1.5 text-xs font-semibold text-neutral-700 ring-1 ring-neutral-200 transition hover:bg-neutral-50"
+              data-track-label="Support Requests - Bulk Reopen"
+            >
+              Mark open
             </button>
             <button
               type="button"
@@ -244,7 +322,7 @@ export default function SupportRequestsPage() {
                 <th className="px-3 py-3.5">COMPANY</th>
                 <th className="px-3 py-3.5">MESSAGE</th>
                 <th className="px-3 py-3.5">SENT</th>
-                <th className="px-3 py-3.5">EMAILED</th>
+                <th className="px-3 py-3.5">STATUS</th>
                 <th className="px-3 py-3.5 text-right">ACTIONS</th>
               </tr>
             </thead>
@@ -284,7 +362,7 @@ export default function SupportRequestsPage() {
                     }}
                     className={`cursor-pointer border-b border-neutral-100 align-top transition last:border-0 hover:bg-neutral-50 ${
                       checked ? 'bg-brand-50/40' : fresh ? 'bg-brand-50/60' : ''
-                    }`}
+                    } ${row.status === 'closed' ? 'opacity-60' : ''}`}
                   >
                     <td className="px-4 py-3.5" onClick={(event) => event.stopPropagation()}>
                       <input
@@ -328,19 +406,25 @@ export default function SupportRequestsPage() {
                       </span>
                     </td>
                     <td className="px-3 py-3.5 whitespace-nowrap text-neutral-500">{formatWhen(row.created_at)}</td>
-                    <td className="px-3 py-3.5">
-                      <span
-                        className={`inline-flex rounded-full px-2 py-0.5 text-[10px] font-semibold ${
-                          row.email_sent ? 'bg-emerald-50 text-emerald-700' : 'bg-amber-50 text-amber-700'
+                    <td className="px-3 py-3.5" onClick={(event) => event.stopPropagation()}>
+                      <button
+                        type="button"
+                        onClick={() => changeStatus([row.id], row.status === 'closed' ? 'open' : 'closed')}
+                        className={`inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-[10px] font-semibold transition ${
+                          row.status === 'closed'
+                            ? 'bg-neutral-100 text-neutral-600 hover:bg-neutral-200'
+                            : 'bg-amber-50 text-amber-700 hover:bg-amber-100'
                         }`}
-                        title={
-                          row.email_sent
-                            ? 'A copy was handed to the mail server'
-                            : 'Saved here, but the email did not go out'
-                        }
+                        title={row.status === 'closed' ? 'Click to reopen' : 'Click to close'}
+                        data-track-label="Support Requests - Toggle Status"
                       >
-                        {row.email_sent ? 'Sent' : 'Not sent'}
-                      </span>
+                        <span
+                          className={`h-1.5 w-1.5 rounded-full ${
+                            row.status === 'closed' ? 'bg-neutral-400' : 'bg-amber-500'
+                          }`}
+                        />
+                        {row.status === 'closed' ? 'Closed' : 'Open'}
+                      </button>
                     </td>
                     <td className="px-3 py-3.5 text-right" onClick={(event) => event.stopPropagation()}>
                       <button

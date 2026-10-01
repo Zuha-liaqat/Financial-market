@@ -1,5 +1,10 @@
-import { useCallback, useEffect, useMemo, useState } from 'react'
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { ChevronDown, LifeBuoy, RefreshCw, Search, X } from 'lucide-react'
+
+// A request is not a conversation, so a few seconds behind is fine - and a poll
+// is steadier here than a socket, which on a serverless host usually lands on a
+// different instance from the one that saved the request.
+const POLL_MS = 10000
 import { apiAdminListSupportRequests } from '../../lib/api'
 import { ErrorToast } from '../../components/Toast'
 
@@ -39,12 +44,29 @@ export default function SupportRequestsPage() {
   const [error, setError] = useState('')
   const [query, setQuery] = useState('')
   const [openId, setOpenId] = useState(null)
+  // Ids that arrived while this page was open, so a new row can announce itself.
+  const [freshIds, setFreshIds] = useState(() => new Set())
+  const knownIds = useRef(null)
 
   const load = useCallback(async ({ quiet = false } = {}) => {
     if (!quiet) setStatus((current) => (current === 'ready' ? current : 'loading'))
     try {
       const body = await apiAdminListSupportRequests()
-      setRequests(body?.requests || [])
+      const rows = body?.requests || []
+
+      // The first load is the baseline; anything unseen after that is new.
+      const ids = new Set(rows.map((r) => r.id))
+      if (knownIds.current === null) {
+        knownIds.current = ids
+      } else {
+        const arrived = rows.filter((r) => !knownIds.current.has(r.id)).map((r) => r.id)
+        if (arrived.length) {
+          setFreshIds((current) => new Set([...current, ...arrived]))
+        }
+        knownIds.current = ids
+      }
+
+      setRequests(rows)
       setTotal(body?.total || 0)
       setStatus('ready')
     } catch (err) {
@@ -55,6 +77,8 @@ export default function SupportRequestsPage() {
 
   useEffect(() => {
     load()
+    const timer = setInterval(() => load({ quiet: true }), POLL_MS)
+    return () => clearInterval(timer)
   }, [load])
 
   const visible = useMemo(() => {
@@ -72,9 +96,15 @@ export default function SupportRequestsPage() {
           <h1 className="flex items-center gap-2 text-lg font-semibold text-neutral-900">
             <LifeBuoy className="h-5 w-5 text-brand-600" strokeWidth={1.75} />
             Support Requests
+            {freshIds.size > 0 && (
+              <span className="rounded-full bg-brand-500 px-2 py-0.5 text-[10px] font-semibold text-white">
+                {freshIds.size} new
+              </span>
+            )}
           </h1>
-          <p className="mt-1 text-sm text-neutral-500">
-            {total} {total === 1 ? 'message' : 'messages'} sent through the Support form.
+          <p className="mt-1 flex items-center gap-1.5 text-sm text-neutral-500">
+            <span className="h-1.5 w-1.5 rounded-full bg-emerald-500" />
+            {total} {total === 1 ? 'message' : 'messages'} · updating automatically
           </p>
         </div>
         <div className="flex items-center gap-2">
@@ -140,11 +170,24 @@ export default function SupportRequestsPage() {
 
               {visible.map((row) => {
                 const open = openId === row.id
+                const fresh = freshIds.has(row.id)
                 return (
                   <tr
                     key={row.id}
-                    onClick={() => setOpenId(open ? null : row.id)}
-                    className="cursor-pointer border-b border-neutral-100 align-top transition last:border-0 hover:bg-neutral-50"
+                    onClick={() => {
+                      setOpenId(open ? null : row.id)
+                      // Reading it is what clears the highlight.
+                      if (fresh) {
+                        setFreshIds((current) => {
+                          const next = new Set(current)
+                          next.delete(row.id)
+                          return next
+                        })
+                      }
+                    }}
+                    className={`cursor-pointer border-b border-neutral-100 align-top transition last:border-0 hover:bg-neutral-50 ${
+                      fresh ? 'bg-brand-50/60' : ''
+                    }`}
                   >
                     <td className="px-4 py-3.5">
                       <div className="flex items-start gap-2.5">
@@ -152,7 +195,14 @@ export default function SupportRequestsPage() {
                           {initials(row.name)}
                         </span>
                         <span className="min-w-0">
-                          <span className="block truncate font-medium text-neutral-800">{row.name}</span>
+                          <span className="flex items-center gap-1.5">
+                            <span className="truncate font-medium text-neutral-800">{row.name}</span>
+                            {fresh && (
+                              <span className="shrink-0 rounded-full bg-brand-500 px-1.5 py-0.5 text-[9px] font-semibold text-white">
+                                NEW
+                              </span>
+                            )}
+                          </span>
                           <a
                             href={`mailto:${row.email}`}
                             onClick={(event) => event.stopPropagation()}

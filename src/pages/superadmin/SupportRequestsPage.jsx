@@ -9,7 +9,8 @@ import {
   apiAdminSetSupportRequestsStatus,
 } from '../../lib/api'
 import ConfirmDialog from '../../components/ConfirmDialog'
-import { ErrorToast } from '../../components/Toast'
+import { ErrorToast, SuccessToast } from '../../components/Toast'
+import { closedNotice, watchResolvedEmail } from '../../lib/supportNotice'
 
 // A request is not a conversation, so a few seconds behind is fine - and a poll
 // is steadier here than a socket, which on a serverless host usually lands on a
@@ -57,6 +58,8 @@ export default function SupportRequestsPage() {
   const [total, setTotal] = useState(0)
   const [status, setStatus] = useState('loading')
   const [error, setError] = useState('')
+  const [notice, setNotice] = useState('')
+  const [noticePending, setNoticePending] = useState(false)
   const [query, setQuery] = useState('')
   const [statusFilter, setStatusFilter] = useState('all')
   // Ids that arrived while this page was open, so a new row can announce itself.
@@ -135,6 +138,26 @@ export default function SupportRequestsPage() {
         if (ids.length === 1) await apiAdminSetSupportRequestStatus(ids[0], next)
         else await apiAdminSetSupportRequestsStatus(ids, next)
         await load({ quiet: true })
+
+        if (next !== 'closed') {
+          setNotice(
+            ids.length === 1
+              ? 'Request reopened. The company has not been emailed about this.'
+              : `${ids.length} requests reopened. No emails were sent.`,
+          )
+        } else if (ids.length === 1) {
+          // One row can be followed to the end; a selection of twenty cannot be
+          // chased without twenty more reads, so that one just says it is going.
+          setNoticePending(true)
+          setNotice('Request closed. Telling the company by email…')
+          watchResolvedEmail(ids[0]).then((result) => {
+            setNoticePending(false)
+            setNotice(closedNotice(result))
+            load({ quiet: true })
+          })
+        } else {
+          setNotice(`${ids.length} requests closed. The companies are being emailed.`)
+        }
       } catch (err) {
         setError(err.message || 'Failed to update the status')
         await load({ quiet: true })
@@ -464,6 +487,13 @@ export default function SupportRequestsPage() {
         />
       )}
 
+      {notice && (
+        <SuccessToast
+          message={notice}
+          duration={noticePending ? 0 : 4000}
+          onClose={() => setNotice('')}
+        />
+      )}
       {error && <ErrorToast message={error} onClose={() => setError('')} />}
     </div>
   )

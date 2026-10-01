@@ -1,10 +1,13 @@
 import { useEffect } from 'react'
 
-function ToastShell({ message, onClose, borderClass, iconClass, icon }) {
+// duration 0 keeps it up: used while something is still finishing and the
+// message is about to be replaced with the outcome.
+function ToastShell({ message, onClose, borderClass, iconClass, icon, duration = 4000 }) {
   useEffect(() => {
-    const id = setTimeout(onClose, 4000)
+    if (!duration) return undefined
+    const id = setTimeout(onClose, duration)
     return () => clearTimeout(id)
-  }, [message, onClose])
+  }, [message, onClose, duration])
 
   return (
     <div className="pointer-events-none fixed right-4 top-5 z-50 flex justify-end px-4 sm:px-0">
@@ -30,11 +33,12 @@ function ToastShell({ message, onClose, borderClass, iconClass, icon }) {
   )
 }
 
-export function ErrorToast({ message, onClose }) {
+export function ErrorToast({ message, onClose, duration }) {
   return (
     <ToastShell
       message={message}
       onClose={onClose}
+      duration={duration}
       borderClass="border-red-200"
       iconClass="text-red-500"
       icon={
@@ -49,11 +53,12 @@ export function ErrorToast({ message, onClose }) {
   )
 }
 
-export function SuccessToast({ message, onClose }) {
+export function SuccessToast({ message, onClose, duration }) {
   return (
     <ToastShell
       message={message}
       onClose={onClose}
+      duration={duration}
       borderClass="border-brand-200"
       iconClass="text-brand-500"
       icon={

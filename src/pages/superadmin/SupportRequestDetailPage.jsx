@@ -16,7 +16,8 @@ import {
   apiAdminSetSupportRequestStatus,
 } from '../../lib/api'
 import ConfirmDialog from '../../components/ConfirmDialog'
-import { ErrorToast } from '../../components/Toast'
+import { ErrorToast, SuccessToast } from '../../components/Toast'
+import { closedNotice, watchResolvedEmail } from '../../lib/supportNotice'
 
 // How each recorded event reads on the timeline.
 const EVENTS = {
@@ -62,6 +63,8 @@ export default function SupportRequestDetailPage() {
   const [status, setStatus] = useState('loading')
   const [error, setError] = useState('')
   const [saving, setSaving] = useState(false)
+  const [notice, setNotice] = useState('')
+  const [noticePending, setNoticePending] = useState(false)
   const [confirmDelete, setConfirmDelete] = useState(false)
   const [deleting, setDeleting] = useState(false)
   const [deleteError, setDeleteError] = useState('')
@@ -87,6 +90,21 @@ export default function SupportRequestDetailPage() {
     try {
       await apiAdminSetSupportRequestStatus(request.id, next)
       await load()
+
+      if (next !== 'closed') {
+        setNotice('Request reopened. The company has not been emailed about this.')
+        return
+      }
+
+      // Say it is done straight away, then say what became of the email once
+      // the history knows - it is sent after the response, so it cannot be
+      // reported yet.
+      setNoticePending(true)
+          setNotice('Request closed. Telling the company by email…')
+      watchResolvedEmail(request.id).then((result) => {
+        setNotice(closedNotice(result))
+        load()
+      })
     } catch (err) {
       setError(err.message || 'Failed to update the status')
     } finally {
@@ -264,6 +282,13 @@ export default function SupportRequestDetailPage() {
         />
       )}
 
+      {notice && (
+        <SuccessToast
+          message={notice}
+          duration={noticePending ? 0 : 4000}
+          onClose={() => setNotice('')}
+        />
+      )}
       {error && status === 'ready' && <ErrorToast message={error} onClose={() => setError('')} />}
     </div>
   )

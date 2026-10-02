@@ -1,4 +1,5 @@
 import { useState, useRef, useEffect, useCallback, useMemo } from "react";
+import { ErrorToast } from "../../components/Toast";
 import { BloggerIcon, MediumIcon, WixIcon, WordPressIcon } from "../../components/BlogIcons";
 import { CalendarDays, Upload } from "lucide-react";
 import { useNavigate } from "react-router-dom";
@@ -171,6 +172,7 @@ function dayIndex(dateStr) {
 
 function GenerateView({
   period,
+  onDismissError,
   onBack,
   onGenerate,
   generating,
@@ -677,9 +679,7 @@ function GenerateView({
       </div>
 
       {generateError && (
-        <div className="rounded-lg border border-red-200 bg-red-50 px-4 py-2.5 text-sm text-red-600">
-          {generateError}
-        </div>
+        <ErrorToast message={generateError} onClose={onDismissError} />
       )}
 
       <div className="flex items-center gap-3">
@@ -1218,6 +1218,7 @@ export default function PlannerPage() {
         period={period}
         generating={generating}
         generateError={generateError}
+        onDismissError={() => setGenerateError(null)}
         onBack={() => setView("home")}
         onGenerate={handleGenerate}
       />

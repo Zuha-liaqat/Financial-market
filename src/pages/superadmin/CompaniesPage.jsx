@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useRef, useState } from 'react'
+import { ErrorToast } from '../../components/Toast';
 import Pagination from '../../components/Pagination'
 import { createPortal } from 'react-dom'
 import ConfirmDialog from '../../components/ConfirmDialog'
@@ -321,7 +322,12 @@ export default function CompaniesPage() {
           <div className="p-10 text-center text-sm text-neutral-400">Loading companies…</div>
         )}
         {loadState === 'error' && (
-          <div className="p-10 text-center text-sm font-medium text-red-600">{loadError}</div>
+          <>
+            {loadError && <ErrorToast message={loadError} onClose={() => setLoadError('')} />}
+            <div className="p-10 text-center text-sm text-neutral-400">
+              Couldn't load companies. Refresh the page to try again.
+            </div>
+          </>
         )}
         {loadState === 'ready' && filtered.length === 0 && (
           <div className="p-10 text-center text-sm text-neutral-400">

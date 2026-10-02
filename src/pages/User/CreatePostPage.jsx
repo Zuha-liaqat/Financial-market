@@ -1,4 +1,5 @@
 import { useState, useRef, useEffect } from "react";
+import { ErrorToast } from "../../components/Toast";
 import { Upload } from "lucide-react";
 import { addNotification } from "../../data/notifications";
 import { apiGeneratePost } from "../../lib/api";
@@ -389,9 +390,7 @@ export default function CreatePostPage() {
   return (
     <div className="space-y-3">
       {generateError && (
-        <div className="rounded-lg border border-red-200 bg-red-50 px-4 py-2.5 text-sm text-red-600">
-          {generateError}
-        </div>
+        <ErrorToast message={generateError} onClose={() => setGenerateError(null)} />
       )}
 
       {isGenerating && (

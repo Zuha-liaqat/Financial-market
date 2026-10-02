@@ -364,7 +364,7 @@ export default function SettingsPage() {
         </div>
         )}
         {avatarError && (
-          <p className="mt-3 text-xs font-medium text-red-600">{avatarError}</p>
+          <ErrorToast message={avatarError} onClose={() => setAvatarError("")} />
         )}
       </div>
 

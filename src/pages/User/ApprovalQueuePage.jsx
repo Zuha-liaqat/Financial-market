@@ -4,7 +4,7 @@ import { useNavigate, useSearchParams } from "react-router-dom";
 import { addNotification } from "../../data/notifications";
 import PostPreviewModal from "../../components/PostPreviewModal";
 import ConfirmDialog from "../../components/ConfirmDialog";
-import { SuccessToast } from "../../components/Toast";
+import { ErrorToast, SuccessToast } from "../../components/Toast";
 import {
   apiApprovalQueueDecision,
   apiDeleteBlog,
@@ -811,6 +811,7 @@ export default function ApprovalQueuePage() {
   const view = searchParams.get("view") === "grid" ? "grid" : "list";
   const [items, setItems] = useState([]);
   const [status, setStatus] = useState("loading");
+  const [showLoadError, setShowLoadError] = useState(true);
   const [selectedIds, setSelectedIds] = useState(new Set());
   const [previewItem, setPreviewItem] = useState(null);
   const [deletingId, setDeletingId] = useState(null);
@@ -1111,9 +1112,17 @@ export default function ApprovalQueuePage() {
       </div>
 
       {status === "error" && (
-        <div className="rounded-lg border border-dashed border-red-300 bg-red-50 p-6 text-center text-sm text-red-600">
-          Couldn't load the approval queue. Please try again later.
-        </div>
+        <>
+          {showLoadError && (
+            <ErrorToast
+              message="Couldn't load the approval queue. Please try again later."
+              onClose={() => setShowLoadError(false)}
+            />
+          )}
+          <div className="rounded-lg border border-dashed border-neutral-300 bg-white p-6 text-center text-sm text-neutral-400">
+            Nothing to show right now. Refresh the page to try again.
+          </div>
+        </>
       )}
 
       {status === "loading" &&

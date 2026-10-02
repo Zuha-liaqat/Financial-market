@@ -1,4 +1,5 @@
 import { useEffect, useState } from 'react'
+import { ErrorToast } from '../../components/Toast';
 import { Feather, Rocket, Crown, Gem, Check, Pencil, Plus, Trash2, X, Loader2 } from 'lucide-react'
 import { normalizePlan } from '../../data/subscriptionPlans'
 import { apiAdminListPlans, apiAdminUpdatePlan } from '../../lib/api'
@@ -315,7 +316,14 @@ export default function ManageSubscriptionsPage() {
 
   return (
     <div>
-      {status === 'error' && <p className="mt-16 text-center text-sm font-medium text-red-600">{error}</p>}
+      {status === 'error' && (
+        <>
+          {error && <ErrorToast message={error} onClose={() => setError('')} />}
+          <p className="mt-16 text-center text-sm text-neutral-400">
+            Couldn't load the plans. Refresh the page to try again.
+          </p>
+        </>
+      )}
 
       <div className="grid grid-cols-1 gap-5 sm:grid-cols-2 xl:grid-cols-4">
         {status === 'loading' && Array.from({ length: 4 }).map((_, i) => <PlanCardSkeleton key={i} />)}

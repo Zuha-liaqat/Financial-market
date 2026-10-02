@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react";
 import { useSearchParams } from "react-router-dom";
+import { ErrorToast } from "../../components/Toast";
 import {
   Feather,
   Rocket,
@@ -233,11 +234,6 @@ export default function SubscriptionsPage() {
           Each post uses {CREDITS_PER_POST} credits · New accounts get{" "}
           {FREE_STARTING_CREDITS} free credits
         </p>
-        {checkoutError && (
-          <p className="mx-auto mt-3 max-w-lg text-sm font-medium text-red-600">
-            {checkoutError}
-          </p>
-        )}
       </div>
 
       <div className="mt-7 flex justify-center">
@@ -270,9 +266,15 @@ export default function SubscriptionsPage() {
         </div>
       </div>
 
+      {checkoutError && (
+        <ErrorToast message={checkoutError} onClose={() => setCheckoutError("")} />
+      )}
+      {loadError && (
+        <ErrorToast message={loadError} onClose={() => setLoadError("")} />
+      )}
       {loadState === "error" && (
-        <p className="mt-16 text-center text-sm font-medium text-red-600">
-          {loadError}
+        <p className="mt-16 text-center text-sm text-neutral-400">
+          Couldn't load the plans. Please refresh the page to try again.
         </p>
       )}
 

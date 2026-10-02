@@ -17,7 +17,7 @@ function ToastShell({ message, onClose, borderClass, iconClass, icon, duration =
         <svg className={`mt-0.5 h-4 w-4 shrink-0 ${iconClass}`} fill="none" viewBox="0 0 24 24" stroke="currentColor">
           {icon}
         </svg>
-        <span className="flex-1 text-sm font-medium text-neutral-800">{message}</span>
+        <span className="min-w-0 flex-1 text-sm font-medium text-neutral-800 [overflow-wrap:anywhere]">{message}</span>
         <button
           type="button"
           onClick={onClose}

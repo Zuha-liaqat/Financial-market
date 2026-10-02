@@ -106,21 +106,6 @@ const platformIcons = {
 };
 
 const sectionIcons = {
-  prompt: (
-    <svg
-      className="h-4 w-4"
-      fill="none"
-      viewBox="0 0 24 24"
-      stroke="currentColor"
-    >
-      <path
-        strokeLinecap="round"
-        strokeLinejoin="round"
-        strokeWidth={2}
-        d="M9.813 15.904L9 18.75l-.813-2.846a4.5 4.5 0 00-3.09-3.09L2.25 12l2.846-.813a4.5 4.5 0 003.09-3.09L9 5.25l.813 2.846a4.5 4.5 0 003.09 3.09L15.75 12l-2.846.813a4.5 4.5 0 00-3.09 3.09zM18.259 8.715L18 9.75l-.259-1.035a3.375 3.375 0 00-2.455-2.456L14.25 6l1.036-.259a3.375 3.375 0 002.455-2.456L18 2.25l.259 1.035a3.375 3.375 0 002.456 2.456L21.75 6l-1.035.259a3.375 3.375 0 00-2.456 2.456z"
-      />
-    </svg>
-  ),
   schedule: (
     <svg
       className="h-4 w-4"
@@ -199,7 +184,6 @@ const sectionIcons = {
 };
 
 const sectionChips = {
-  prompt: "bg-brand-100 text-brand-700",
   schedule: "bg-orange-100 text-orange-600",
   link: "bg-sky-100 text-sky-600",
   media: "bg-violet-100 text-violet-600",
@@ -210,11 +194,13 @@ const sectionChips = {
 function SectionLabel({ icon, chip, title, required }) {
   return (
     <div className="mb-4 flex items-center gap-2.5">
-      <span
-        className={`flex h-7 w-7 shrink-0 items-center justify-center rounded-md ${chip}`}
-      >
-        {icon}
-      </span>
+      {icon && (
+        <span
+          className={`flex h-7 w-7 shrink-0 items-center justify-center rounded-md ${chip}`}
+        >
+          {icon}
+        </span>
+      )}
       <h3 className="text-sm font-bold tracking-wide text-neutral-800">
         {title}
         {required && <span className="text-red-500"> *</span>}
@@ -433,8 +419,6 @@ export default function CreatePostPage() {
         {/* Prompt Console */}
         <div className="rounded-lg border border-neutral-200 bg-neutral-50 p-4">
           <SectionLabel
-            icon={sectionIcons.prompt}
-            chip={sectionChips.prompt}
             title="PROMPT CONSOLE"
             required
           />

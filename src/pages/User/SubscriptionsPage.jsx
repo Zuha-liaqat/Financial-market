@@ -203,7 +203,7 @@ export default function SubscriptionsPage() {
     setCheckoutError("");
     setLoadingPlanCode(plan.code);
     try {
-      const basePath = `${window.location.origin}/super-admin/subscriptions`;
+      const basePath = `${window.location.origin}/subscriptions`;
       const { checkout_url, session_id } = await apiStartSubscriptionCheckout({
         plan_code: plan.code,
         billing_period: cycle,

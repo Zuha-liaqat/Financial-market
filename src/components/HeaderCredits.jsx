@@ -25,7 +25,7 @@ export default function HeaderCredits() {
 
   return (
     <Link
-      to="/super-admin/subscriptions"
+      to="/subscriptions"
       title={breakdown}
       aria-label={unlimited ? 'Unlimited credits' : `${formatNumber(credits.total)} credits. ${breakdown}`}
       className="flex items-center gap-1.5 rounded-full bg-brand-50 py-1 pr-3 pl-1 text-sm font-semibold text-brand-800 ring-1 ring-brand-100 transition hover:bg-brand-100"

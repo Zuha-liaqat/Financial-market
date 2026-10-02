@@ -51,7 +51,7 @@ const managementItems = [
 const accountItems = [
   { to: '/themes', label: 'Themes/Brands', icon: Palette, color: '#ea580c', hideForSuperAdmin: true },
   { to: '/notifications', label: 'Notifications', icon: Bell, color: '#2563eb', hideForSuperAdmin: true },
-  { to: '/super-admin/subscriptions', label: 'Plans and Billing', icon: CreditCard, color: '#0d9488', hideForSuperAdmin: true },
+  { to: '/subscriptions', label: 'Plans and Billing', icon: CreditCard, color: '#0d9488', hideForSuperAdmin: true },
 ]
 
 const referItem = {

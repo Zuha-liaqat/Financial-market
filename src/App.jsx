@@ -46,6 +46,13 @@ function PageTracker() {
   return null
 }
 
+// Plans & Billing used to live at /super-admin/subscriptions and /company/subscriptions.
+// Old links and Stripe return URLs still point there, so send them on with their query string intact.
+function OldPlansUrlRedirect() {
+  const { search } = useLocation()
+  return <Navigate to={`/subscriptions${search}`} replace />
+}
+
 // Checked on each visit so logging in as a different role picks the right dashboard.
 function DashboardRoute() {
   return isSuperAdmin() ? <AdminDashboardPage /> : <DashboardPage />
@@ -118,13 +125,15 @@ function App() {
             }
           />
           <Route
-            path="/super-admin/subscriptions"
+            path="/subscriptions"
             element={
               <RequireNotSuperAdmin>
                 <SubscriptionsPage />
               </RequireNotSuperAdmin>
             }
           />
+          <Route path="/super-admin/subscriptions" element={<OldPlansUrlRedirect />} />
+          <Route path="/company/subscriptions" element={<OldPlansUrlRedirect />} />
           <Route
             path="/support"
             element={

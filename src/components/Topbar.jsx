@@ -26,7 +26,7 @@ const pageTitles = [
   { match: '/integrations', label: 'Integrations' },
   { match: '/notifications', label: 'Notifications' },
   { match: '/super-admin/companies', label: 'Companies' },
-  { match: '/super-admin/subscriptions', label: 'Plans and Billing' },
+  { match: '/subscriptions', label: 'Plans and Billing' },
   { match: '/super-admin/plans', label: 'Subscriptions' },
   { match: '/super-admin/referrals', label: 'Referrals' },
   { match: '/documentation', label: 'Documentation' },

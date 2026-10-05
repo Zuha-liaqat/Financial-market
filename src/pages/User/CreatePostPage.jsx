@@ -228,7 +228,7 @@ export default function CreatePostPage() {
   const [selectedPlatforms, setSelectedPlatforms] = useState(
     draft?.selectedPlatforms ?? [],
   );
-  const [tags, setTags] = useState(draft?.tags ?? ["#RoboBus"]);
+  const [tags, setTags] = useState(draft?.tags ?? []);
   const [newTag, setNewTag] = useState("");
   const [isGenerating, setIsGenerating] = useState(false);
   const [generateError, setGenerateError] = useState(null);

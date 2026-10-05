@@ -198,7 +198,7 @@ function GenerateView({
   ]);
   const [uploadedFiles, setUploadedFiles] = useState([]);
   const [isDragOver, setIsDragOver] = useState(false);
-  const [tags, setTags] = useState(["#PIXMoving", "#RoboBus"]);
+  const [tags, setTags] = useState([]);
   const [newTag, setNewTag] = useState("");
 
   useEffect(() => {

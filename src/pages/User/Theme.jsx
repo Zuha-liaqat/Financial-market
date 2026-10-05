@@ -321,16 +321,18 @@ export default function ThemesPage() {
     setSaveError("");
     try {
       const profile = await apiSaveBrandProfile({
-        company_name: companyName || null,
-        company_description: companyDescription || null,
-        company_website: website || null,
-        contact_mobile: contactPhone || null,
-        brand_tone: brandTone || null,
-        target_audience: targetAudience || null,
+        // Free-text fields are always sent, so clearing one on the page clears it on the server.
+        company_name: companyName.trim(),
+        company_description: companyDescription.trim(),
+        company_website: website.trim(),
+        contact_mobile: contactPhone.trim(),
+        target_audience: targetAudience.trim(),
+        // These are checked by the API, so they're only sent when they have a value.
+        brand_tone: brandTone || undefined,
         visual_style: "custom",
         // The API accepts one hex colour, so only the first (primary) brand colour is saved for now.
-        custom_color: brandColors[0] || null,
-        custom_font: customFont || null,
+        custom_color: brandColors[0] || undefined,
+        custom_font: customFont || undefined,
         status: complete ? "complete" : "draft",
       });
       if (profile?.logo_url) setLogoUrl(profile.logo_url);
@@ -480,6 +482,7 @@ export default function ThemesPage() {
               </label>
               <input
                 id="company-name"
+                maxLength={255}
                 value={companyName}
                 onChange={(e) => setCompanyName(e.target.value)}
                 placeholder="e.g. Financial Market"
@@ -495,6 +498,7 @@ export default function ThemesPage() {
               </label>
               <input
                 id="company-website"
+                maxLength={500}
                 type="url"
                 value={website}
                 onChange={(e) => setWebsite(e.target.value)}
@@ -511,6 +515,7 @@ export default function ThemesPage() {
               </label>
               <input
                 id="contact-phone"
+                maxLength={50}
                 type="tel"
                 value={contactPhone}
                 onChange={(e) => setContactPhone(e.target.value)}
@@ -528,6 +533,7 @@ export default function ThemesPage() {
             </label>
             <textarea
               id="company-description"
+              maxLength={5000}
               value={companyDescription}
               onChange={(e) => setCompanyDescription(e.target.value)}
               placeholder="Describe your company's mission, products, and unique value proposition..."
@@ -584,6 +590,7 @@ export default function ThemesPage() {
             </label>
             <input
               id="target-audience"
+              maxLength={500}
               value={targetAudience}
               onChange={(e) => setTargetAudience(e.target.value)}
               placeholder="e.g. Urban planners, Tech enthusiasts"

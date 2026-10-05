@@ -264,17 +264,18 @@ export async function apiTestNotificationChannel(provider, companyId) {
   return body
 }
 
-// Sends a short recorded clip (WebM from MediaRecorder) and returns the spoken text.
-export async function apiTranscribeSpeech(audio) {
-  const extension = audio.type.includes('mp4') ? 'mp4' : audio.type.includes('ogg') ? 'ogg' : 'webm'
-  const formData = new FormData()
-  formData.append('file', audio, `voice-prompt.${extension}`)
-  const res = await authorizedRequest('/api/speech/transcribe', { method: 'POST', body: formData })
+// Opens a live transcription session. Returns { token, model, setup }: a short-lived Gemini
+// token and the setup message to send once the browser connects to Gemini Live.
+export async function apiStartSpeechSession() {
+  const res = await authorizedRequest('/api/speech/transcribe', { method: 'POST' })
   const body = await res.json().catch(() => null)
   if (!res.ok) {
-    throw new Error(extractErrorMessage(body, "Couldn't turn your recording into text"))
+    throw new Error(extractErrorMessage(body, "Couldn't start voice input"))
   }
-  return typeof body === 'string' ? body : body?.text || ''
+  if (!body?.token) {
+    throw new Error('Voice input could not start: no session token was returned.')
+  }
+  return body
 }
 
 export async function apiGeneratePost({
@@ -682,27 +683,47 @@ export async function apiGetPlanner({ period = 'week', start_date, company_id } 
   return body
 }
 
+// Sent as multipart form data so a brief can be attached as planner_pdf.
 export async function apiGeneratePlan(
-  { period, start_date, platforms, count, post_time, mode, topic, company_description, brand_tone, target_audience, language },
+  {
+    period,
+    start_date,
+    platforms,
+    count,
+    post_time,
+    mode,
+    topic,
+    company_description,
+    brand_tone,
+    target_audience,
+    language,
+    planner_pdf,
+  },
   companyId,
 ) {
   const query = companyId ? `?company_id=${companyId}` : ''
+  const formData = new FormData()
+  const fields = {
+    period,
+    start_date,
+    platforms,
+    count,
+    post_time,
+    mode,
+    topic,
+    company_description,
+    brand_tone,
+    target_audience,
+    language,
+  }
+  Object.entries(fields).forEach(([key, value]) => {
+    if (value !== undefined && value !== null && value !== '') formData.append(key, value)
+  })
+  if (planner_pdf) formData.append('planner_pdf', planner_pdf)
+
   const res = await authorizedRequest(`/api/planner/generate${query}`, {
     method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({
-      period,
-      start_date,
-      platforms,
-      count,
-      post_time,
-      mode,
-      topic,
-      company_description,
-      brand_tone,
-      target_audience,
-      language,
-    }),
+    body: formData,
   })
   const body = await res.json().catch(() => null)
   if (!res.ok) {
@@ -730,12 +751,19 @@ export async function apiGetBrandProfile(companyId) {
   return body
 }
 
-export async function apiSaveBrandProfile(payload, companyId) {
+// PATCH /api/themes takes multipart form data: only the fields sent are changed, and reference
+// files (PDFs and images) go under the repeated "files" field. undefined/null fields are left out;
+// an empty string clears that field.
+export async function apiSaveBrandProfile(fields, { files = [] } = {}, companyId) {
   const query = companyId ? `?company_id=${companyId}` : ''
+  const formData = new FormData()
+  Object.entries(fields).forEach(([key, value]) => {
+    if (value !== undefined && value !== null) formData.append(key, value)
+  })
+  files.forEach((file) => formData.append('files', file))
   const res = await authorizedRequest(`/api/themes${query}`, {
-    method: 'PUT',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify(payload),
+    method: 'PATCH',
+    body: formData,
   })
   const body = await res.json().catch(() => null)
   if (!res.ok) {
@@ -1035,18 +1063,7 @@ export async function apiAdminGetOpenSupportCount() {
   return body?.open || 0
 }
 
-export async function apiUploadBrandReferenceFiles(files, companyId) {
-  const query = companyId ? `?company_id=${companyId}` : ''
-  const formData = new FormData()
-  // The API takes several under the one field name.
-  files.forEach((file) => formData.append('files', file))
-  const res = await authorizedRequest(`/api/themes${query}`, {
-    method: 'PATCH',
-    body: formData,
-  })
-  const body = await res.json().catch(() => null)
-  if (!res.ok) {
-    throw new Error(extractErrorMessage(body, 'Failed to upload the theme file'))
-  }
-  return body
+// Uploads reference files on their own, without touching the other brand fields.
+export function apiUploadBrandReferenceFiles(files, companyId) {
+  return apiSaveBrandProfile({}, { files }, companyId)
 }

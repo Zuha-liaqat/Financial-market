@@ -178,6 +178,16 @@ function PostImage({ item, initials, textSize = 'text-5xl', className = '' }) {
 
 const avatarGradient = 'bg-gradient-to-tr from-[#FEDA75] via-[#FA7E1E] to-[#D62976]'
 
+// A lone image fills the post's width at its own aspect ratio, like the real feeds show it.
+// Very tall images are cropped so they don't push the rest of the preview off screen.
+function SingleImage({ image, className = '' }) {
+  return (
+    <div className={`overflow-hidden bg-white ${className}`}>
+      <img src={image.dataUri} alt={image.name} className="block h-auto max-h-120 w-full object-cover" />
+    </div>
+  )
+}
+
 function PostImages({ item, initials, platform, className = '' }) {
   const images = item.images || []
   if (images.length === 0) {
@@ -186,11 +196,7 @@ function PostImages({ item, initials, platform, className = '' }) {
 
   if (platform === 'Instagram') {
     if (images.length === 1) {
-      return (
-        <div className={`relative overflow-hidden bg-white ${className}`}>
-          <img src={images[0].dataUri} alt={images[0].name} className="h-full w-full object-contain" />
-        </div>
-      )
+      return <SingleImage image={images[0]} />
     }
     return (
       <div className={`relative overflow-hidden bg-white ${className}`}>
@@ -217,11 +223,7 @@ function PostImages({ item, initials, platform, className = '' }) {
 
   if (platform === 'LinkedIn') {
     if (images.length === 1) {
-      return (
-        <div className={`relative overflow-hidden bg-white ${className}`}>
-          <img src={images[0].dataUri} alt={images[0].name} className="h-full w-full object-contain" />
-        </div>
-      )
+      return <SingleImage image={images[0]} />
     }
     if (images.length === 2) {
       return (
@@ -253,11 +255,7 @@ function PostImages({ item, initials, platform, className = '' }) {
 
   if (platform === 'Twitter') {
     if (images.length === 1) {
-      return (
-        <div className={`relative overflow-hidden rounded-xl bg-white ring-1 ring-neutral-200 ${className}`}>
-          <img src={images[0].dataUri} alt={images[0].name} className="h-full w-full object-contain" />
-        </div>
-      )
+      return <SingleImage image={images[0]} className="rounded-xl ring-1 ring-neutral-200" />
     }
     if (images.length === 2) {
       return (
@@ -289,11 +287,7 @@ function PostImages({ item, initials, platform, className = '' }) {
 
   if (platform === 'Facebook') {
     if (images.length === 1) {
-      return (
-        <div className={`relative overflow-hidden bg-white ${className}`}>
-          <img src={images[0].dataUri} alt={images[0].name} className="h-full w-full object-contain" />
-        </div>
-      )
+      return <SingleImage image={images[0]} />
     }
     if (images.length === 2) {
       return (
@@ -924,7 +918,8 @@ function PhoneFrame({ children }) {
       <div className="absolute -right-[3px] top-[158px] h-14 w-[2.5px] rounded-r bg-neutral-500" />
 
       <div className="relative h-[612px] overflow-hidden rounded-[2.7rem]">
-        <div className="h-full overflow-y-auto pb-8">{children}</div>
+        {/* Scrolls like a real phone screen, without a visible scrollbar. */}
+        <div className="h-full overflow-y-auto pb-8 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">{children}</div>
         <div className="pointer-events-none absolute left-1/2 top-2 z-20 h-[20px] w-[68px] -translate-x-1/2 rounded-full bg-black shadow-[0_0_0_1px_rgba(60,60,60,0.3)]" />
         <div className="pointer-events-none absolute bottom-1.5 left-1/2 z-20 h-[4px] w-28 -translate-x-1/2 rounded-full bg-neutral-900" />
       </div>
@@ -941,7 +936,7 @@ function BrowserFrame({ children, url }) {
         <span className="h-2.5 w-2.5 rounded-full bg-emerald-400" />
         <div className="ml-3 flex-1 truncate rounded bg-white px-2 py-0.5 text-[10px] text-neutral-400">{url}</div>
       </div>
-      <div className="max-h-[520px] overflow-y-auto">{children}</div>
+      <div className="max-h-[520px] overflow-y-auto [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">{children}</div>
     </div>
   )
 }

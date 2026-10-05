@@ -1,6 +1,5 @@
 import { useState, useRef, useEffect, useCallback, useMemo } from "react";
 import VoiceInputButton from "../../components/VoiceInputButton";
-import { appendSpokenText } from "../../lib/useSpeechToText";
 import { ErrorToast } from "../../components/Toast";
 import { BloggerIcon, MediumIcon, WixIcon, WordPressIcon } from "../../components/BlogIcons";
 import { CalendarDays, Upload } from "lucide-react";
@@ -8,7 +7,7 @@ import { useNavigate } from "react-router-dom";
 import { apiGeneratePlan, apiGetPlanner } from "../../lib/api";
 import { mapPlannerItem } from "../../lib/posts";
 import {
-  ATTACHMENT_ACCEPT,
+  fileExtension,
   releaseAttachment,
   toAttachments,
 } from "../../lib/attachments";
@@ -18,6 +17,9 @@ import {
   ThreadsIcon,
   TikTokIcon,
 } from "../../components/SocialIcons";
+
+// The plan generator writes at most this many posts per run.
+const MAX_PLAN_COUNT = 10;
 
 const toneOptions = [
   "Professional",
@@ -127,16 +129,12 @@ const contentTypes = {
     plural: "Posts",
     platforms: platformData,
     defaultPlatform: "Instagram",
-    placeholder:
-      "Describe the posts in detail. e.g., 'Write professional LinkedIn posts announcing our new autonomous coffee cart fleet in Tokyo...'",
   },
   blog: {
     label: "Blog",
     plural: "Blogs",
     platforms: blogPlatformData,
     defaultPlatform: "Website",
-    placeholder:
-      "Describe the blogs in detail. e.g., 'Write in-depth articles about how our autonomous coffee carts are changing city mornings in Tokyo...'",
   },
 };
 
@@ -191,7 +189,7 @@ function GenerateView({
   const [referenceUrl, setReferenceUrl] = useState("");
   const [urlDraft, setUrlDraft] = useState("");
   const [showUrlInput, setShowUrlInput] = useState(false);
-  const [frequency, setFrequency] = useState(period === "monthly" ? 20 : 5);
+  const [frequency, setFrequency] = useState(period === "monthly" ? MAX_PLAN_COUNT : 5);
   const [contentType, setContentType] = useState("post");
   const [selectedPlatforms, setSelectedPlatforms] = useState(["Instagram"]);
   const [selectedThemes, setSelectedThemes] = useState([
@@ -217,6 +215,8 @@ function GenerateView({
   const periodLabel = period === "monthly" ? "Month" : "Week";
   const typeConfig = contentTypes[contentType];
   const freqLabel = `${frequency} ${typeConfig.plural} / ${periodLabel}`;
+  // A PDF brief can stand in for a written prompt; an image can't.
+  const hasPdfBrief = uploadedFiles.some((f) => fileExtension(f.name) === "pdf");
 
   function changeContentType(type) {
     if (type === contentType) return;
@@ -247,10 +247,15 @@ function GenerateView({
     setTags((prev) => prev.filter((t) => t !== tag));
   }
 
+  // The planner takes a single PDF brief, so a new pick replaces the old one.
   function addFiles(files) {
-    const newFiles = toAttachments(files);
-    if (newFiles.length === 0) return;
-    setUploadedFiles((prev) => [...prev, ...newFiles]);
+    const pdf = files.find((f) => fileExtension(f.name) === "pdf");
+    const [attachment] = pdf ? toAttachments([pdf]) : [];
+    if (!attachment) return;
+    setUploadedFiles((prev) => {
+      prev.forEach(releaseAttachment);
+      return [attachment];
+    });
   }
 
   function handleFileSelect(e) {
@@ -349,7 +354,6 @@ function GenerateView({
               <textarea
                 value={prompt}
                 onChange={(e) => setPrompt(e.target.value)}
-                placeholder={typeConfig.placeholder}
                 rows={11}
                 className={`w-full resize-none rounded-lg border border-neutral-200 bg-white px-4 pt-3 pb-3 text-sm text-neutral-700 outline-none placeholder:text-neutral-400 focus:border-brand-500 focus:ring-2 focus:ring-brand-500/20 ${
                   uploadedFiles.length > 0 ? "sm:pb-28" : "sm:pb-12"
@@ -358,8 +362,7 @@ function GenerateView({
               <input
                 ref={fileInputRef}
                 type="file"
-                accept={ATTACHMENT_ACCEPT}
-                multiple
+                accept=".pdf,application/pdf"
                 onChange={handleFileSelect}
                 className="hidden"
               />
@@ -376,17 +379,15 @@ function GenerateView({
                   <button
                     type="button"
                     onClick={() => fileInputRef.current?.click()}
-                    aria-label="Add image or document"
-                    title="Add image or document"
+                    aria-label="Attach a PDF brief"
+                    title="Attach a PDF brief"
                     className="flex h-9 w-9 shrink-0 cursor-pointer items-center justify-center rounded-lg border border-neutral-200 bg-white transition hover:bg-neutral-50"
                   >
                     <Upload className="h-5 w-5 text-brand-500" strokeWidth={2} />
                   </button>
 
                   {/* Speak the prompt */}
-                  <VoiceInputButton
-                    onText={(text) => setPrompt((prev) => appendSpokenText(prev, text))}
-                  />
+                  <VoiceInputButton value={prompt} onChange={setPrompt} />
                   {/* Reference URL */}
                   <div
                     className={
@@ -609,14 +610,14 @@ function GenerateView({
             <input
               type="range"
               min={1}
-              max={period === "monthly" ? 30 : 14}
+              max={MAX_PLAN_COUNT}
               value={frequency}
               onChange={(e) => setFrequency(Number(e.target.value))}
               className="w-full accent-brand-500"
             />
             <div className="mt-1 flex justify-between text-xs text-neutral-400">
               <span>1</span>
-              <span>{period === "monthly" ? 30 : 14}</span>
+              <span>{MAX_PLAN_COUNT}</span>
             </div>
           </div>
 
@@ -699,10 +700,13 @@ function GenerateView({
               frequency,
               selectedPlatforms,
               tags,
+              plannerPdf: uploadedFiles.find((f) => fileExtension(f.name) === "pdf")?.file,
             })
           }
           disabled={
-            generating || !prompt.trim() || selectedPlatforms.length === 0
+            generating ||
+            (!prompt.trim() && !hasPdfBrief) ||
+            selectedPlatforms.length === 0
           }
           className="flex items-center justify-center gap-2 rounded-lg bg-brand-500 px-5 py-3 text-sm font-semibold text-white shadow-sm transition hover:bg-brand-600 disabled:cursor-not-allowed disabled:opacity-50"
         >
@@ -1197,6 +1201,7 @@ export default function PlannerPage() {
     language,
     frequency,
     selectedPlatforms,
+    plannerPdf,
   }) {
     setGenerating(true);
     setGenerateError(null);
@@ -1209,6 +1214,7 @@ export default function PlannerPage() {
         topic: prompt,
         brand_tone: tone,
         language,
+        planner_pdf: plannerPdf,
       });
       setView("home");
       loadPlanner();

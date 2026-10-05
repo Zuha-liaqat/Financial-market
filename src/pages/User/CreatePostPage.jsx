@@ -1,6 +1,5 @@
 import { useState, useRef, useEffect } from "react";
 import VoiceInputButton from "../../components/VoiceInputButton";
-import { appendSpokenText } from "../../lib/useSpeechToText";
 import { ErrorToast } from "../../components/Toast";
 import { Upload } from "lucide-react";
 import { addNotification } from "../../data/notifications";
@@ -428,7 +427,6 @@ export default function CreatePostPage() {
             <textarea
               value={prompt}
               onChange={(e) => setPrompt(e.target.value)}
-              placeholder="Describe the post in detail. e.g., 'Write a professional LinkedIn post announcing our new autonomous coffee cart fleet in Tokyo. Emphasize the sustainable design and modern aesthetics. Target audience is urban planners and tech enthusiasts. Tone should be innovative yet grounded.'"
               rows={11}
               className={`w-full resize-none rounded-lg border border-neutral-200 bg-white px-4 pt-3 pb-3 text-sm text-neutral-700 outline-none placeholder:text-neutral-400 focus:border-brand-500 focus:ring-2 focus:ring-brand-500/20 ${
                 uploadedFiles.length > 0 ? "sm:pb-28" : "sm:pb-12"
@@ -458,9 +456,7 @@ export default function CreatePostPage() {
                 </button>
 
                 {/* Speak the prompt */}
-                <VoiceInputButton
-                  onText={(text) => setPrompt((prev) => appendSpokenText(prev, text))}
-                />
+                <VoiceInputButton value={prompt} onChange={setPrompt} />
 
                 {/* Reference URL */}
                 <div

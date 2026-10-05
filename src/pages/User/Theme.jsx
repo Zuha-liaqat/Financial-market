@@ -242,6 +242,9 @@ export default function ThemesPage() {
         setCompanyDescription(profile?.company_description || "");
         setLogoUrl(profile?.logo_url || null);
         setReferenceFiles(profile?.reference_files || []);
+        // Someone who has uploaded their theme should land on it, not on the
+        // pick-your-own option with their files tucked away behind a click.
+        if (profile?.reference_files?.length) setThemeMode("upload");
         setWebsite(profile?.company_website || "");
         setContactPhone(profile?.contact_mobile || "");
         setBrandTone(profile?.brand_tone || options?.brand_tones?.[0] || "");

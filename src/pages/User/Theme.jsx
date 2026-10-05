@@ -9,7 +9,9 @@ import {
 } from "../../components/ui/select";
 import { addNotification } from "../../data/notifications";
 import { ErrorToast, SuccessToast } from "../../components/Toast";
+import ConfirmDialog from "../../components/ConfirmDialog";
 import {
+  apiDeleteBrandReferenceFile,
   apiGetBrandProfile,
   apiGetThemeOptions,
   apiSaveBrandProfile,
@@ -109,12 +111,34 @@ function isHexColor(value) {
   return /^#[0-9a-f]{6}$/i.test(value.trim());
 }
 
-// custom_color holds a single hex colour today. Splitting on commas keeps older or future multi-colour values readable.
+// custom_color is the older single-colour field. Splitting on commas keeps any multi-colour value in it readable too.
 function parseColors(value) {
   return (value || "")
     .split(",")
     .map((c) => c.trim().toLowerCase())
     .filter(isHexColor);
+}
+
+// brand_colors holds every saved colour; profiles saved before it existed only have custom_color.
+function profileColors(profile) {
+  const saved = Array.isArray(profile?.brand_colors)
+    ? profile.brand_colors
+        .filter((c) => typeof c === "string")
+        .map((c) => c.trim().toLowerCase())
+        .filter(isHexColor)
+    : [];
+  const colors = saved.length ? saved : parseColors(profile?.custom_color);
+  return [...new Set(colors)].slice(0, MAX_COLORS);
+}
+
+// The saved choice wins. Profiles saved before the choice was kept were all stored as
+// "custom", so one with no colours but with uploaded files lands on its upload.
+// Generation decides the same way (theme_mode in the backend's brand_service.py), so
+// keep the two in step: the option shown here is the one posts and blogs really use.
+function profileThemeMode(profile, colors) {
+  if (profile?.visual_style === "upload") return "upload";
+  if (profile?.visual_style === "custom" && colors.length) return "custom";
+  return profile?.reference_files?.length ? "upload" : "custom";
 }
 
 function SectionCard({ icon, chip, title, children }) {
@@ -222,6 +246,9 @@ export default function ThemesPage() {
   const [themeMode, setThemeMode] = useState("custom");
   const [referenceFiles, setReferenceFiles] = useState([]);
   const [themeUploading, setThemeUploading] = useState(false);
+  const [fileToRemove, setFileToRemove] = useState(null);
+  const [removingFile, setRemovingFile] = useState(false);
+  const [removeError, setRemoveError] = useState("");
   const [brandColors, setBrandColors] = useState([]);
   const [colorDraft, setColorDraft] = useState("");
   const [customFont, setCustomFont] = useState("");
@@ -238,18 +265,17 @@ export default function ThemesPage() {
         setToneOptions(options?.brand_tones || []);
         setFontOptions(mergeFonts(options?.fonts, profile?.custom_font));
 
+        const colors = profileColors(profile);
         setCompanyName(profile?.company_name || "");
         setCompanyDescription(profile?.company_description || "");
         setLogoUrl(profile?.logo_url || null);
         setReferenceFiles(profile?.reference_files || []);
-        // Someone who has uploaded their theme should land on it, not on the
-        // pick-your-own option with their files tucked away behind a click.
-        if (profile?.reference_files?.length) setThemeMode("upload");
+        setThemeMode(profileThemeMode(profile, colors));
         setWebsite(profile?.company_website || "");
         setContactPhone(profile?.contact_mobile || "");
         setBrandTone(profile?.brand_tone || options?.brand_tones?.[0] || "");
         setTargetAudience(profile?.target_audience || "");
-        setBrandColors(parseColors(profile?.custom_color));
+        setBrandColors(colors);
         setCustomFont(
           profile?.custom_font || options?.fonts?.[0] || FONT_FAMILIES[0],
         );
@@ -289,13 +315,42 @@ export default function ThemesPage() {
     setSaveError("");
     try {
       // Sent straight away rather than held until Save, so it cannot be lost by
-      // leaving the page - which is what used to happen to it.
-      const profile = await apiUploadBrandReferenceFiles([file]);
+      // leaving the page - which is what used to happen to it. The upload option is
+      // saved with it, so the file is used even if Save is never pressed.
+      const profile = await apiUploadBrandReferenceFiles([file], undefined, {
+        visual_style: "upload",
+      });
       setReferenceFiles(profile?.reference_files || []);
     } catch (err) {
       setSaveError(err.message);
     } finally {
       setThemeUploading(false);
+    }
+  }
+
+  async function confirmRemoveFile() {
+    const target = fileToRemove;
+    if (!target) return;
+    setRemovingFile(true);
+    setRemoveError("");
+    try {
+      const profile = await apiDeleteBrandReferenceFile(target.url);
+      setReferenceFiles(profile?.reference_files || []);
+      setFileToRemove(null);
+    } catch (err) {
+      if (err.status === 404) {
+        // It may already be gone; if the server no longer lists it, show its list.
+        const profile = await apiGetBrandProfile().catch(() => null);
+        const files = profile?.reference_files;
+        if (Array.isArray(files) && !files.some((f) => f.url === target.url)) {
+          setReferenceFiles(files);
+          setFileToRemove(null);
+          return;
+        }
+      }
+      setRemoveError(err.message);
+    } finally {
+      setRemovingFile(false);
     }
   }
 
@@ -332,13 +387,24 @@ export default function ThemesPage() {
         target_audience: targetAudience.trim(),
         // These are checked by the API, so they're only sent when they have a value.
         brand_tone: brandTone || undefined,
-        visual_style: "custom",
-        // The API accepts one hex colour, so only the first (primary) brand colour is saved for now.
+        // Upload styles content from the theme files, the other option from the picked colours.
+        visual_style: themeMode === "upload" ? "upload" : "custom",
+        // All colours are kept whichever option is picked, so switching back does not lose them.
+        // An empty list is sent too, so removing every colour clears them on the server.
+        brand_colors: brandColors,
+        // Older readers only know custom_color, so it stays the first (primary) colour.
         custom_color: brandColors[0] || undefined,
         custom_font: customFont || undefined,
         status: complete ? "complete" : "draft",
       });
       if (profile?.logo_url) setLogoUrl(profile.logo_url);
+      if (profile) {
+        // Show what was saved rather than what was sent, and the option generation
+        // will use (the same one a reload would show).
+        const savedColors = profileColors(profile);
+        setBrandColors(savedColors);
+        setThemeMode(profileThemeMode(profile, savedColors));
+      }
       window.dispatchEvent(
         new CustomEvent("user-profile-updated", {
           detail: { company_name: profile?.company_name ?? companyName },
@@ -677,6 +743,18 @@ export default function ThemesPage() {
                 >
                   Open
                 </a>
+                <button
+                  type="button"
+                  onClick={() => {
+                    setRemoveError("");
+                    setFileToRemove(file);
+                  }}
+                  disabled={themeUploading}
+                  aria-label={`Remove ${file.filename}`}
+                  className="shrink-0 cursor-pointer text-xs font-semibold text-neutral-500 transition hover:text-red-600 hover:underline disabled:cursor-not-allowed disabled:opacity-50"
+                >
+                  Remove
+                </button>
               </div>
             ))}
 
@@ -699,7 +777,7 @@ export default function ThemesPage() {
               <input
                 type="file"
                 accept=".pdf,.jpg,.jpeg,.png,.webp,.gif,.avif"
-                disabled={themeUploading}
+                disabled={themeUploading || removingFile}
                 onChange={handleThemeFileSelect}
                 className="hidden"
               />
@@ -774,10 +852,20 @@ export default function ThemesPage() {
                   ))}
                 </div>
               ) : (
-                <p className="mt-3 text-xs text-neutral-400">
-                  No colors added yet. Pick a color or type its hex code, then
-                  click Add.
-                </p>
+                <>
+                  <p className="mt-3 text-xs text-neutral-400">
+                    No colors added yet. Pick a color or type its hex code, then
+                    click Add.
+                  </p>
+                  {referenceFiles.length > 0 && (
+                    // Without a colour this option has nothing to apply, so the saved theme files stay in use.
+                    <p className="mt-1.5 text-xs text-amber-600">
+                      Until you add a color, your uploaded theme files are still
+                      used. To stop using them, remove them under Upload your
+                      theme.
+                    </p>
+                  )}
+                </>
               )}
             </div>
             <div>
@@ -796,6 +884,10 @@ export default function ThemesPage() {
                   ))}
                 </SelectContent>
               </Select>
+              <p className="mt-1.5 text-xs text-neutral-400">
+                AI images contain no text, so this font isn't applied to them
+                yet.
+              </p>
             </div>
           </div>
         )}
@@ -817,6 +909,22 @@ export default function ThemesPage() {
           {savingComplete ? "Saving…" : "Complete Setup"}
         </button>
       </div>
+
+      {fileToRemove && (
+        <ConfirmDialog
+          title="Remove theme file?"
+          message={`"${fileToRemove.filename}" will no longer be used to style your posts and blogs.`}
+          confirmLabel="Remove"
+          confirming={removingFile}
+          error={removeError}
+          onConfirm={confirmRemoveFile}
+          onCancel={() => {
+            if (removingFile) return;
+            setFileToRemove(null);
+            setRemoveError("");
+          }}
+        />
+      )}
     </div>
   );
 }

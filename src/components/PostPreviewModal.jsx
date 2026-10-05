@@ -1,7 +1,7 @@
 import { useEffect, useRef, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { Wifi as WifiIcon } from 'lucide-react'
-import { apiPublishPost } from '../lib/api'
+import { apiGetBrandProfile, apiPublishPost } from '../lib/api'
 
 function friendlyPublishError(message) {
   const credMatch = /no credentials found for platform ['"]?([a-z]+)['"]?/i.exec(message || '')
@@ -22,6 +22,53 @@ function getInitials(title) {
     .slice(0, 2)
     .map((w) => w[0]?.toUpperCase() ?? '')
   return letters.join('') || '?'
+}
+
+// The last brand loaded, so a reopened preview shows the company straight away. It is
+// kept per signed-in user, so after a logout the next account never sees the old one.
+let cachedBrand = null
+
+function currentUserKey() {
+  try {
+    return localStorage.getItem('current_user_email') || ''
+  } catch {
+    return ''
+  }
+}
+
+function brandFromProfile(profile) {
+  const name = profile?.company_name?.trim() || ''
+  return {
+    name,
+    handle: name.toLowerCase().replace(/[^\p{L}\p{N}_]+/gu, ''),
+    logoUrl: profile?.logo_url?.trim() || null,
+  }
+}
+
+// The account the post is shown under: the company from Themes, or the old placeholder when it has no name.
+function previewAccount(brand) {
+  return {
+    name: brand?.name || 'Financial Market',
+    handle: brand?.handle || 'financialmarket',
+    logoUrl: brand?.logoUrl || null,
+    initials: brand?.name ? getInitials(brand.name) : null,
+  }
+}
+
+// The company logo inside an avatar circle, or the initials when there is no logo or it fails to load.
+function AvatarContent({ account, fallback }) {
+  const [failedUrl, setFailedUrl] = useState(null)
+  if (account.logoUrl && account.logoUrl !== failedUrl) {
+    return (
+      <img
+        src={account.logoUrl}
+        alt=""
+        onError={() => setFailedUrl(account.logoUrl)}
+        className="h-full w-full rounded-full bg-white object-contain"
+      />
+    )
+  }
+  return account.initials || fallback
 }
 
 const HeartIcon = (props) => (
@@ -370,17 +417,17 @@ function TruncatedCaption({ prefix, text, hashtags, hashtagClass, limit = 100 })
   )
 }
 
-function StoryAvatar({ initials, size = 'h-8 w-8', text = 'text-[10px]' }) {
+function StoryAvatar({ account, initials, size = 'h-8 w-8', text = 'text-[10px]' }) {
   return (
     <div className={`shrink-0 rounded-full ${avatarGradient} p-[2px]`}>
-      <div className={`flex ${size} items-center justify-center rounded-full bg-white ${text} font-bold text-neutral-500`}>
-        {initials}
+      <div className={`flex ${size} items-center justify-center overflow-hidden rounded-full bg-white ${text} font-bold text-neutral-500`}>
+        <AvatarContent account={account} fallback={initials} />
       </div>
     </div>
   )
 }
 
-function InstagramMobile({ item, initials }) {
+function InstagramMobile({ item, initials, account }) {
   return (
     <div className="min-h-full bg-white">
       <StatusBar />
@@ -393,11 +440,11 @@ function InstagramMobile({ item, initials }) {
       </div>
 
       <div className="flex items-center gap-2 px-3 pt-1">
-        <StoryAvatar initials={initials} />
-        <div className="flex items-center gap-1">
-          <span className="text-xs font-semibold text-black">financialmarket</span>
-          <VerifiedBadge className="h-3.5 w-3.5" />
-          <span className="text-[10px] text-neutral-400">• Sponsored</span>
+        <StoryAvatar account={account} initials={initials} />
+        <div className="flex min-w-0 items-center gap-1">
+          <span className="truncate text-xs font-semibold text-black">{account.handle}</span>
+          <VerifiedBadge className="h-3.5 w-3.5 shrink-0" />
+          <span className="shrink-0 text-[10px] text-neutral-400">• Sponsored</span>
         </div>
         <DotsIcon className="ml-auto h-5 w-5 text-neutral-700" />
       </div>
@@ -417,7 +464,7 @@ function InstagramMobile({ item, initials }) {
       <p className="px-3 pt-1 text-[12px] font-bold leading-snug text-black">{item.title}</p>
       <p className="px-3 pt-0.5 text-[11px] leading-snug text-neutral-800">
         <TruncatedCaption
-          prefix={<span className="font-semibold text-black">financialmarket </span>}
+          prefix={<span className="font-semibold text-black">{account.handle} </span>}
           text={item.caption}
           hashtags={item.hashtags.join(' ')}
           hashtagClass="text-[#0a55a0]"
@@ -434,7 +481,7 @@ function InstagramMobile({ item, initials }) {
   )
 }
 
-function InstagramWeb({ item, initials }) {
+function InstagramWeb({ item, initials, account }) {
   return (
     <div className="bg-white">
       <div className="flex items-center justify-between border-b border-neutral-200 px-4 py-2.5">
@@ -453,10 +500,10 @@ function InstagramWeb({ item, initials }) {
           </div>
           <div className="flex w-1/2 flex-col">
             <div className="flex items-center gap-2 border-b border-neutral-100 px-3 py-2.5">
-              <StoryAvatar initials={initials} />
-              <div className="flex items-center gap-1">
-                <span className="text-xs font-semibold text-black">financialmarket</span>
-                <VerifiedBadge className="h-3.5 w-3.5" />
+              <StoryAvatar account={account} initials={initials} />
+              <div className="flex min-w-0 items-center gap-1">
+                <span className="truncate text-xs font-semibold text-black">{account.handle}</span>
+                <VerifiedBadge className="h-3.5 w-3.5 shrink-0" />
               </div>
               <DotsIcon className="ml-auto h-5 w-5 text-neutral-700" />
             </div>
@@ -464,7 +511,7 @@ function InstagramWeb({ item, initials }) {
               <p className="text-xs font-bold leading-relaxed text-black">{item.title}</p>
               <p className="text-xs leading-relaxed text-neutral-800">
                 <TruncatedCaption
-                  prefix={<span className="font-semibold text-black">financialmarket </span>}
+                  prefix={<span className="font-semibold text-black">{account.handle} </span>}
                   text={item.caption}
                   hashtags={item.hashtags.join(' ')}
                   hashtagClass="text-[#0a55a0]"
@@ -496,7 +543,7 @@ function InstagramWeb({ item, initials }) {
   )
 }
 
-function LinkedInMobile({ item, initials }) {
+function LinkedInMobile({ item, initials, account }) {
   return (
     <div className="min-h-full bg-white">
       <StatusBar />
@@ -509,13 +556,13 @@ function LinkedInMobile({ item, initials }) {
 
       <div className="border-t border-neutral-100 bg-white">
         <div className="flex items-center gap-2 px-3 pt-3">
-          <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-[#0A66C2] text-xs font-bold text-white">
-            D
+          <div className="flex h-10 w-10 shrink-0 items-center justify-center overflow-hidden rounded-full bg-[#0A66C2] text-xs font-bold text-white">
+            <AvatarContent account={account} fallback="D" />
           </div>
           <div className="min-w-0">
             <div className="flex items-center gap-1">
-              <span className="text-xs font-semibold text-black">Financial Market</span>
-              <VerifiedBadge className="h-3.5 w-3.5" />
+              <span className="truncate text-xs font-semibold text-black">{account.name}</span>
+              <VerifiedBadge className="h-3.5 w-3.5 shrink-0" />
             </div>
             <p className="truncate text-[10px] text-neutral-500">12,481 followers</p>
             <p className="text-[10px] text-neutral-500">2h • Edited</p>
@@ -568,20 +615,20 @@ function LinkedInMobile({ item, initials }) {
   )
 }
 
-function LinkedInWeb({ item, initials }) {
+function LinkedInWeb({ item, initials, account }) {
   return (
     <div className="flex bg-neutral-50">
       <div className="flex flex-1 items-start gap-5 p-4">
         <div className="min-w-0 flex-1">
           <div className="rounded-md border border-neutral-200 bg-white shadow-sm">
             <div className="flex items-center gap-2 px-4 pt-4">
-              <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-full bg-[#0A66C2] text-sm font-bold text-white">
-                D
+              <div className="flex h-12 w-12 shrink-0 items-center justify-center overflow-hidden rounded-full bg-[#0A66C2] text-sm font-bold text-white">
+                <AvatarContent account={account} fallback="D" />
               </div>
               <div className="min-w-0">
                 <div className="flex items-center gap-1">
-                  <span className="text-sm font-semibold text-black">Financial Market</span>
-                  <VerifiedBadge className="h-4 w-4" />
+                  <span className="truncate text-sm font-semibold text-black">{account.name}</span>
+                  <VerifiedBadge className="h-4 w-4 shrink-0" />
                 </div>
                 <p className="text-[11px] text-neutral-500">12,481 followers • 2h • Edited</p>
               </div>
@@ -633,7 +680,7 @@ function LinkedInWeb({ item, initials }) {
 
         <div className="hidden w-52 shrink-0 space-y-4 md:block">
           <div className="rounded-md border border-neutral-200 bg-white p-3 shadow-sm">
-            <p className="text-[11px] font-semibold text-neutral-500">Financial Market</p>
+            <p className="truncate text-[11px] font-semibold text-neutral-500">{account.name}</p>
             <div className="mt-2 h-8 rounded bg-neutral-200" />
             <div className="mt-2 h-2 w-3/4 rounded bg-neutral-200" />
             <div className="mt-3 h-6 rounded bg-[#0A66C2] opacity-90" />
@@ -648,7 +695,7 @@ function LinkedInWeb({ item, initials }) {
   )
 }
 
-function FacebookMobile({ item, initials }) {
+function FacebookMobile({ item, initials, account }) {
   return (
     <div className="min-h-full bg-white">
       <StatusBar />
@@ -664,13 +711,13 @@ function FacebookMobile({ item, initials }) {
 
       <div className="border-t border-neutral-100 bg-white">
         <div className="flex items-center gap-2 px-3 pt-3">
-          <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-[#1877F2] text-xs font-bold text-white">
-            {initials}
+          <div className="flex h-10 w-10 shrink-0 items-center justify-center overflow-hidden rounded-full bg-[#1877F2] text-xs font-bold text-white">
+            <AvatarContent account={account} fallback={initials} />
           </div>
           <div className="min-w-0">
             <div className="flex items-center gap-1">
-              <span className="text-xs font-semibold text-black">Financial Market</span>
-              <VerifiedBadge className="h-3.5 w-3.5" />
+              <span className="truncate text-xs font-semibold text-black">{account.name}</span>
+              <VerifiedBadge className="h-3.5 w-3.5 shrink-0" />
             </div>
             <p className="text-[10px] text-neutral-500">2h · Edited</p>
           </div>
@@ -717,20 +764,20 @@ function FacebookMobile({ item, initials }) {
   )
 }
 
-function FacebookWeb({ item, initials }) {
+function FacebookWeb({ item, initials, account }) {
   return (
     <div className="flex bg-neutral-50">
       <div className="flex flex-1 items-start gap-5 p-4">
         <div className="min-w-0 flex-1">
           <div className="rounded-md border border-neutral-200 bg-white shadow-sm">
             <div className="flex items-center gap-2 px-4 pt-4">
-              <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-full bg-[#1877F2] text-sm font-bold text-white">
-                {initials}
+              <div className="flex h-12 w-12 shrink-0 items-center justify-center overflow-hidden rounded-full bg-[#1877F2] text-sm font-bold text-white">
+                <AvatarContent account={account} fallback={initials} />
               </div>
               <div className="min-w-0">
                 <div className="flex items-center gap-1">
-                  <span className="text-sm font-semibold text-black">Financial Market</span>
-                  <VerifiedBadge className="h-4 w-4" />
+                  <span className="truncate text-sm font-semibold text-black">{account.name}</span>
+                  <VerifiedBadge className="h-4 w-4 shrink-0" />
                 </div>
                 <p className="text-[11px] text-neutral-500">2h · Edited</p>
               </div>
@@ -777,7 +824,7 @@ function FacebookWeb({ item, initials }) {
 
         <div className="hidden w-52 shrink-0 space-y-4 md:block">
           <div className="rounded-md border border-neutral-200 bg-white p-3 shadow-sm">
-            <p className="text-[11px] font-semibold text-neutral-500">Financial Market</p>
+            <p className="truncate text-[11px] font-semibold text-neutral-500">{account.name}</p>
             <div className="mt-2 h-8 rounded bg-neutral-200" />
             <div className="mt-2 h-2 w-3/4 rounded bg-neutral-200" />
             <div className="mt-3 h-6 rounded bg-[#1877F2] opacity-90" />
@@ -792,7 +839,7 @@ function FacebookWeb({ item, initials }) {
   )
 }
 
-function TwitterMobile({ item, initials }) {
+function TwitterMobile({ item, initials, account }) {
   return (
     <div className="min-h-full bg-white text-black">
       <StatusBar />
@@ -805,14 +852,14 @@ function TwitterMobile({ item, initials }) {
       </div>
 
       <div className="flex gap-2.5 px-3 pt-2">
-        <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-[#1d9bf0] text-[10px] font-bold text-white">
-          {initials}
+        <div className="flex h-9 w-9 shrink-0 items-center justify-center overflow-hidden rounded-full bg-[#1d9bf0] text-[10px] font-bold text-white">
+          <AvatarContent account={account} fallback={initials} />
         </div>
         <div className="min-w-0 flex-1">
           <div className="flex flex-wrap items-center gap-x-1">
-            <span className="text-xs font-bold text-black">Financial Market</span>
-            <VerifiedBadge className="h-3.5 w-3.5" />
-            <span className="text-xs text-neutral-500">@financialmarket · 2h</span>
+            <span className="truncate text-xs font-bold text-black">{account.name}</span>
+            <VerifiedBadge className="h-3.5 w-3.5 shrink-0" />
+            <span className="truncate text-xs text-neutral-500">@{account.handle} · 2h</span>
           </div>
           <p className="mt-1 text-[12px] font-bold leading-snug text-black">{item.title}</p>
           <p className="whitespace-pre-line text-[12px] leading-snug text-neutral-800">
@@ -855,19 +902,19 @@ function TwitterMobile({ item, initials }) {
   )
 }
 
-function TwitterWeb({ item, initials }) {
+function TwitterWeb({ item, initials, account }) {
   return (
     <div className="min-h-full bg-white text-black">
       <div className="mx-auto max-w-lg p-4">
         <div className="flex gap-3">
-          <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-[#1d9bf0] text-[11px] font-bold text-white">
-            {initials}
+          <div className="flex h-10 w-10 shrink-0 items-center justify-center overflow-hidden rounded-full bg-[#1d9bf0] text-[11px] font-bold text-white">
+            <AvatarContent account={account} fallback={initials} />
           </div>
           <div className="min-w-0 flex-1">
             <div className="flex flex-wrap items-center gap-x-1">
-              <span className="text-[13px] font-bold text-black">Financial Market</span>
-              <VerifiedBadge className="h-4 w-4" />
-              <span className="text-[13px] text-neutral-500">@financialmarket · 2h</span>
+              <span className="truncate text-[13px] font-bold text-black">{account.name}</span>
+              <VerifiedBadge className="h-4 w-4 shrink-0" />
+              <span className="truncate text-[13px] text-neutral-500">@{account.handle} · 2h</span>
             </div>
             <p className="mt-1 text-[14px] font-bold leading-relaxed text-black">{item.title}</p>
             <p className="whitespace-pre-line text-[14px] leading-relaxed text-neutral-800">
@@ -982,8 +1029,26 @@ export default function PostPreviewModal({ item, onClose, onPublished }) {
   const [publishing, setPublishing] = useState(false)
   const [publishError, setPublishError] = useState(null)
   const [posted, setPosted] = useState(item.isPosted)
+  const [brand, setBrand] = useState(() =>
+    cachedBrand?.owner === currentUserKey() ? cachedBrand.brand : null,
+  )
   const initials = getInitials(item.title)
+  const account = previewAccount(brand)
   const active = platforms.find((p) => p.key === tab)
+
+  useEffect(() => {
+    let cancelled = false
+    apiGetBrandProfile()
+      .then((profile) => {
+        const loaded = brandFromProfile(profile)
+        cachedBrand = { owner: currentUserKey(), brand: loaded }
+        if (!cancelled) setBrand(loaded)
+      })
+      .catch(() => {})
+    return () => {
+      cancelled = true
+    }
+  }, [])
 
   async function handlePublish() {
     setPublishing(true)
@@ -1077,11 +1142,11 @@ export default function PostPreviewModal({ item, onClose, onPublished }) {
 
         {device === 'mobile' ? (
           <PhoneFrame>
-            <active.Mobile item={item} initials={initials} />
+            <active.Mobile item={item} initials={initials} account={account} />
           </PhoneFrame>
         ) : (
           <BrowserFrame url={active.url}>
-            <active.Web item={item} initials={initials} />
+            <active.Web item={item} initials={initials} account={account} />
           </BrowserFrame>
         )}
 

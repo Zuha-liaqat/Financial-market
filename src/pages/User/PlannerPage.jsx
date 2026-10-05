@@ -4,7 +4,7 @@ import { ErrorToast } from "../../components/Toast";
 import { BloggerIcon, MediumIcon, WixIcon, WordPressIcon } from "../../components/BlogIcons";
 import { CalendarDays, Upload } from "lucide-react";
 import { useNavigate } from "react-router-dom";
-import { apiGeneratePlan, apiGetPlanner } from "../../lib/api";
+import { apiGeneratePlan, apiGetBrandProfile, apiGetPlanner } from "../../lib/api";
 import { mapPlannerItem } from "../../lib/posts";
 import {
   fileExtension,
@@ -29,6 +29,12 @@ const toneOptions = [
   "Humorous",
 ];
 const languageOptions = ["EN-US", "EN-GB", "ES", "FR", "DE", "JA"];
+
+// The brand tone from Themes, spelled like the matching option when there is one.
+function matchTone(brandTone) {
+  const lower = brandTone.toLowerCase();
+  return toneOptions.find((t) => t.toLowerCase() === lower) ?? brandTone;
+}
 
 const tagColors = [
   "bg-brand-100 text-brand-800",
@@ -183,6 +189,8 @@ function GenerateView({
   const langRef = useRef(null);
   const [prompt, setPrompt] = useState("");
   const [tone, setTone] = useState("Professional");
+  // Until the user picks a tone by hand, the brand tone from Themes is used.
+  const [toneChosen, setToneChosen] = useState(false);
   const [language, setLanguage] = useState("EN-US");
   const [showToneDropdown, setShowToneDropdown] = useState(false);
   const [showLanguageDropdown, setShowLanguageDropdown] = useState(false);
@@ -200,6 +208,24 @@ function GenerateView({
   const [isDragOver, setIsDragOver] = useState(false);
   const [tags, setTags] = useState([]);
   const [newTag, setNewTag] = useState("");
+  // A brand tone outside the usual list is still shown, so the dropdown always marks the current tone.
+  const toneChoices = toneOptions.includes(tone)
+    ? toneOptions
+    : [tone, ...toneOptions];
+
+  useEffect(() => {
+    if (toneChosen) return;
+    let cancelled = false;
+    apiGetBrandProfile()
+      .then((brand) => {
+        const brandTone = brand?.brand_tone?.trim();
+        if (!cancelled && brandTone) setTone(matchTone(brandTone));
+      })
+      .catch(() => {});
+    return () => {
+      cancelled = true;
+    };
+  }, [toneChosen]);
 
   useEffect(() => {
     function handle(e) {
@@ -459,12 +485,13 @@ function GenerateView({
                     </button>
                     {showToneDropdown && (
                       <div className="absolute left-0 top-full z-10 mt-1 w-48 rounded-lg border border-neutral-200 bg-white py-1 shadow-lg">
-                        {toneOptions.map((o) => (
+                        {toneChoices.map((o) => (
                           <button
                             key={o}
                             type="button"
                             onClick={() => {
                               setTone(o);
+                              setToneChosen(true);
                               setShowToneDropdown(false);
                             }}
                             className={`w-full px-3 py-2 text-left text-sm transition hover:bg-neutral-50 ${tone === o ? "bg-brand-50 font-medium text-brand-700" : "text-neutral-600"}`}

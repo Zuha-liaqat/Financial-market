@@ -4,7 +4,7 @@ import { ErrorToast } from "../../components/Toast";
 import { BloggerIcon, MediumIcon, WixIcon, WordPressIcon } from "../../components/BlogIcons";
 import { Upload } from "lucide-react";
 import { addNotification } from "../../data/notifications";
-import { apiGenerateBlog } from "../../lib/api";
+import { apiGenerateBlog, apiGetBrandProfile } from "../../lib/api";
 import { showGlobalToast } from "../../lib/toastBus";
 import {
   ATTACHMENT_ACCEPT,
@@ -31,6 +31,18 @@ const toneOptions = [
   "Humorous",
 ];
 const languageOptions = ["EN-US", "EN-GB", "ES", "FR", "DE", "JA"];
+
+// The brand tone from Themes, spelled like the matching option when there is one.
+function matchTone(brandTone) {
+  const lower = brandTone.toLowerCase();
+  return toneOptions.find((t) => t.toLowerCase() === lower) ?? brandTone;
+}
+
+// Older drafts have no toneChosen flag. "Professional" was the default, so any other tone was picked by hand.
+function draftToneChosen(draft) {
+  if (typeof draft?.toneChosen === "boolean") return draft.toneChosen;
+  return Boolean(draft?.tone) && draft.tone !== "Professional";
+}
 
 const tagColors = [
   "bg-brand-100 text-brand-800",
@@ -129,6 +141,8 @@ export default function CreateBlogPage() {
   const draft = loadDraft();
   const [prompt, setPrompt] = useState(draft?.prompt ?? "");
   const [tone, setTone] = useState(draft?.tone ?? "Professional");
+  // Until the user picks a tone by hand, the brand tone from Themes is used.
+  const [toneChosen, setToneChosen] = useState(() => draftToneChosen(draft));
   const [language, setLanguage] = useState(draft?.language ?? "EN-US");
   const [referenceUrl, setReferenceUrl] = useState(draft?.referenceUrl ?? "");
   const [urlDraft, setUrlDraft] = useState("");
@@ -146,6 +160,24 @@ export default function CreateBlogPage() {
   const [showUrlDialog, setShowUrlDialog] = useState(false);
   const [uploadedFiles, setUploadedFiles] = useState([]);
   const [isDragOver, setIsDragOver] = useState(false);
+  // A brand tone outside the usual list is still shown, so the dropdown always marks the current tone.
+  const toneChoices = toneOptions.includes(tone)
+    ? toneOptions
+    : [tone, ...toneOptions];
+
+  useEffect(() => {
+    if (toneChosen) return;
+    let cancelled = false;
+    apiGetBrandProfile()
+      .then((brand) => {
+        const brandTone = brand?.brand_tone?.trim();
+        if (!cancelled && brandTone) setTone(matchTone(brandTone));
+      })
+      .catch(() => {});
+    return () => {
+      cancelled = true;
+    };
+  }, [toneChosen]);
 
   useEffect(() => {
     function handleOutside(e) {
@@ -175,6 +207,7 @@ export default function CreateBlogPage() {
       JSON.stringify({
         prompt,
         tone,
+        toneChosen,
         language,
         referenceUrl,
         scheduleDate,
@@ -186,6 +219,7 @@ export default function CreateBlogPage() {
   }, [
     prompt,
     tone,
+    toneChosen,
     language,
     referenceUrl,
     scheduleDate,
@@ -447,11 +481,12 @@ export default function CreateBlogPage() {
                   </button>
                   {showToneDropdown && (
                     <div className="absolute left-0 top-full z-10 mt-1 w-48 rounded-lg border border-neutral-200 bg-white py-1 shadow-lg">
-                      {toneOptions.map((option) => (
+                      {toneChoices.map((option) => (
                         <button
                           key={option}
                           onClick={() => {
                             setTone(option);
+                            setToneChosen(true);
                             setShowToneDropdown(false);
                           }}
                           className={`w-full px-3 py-2 text-left text-sm transition hover:bg-neutral-50 ${

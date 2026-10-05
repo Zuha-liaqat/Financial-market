@@ -13,13 +13,32 @@ function clearToken() {
   localStorage.removeItem(TOKEN_KEY)
 }
 
-function extractErrorMessage(body, fallback) {
+// fieldLabels is optional. When given, each 422 message is prefixed with the field it is
+// about, so the user knows which input to fix; without it the messages stay as they were.
+function extractErrorMessage(body, fallback, fieldLabels) {
   if (!body) return fallback
   if (Array.isArray(body.detail)) {
+    if (fieldLabels) {
+      return body.detail.map((d) => describeFieldError(d, fieldLabels)).filter(Boolean).join('; ') || fallback
+    }
     return body.detail.map((d) => d.msg).filter(Boolean).join(', ') || fallback
   }
   if (typeof body.detail === 'string') return body.detail
   return fallback
+}
+
+function describeFieldError(item, fieldLabels) {
+  const msg = typeof item?.msg === 'string' ? item.msg.replace(/^Value error, /, '') : ''
+  if (!msg) return ''
+  // loc looks like ['body', 'company_name'] or ['body', 'brand_colors', 0].
+  const field = [...(Array.isArray(item.loc) ? item.loc : [])]
+    .reverse()
+    .find((part) => typeof part === 'string' && !['body', 'query', 'path'].includes(part))
+  if (!field) return msg
+  const label = Object.prototype.hasOwnProperty.call(fieldLabels, field)
+    ? fieldLabels[field]
+    : field.replace(/_/g, ' ').replace(/^\w/, (c) => c.toUpperCase())
+  return `${label}: ${msg}`
 }
 
 export async function apiLogin(email, password) {
@@ -751,6 +770,24 @@ export async function apiGetBrandProfile(companyId) {
   return body
 }
 
+// The brand profile fields as the Themes page labels them, for naming the field in a 422.
+const BRAND_FIELD_LABELS = {
+  company_name: 'Company Name',
+  company_description: 'Company Description',
+  company_website: 'Website',
+  contact_email: 'Contact Email',
+  contact_mobile: 'Mobile Number',
+  brand_tone: 'Brand Tone',
+  target_audience: 'Target Audience',
+  visual_style: 'Theme option',
+  brand_colors: 'Brand Colors',
+  custom_color: 'Brand Colors',
+  custom_text_style: 'Text Style',
+  custom_font: 'Font',
+  status: 'Status',
+  files: 'Theme file',
+}
+
 // PATCH /api/themes takes multipart form data: only the fields sent are changed, and reference
 // files (PDFs and images) go under the repeated "files" field. undefined/null fields are left out;
 // an empty string clears that field.
@@ -767,7 +804,7 @@ export async function apiSaveBrandProfile(fields, { files = [] } = {}, companyId
   })
   const body = await res.json().catch(() => null)
   if (!res.ok) {
-    throw new Error(extractErrorMessage(body, 'Failed to save brand profile'))
+    throw new Error(extractErrorMessage(body, 'Failed to save brand profile', BRAND_FIELD_LABELS))
   }
   return body
 }
@@ -1064,6 +1101,22 @@ export async function apiAdminGetOpenSupportCount() {
 }
 
 // Uploads reference files on their own, without touching the other brand fields.
-export function apiUploadBrandReferenceFiles(files, companyId) {
-  return apiSaveBrandProfile({}, { files }, companyId)
+// fields: optional profile fields saved in the same request, e.g. { visual_style: 'upload' }.
+export function apiUploadBrandReferenceFiles(files, companyId, fields = {}) {
+  return apiSaveBrandProfile(fields, { files }, companyId)
+}
+
+// Takes one uploaded theme file off the brand profile; the response is the updated profile.
+export async function apiDeleteBrandReferenceFile(url, companyId) {
+  const params = new URLSearchParams({ url })
+  if (companyId) params.set('company_id', companyId)
+  const res = await authorizedRequest(`/api/themes/files?${params}`, { method: 'DELETE' })
+  const body = await res.json().catch(() => null)
+  if (!res.ok) {
+    const error = new Error(extractErrorMessage(body, 'Failed to remove the theme file'))
+    // Lets the page tell a file that is already gone (404) from other failures.
+    error.status = res.status
+    throw error
+  }
+  return body
 }

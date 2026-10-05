@@ -14,6 +14,7 @@ import {
   apiGetThemeOptions,
   apiSaveBrandProfile,
   apiUploadBrandLogo,
+  apiUploadBrandReferenceFiles,
 } from "../../lib/api";
 
 const MAX_COLORS = 8;
@@ -219,7 +220,8 @@ export default function ThemesPage() {
   const [brandTone, setBrandTone] = useState("");
   const [targetAudience, setTargetAudience] = useState("");
   const [themeMode, setThemeMode] = useState("custom");
-  const [themeFile, setThemeFile] = useState(null);
+  const [referenceFiles, setReferenceFiles] = useState([]);
+  const [themeUploading, setThemeUploading] = useState(false);
   const [brandColors, setBrandColors] = useState([]);
   const [colorDraft, setColorDraft] = useState("");
   const [customFont, setCustomFont] = useState("");
@@ -239,7 +241,8 @@ export default function ThemesPage() {
         setCompanyName(profile?.company_name || "");
         setCompanyDescription(profile?.company_description || "");
         setLogoUrl(profile?.logo_url || null);
-        setWebsite(profile?.website_url || "");
+        setReferenceFiles(profile?.reference_files || []);
+        setWebsite(profile?.company_website || "");
         setContactPhone(profile?.contact_mobile || "");
         setBrandTone(profile?.brand_tone || options?.brand_tones?.[0] || "");
         setTargetAudience(profile?.target_audience || "");
@@ -275,6 +278,24 @@ export default function ThemesPage() {
     }
   }
 
+  async function handleThemeFileSelect(e) {
+    const file = e.target.files?.[0];
+    e.target.value = "";
+    if (!file) return;
+    setThemeUploading(true);
+    setSaveError("");
+    try {
+      // Sent straight away rather than held until Save, so it cannot be lost by
+      // leaving the page - which is what used to happen to it.
+      const profile = await apiUploadBrandReferenceFiles([file]);
+      setReferenceFiles(profile?.reference_files || []);
+    } catch (err) {
+      setSaveError(err.message);
+    } finally {
+      setThemeUploading(false);
+    }
+  }
+
   function addColor() {
     const color = colorDraft.trim().toLowerCase();
     if (!isHexColor(color) || brandColors.length >= MAX_COLORS) return;
@@ -302,7 +323,7 @@ export default function ThemesPage() {
       const profile = await apiSaveBrandProfile({
         company_name: companyName || null,
         company_description: companyDescription || null,
-        website_url: website || null,
+        company_website: website || null,
         contact_mobile: contactPhone || null,
         brand_tone: brandTone || null,
         target_audience: targetAudience || null,
@@ -628,42 +649,51 @@ export default function ThemesPage() {
         </div>
 
         {themeMode === "upload" ? (
-          <div className="mt-4 border-t border-neutral-200 pt-4">
-            {themeFile ? (
-              <div className="flex items-center gap-3 rounded-lg border border-neutral-200 bg-neutral-50 px-3 py-2.5">
+          <div className="mt-4 space-y-2 border-t border-neutral-200 pt-4">
+            {referenceFiles.map((file) => (
+              <div
+                key={file.url}
+                className="flex items-center gap-3 rounded-lg border border-neutral-200 bg-neutral-50 px-3 py-2.5"
+              >
                 <FileText className="h-5 w-5 shrink-0 text-brand-500" />
                 <span className="min-w-0 flex-1 truncate text-sm text-neutral-700">
-                  {themeFile.name}
+                  {file.filename}
                 </span>
-                <button
-                  type="button"
-                  onClick={() => setThemeFile(null)}
-                  aria-label="Remove theme file"
-                  className="cursor-pointer rounded p-1 text-neutral-400 transition hover:bg-neutral-200 hover:text-neutral-700"
+                <a
+                  href={file.url}
+                  target="_blank"
+                  rel="noreferrer"
+                  className="shrink-0 text-xs font-semibold text-brand-600 hover:underline"
                 >
-                  <X className="h-4 w-4" />
-                </button>
+                  Open
+                </a>
               </div>
-            ) : (
-              <label className="flex cursor-pointer flex-col items-center justify-center gap-1.5 rounded-lg border-2 border-dashed border-neutral-300 bg-neutral-50 px-4 py-8 text-center transition hover:border-brand-400 hover:bg-brand-50/40">
-                <Upload className="h-6 w-6 text-neutral-400" />
-                <span className="text-sm font-semibold text-neutral-700">
-                  Click to upload your theme
-                </span>
-                <span className="text-xs text-neutral-400">
-                  Brand guidelines as an image or PDF
-                </span>
-                <input
-                  type="file"
-                  accept="image/*,.pdf"
-                  onChange={(e) => {
-                    setThemeFile(e.target.files?.[0] || null);
-                    e.target.value = "";
-                  }}
-                  className="hidden"
-                />
-              </label>
-            )}
+            ))}
+
+            <label
+              className={`flex flex-col items-center justify-center gap-1.5 rounded-lg border-2 border-dashed border-neutral-300 bg-neutral-50 px-4 py-8 text-center transition hover:border-brand-400 hover:bg-brand-50/40 ${
+                themeUploading ? "cursor-wait opacity-60" : "cursor-pointer"
+              }`}
+            >
+              <Upload className="h-6 w-6 text-neutral-400" />
+              <span className="text-sm font-semibold text-neutral-700">
+                {themeUploading
+                  ? "Uploading…"
+                  : referenceFiles.length
+                    ? "Upload another file"
+                    : "Click to upload your theme"}
+              </span>
+              <span className="text-xs text-neutral-400">
+                Brand guidelines as a PDF, JPG, PNG, WebP, GIF or AVIF
+              </span>
+              <input
+                type="file"
+                accept=".pdf,.jpg,.jpeg,.png,.webp,.gif,.avif"
+                disabled={themeUploading}
+                onChange={handleThemeFileSelect}
+                className="hidden"
+              />
+            </label>
           </div>
         ) : (
           <div className="mt-4 grid grid-cols-1 items-start gap-3 border-t border-neutral-200 pt-4 sm:grid-cols-2">

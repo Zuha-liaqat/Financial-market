@@ -1021,3 +1021,19 @@ export async function apiAdminGetOpenSupportCount() {
   }
   return body?.open || 0
 }
+
+export async function apiUploadBrandReferenceFiles(files, companyId) {
+  const query = companyId ? `?company_id=${companyId}` : ''
+  const formData = new FormData()
+  // The API takes several under the one field name.
+  files.forEach((file) => formData.append('files', file))
+  const res = await authorizedRequest(`/api/themes${query}`, {
+    method: 'PATCH',
+    body: formData,
+  })
+  const body = await res.json().catch(() => null)
+  if (!res.ok) {
+    throw new Error(extractErrorMessage(body, 'Failed to upload the theme file'))
+  }
+  return body
+}

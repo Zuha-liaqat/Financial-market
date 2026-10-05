@@ -230,8 +230,7 @@ export default function EditContentPage() {
       </div>
 
       <div className="space-y-5 rounded-lg border border-neutral-200 bg-white p-5">
-        <div className="flex items-center justify-between">
-          <h2 className="text-lg font-bold text-black">Edit Content</h2>
+        <div className="flex items-center justify-end">
           <span className="rounded-full bg-neutral-100 px-2.5 py-1 text-[10px] font-semibold tracking-wide text-neutral-500">
             DRAFT
           </span>
@@ -241,14 +240,15 @@ export default function EditContentPage() {
           <p className="mb-2 text-xs font-semibold tracking-widest text-neutral-400">
             PRIMARY MEDIA
           </p>
+          {/* The whole image is shown at its own shape; only very large ones are scaled down. */}
           <div
-            className={`relative mx-auto flex h-56 w-full max-w-sm items-center justify-center overflow-hidden rounded-lg border border-dashed border-neutral-300 ${item.images?.length ? "bg-neutral-100" : item.thumbClass}`}
+            className={`relative mx-auto flex w-full items-center justify-center overflow-hidden rounded-lg border border-dashed border-neutral-300 ${item.images?.length ? "bg-neutral-50 p-2" : `h-56 max-w-sm ${item.thumbClass}`}`}
           >
             {item.images?.length ? (
               <img
                 src={item.images[0].dataUri}
                 alt={item.images[0].name}
-                className="h-full w-full object-cover"
+                className="block max-h-120 w-auto max-w-full rounded-md object-contain"
               />
             ) : (
               <span className="select-none text-6xl font-bold text-white/70">
@@ -257,6 +257,18 @@ export default function EditContentPage() {
             )}
           </div>
         </div>
+
+        {item.prompt && (
+          <div>
+            <p className="mb-2 text-xs font-semibold tracking-widest text-neutral-400">
+              PROMPT
+            </p>
+            {/* What the post was generated from; shown for reference, not editable. */}
+            <p className="rounded-lg border border-neutral-200 bg-neutral-50 px-3 py-2.5 text-sm whitespace-pre-line text-neutral-600">
+              {item.prompt}
+            </p>
+          </div>
+        )}
 
         <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
           <div>

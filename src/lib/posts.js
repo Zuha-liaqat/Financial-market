@@ -163,6 +163,7 @@ export function mapApiPost(post) {
     id: post.id,
     title: post.title || post.headline || (post.caption ? post.caption.slice(0, 60) : 'Untitled post'),
     headline: post.headline || '',
+    prompt: post.prompt || '',
     platform,
     thumbClass: 'bg-gradient-to-br from-neutral-400 to-neutral-600',
     thumbLabel: platform?.slice(0, 4).toUpperCase() || '',

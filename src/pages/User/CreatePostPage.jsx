@@ -1,4 +1,6 @@
 import { useState, useRef, useEffect } from "react";
+import VoiceInputButton from "../../components/VoiceInputButton";
+import { appendSpokenText } from "../../lib/useSpeechToText";
 import { ErrorToast } from "../../components/Toast";
 import { Upload } from "lucide-react";
 import { addNotification } from "../../data/notifications";
@@ -454,6 +456,11 @@ export default function CreatePostPage() {
                 >
                   <Upload className="h-5 w-5 text-brand-500" strokeWidth={2} />
                 </button>
+
+                {/* Speak the prompt */}
+                <VoiceInputButton
+                  onText={(text) => setPrompt((prev) => appendSpokenText(prev, text))}
+                />
 
                 {/* Reference URL */}
                 <div

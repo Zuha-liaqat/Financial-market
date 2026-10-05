@@ -1,4 +1,6 @@
 import { useState, useRef, useEffect } from "react";
+import VoiceInputButton from "../../components/VoiceInputButton";
+import { appendSpokenText } from "../../lib/useSpeechToText";
 import { ErrorToast } from "../../components/Toast";
 import { BloggerIcon, MediumIcon, WixIcon, WordPressIcon } from "../../components/BlogIcons";
 import { Upload } from "lucide-react";
@@ -369,6 +371,11 @@ export default function CreateBlogPage() {
                 >
                   <Upload className="h-5 w-5 text-brand-500" strokeWidth={2} />
                 </button>
+
+                {/* Speak the prompt */}
+                <VoiceInputButton
+                  onText={(text) => setPrompt((prev) => appendSpokenText(prev, text))}
+                />
 
                 {/* Reference URL */}
                 <div

@@ -264,6 +264,19 @@ export async function apiTestNotificationChannel(provider, companyId) {
   return body
 }
 
+// Sends a short recorded clip (WebM from MediaRecorder) and returns the spoken text.
+export async function apiTranscribeSpeech(audio) {
+  const extension = audio.type.includes('mp4') ? 'mp4' : audio.type.includes('ogg') ? 'ogg' : 'webm'
+  const formData = new FormData()
+  formData.append('file', audio, `voice-prompt.${extension}`)
+  const res = await authorizedRequest('/api/speech/transcribe', { method: 'POST', body: formData })
+  const body = await res.json().catch(() => null)
+  if (!res.ok) {
+    throw new Error(extractErrorMessage(body, "Couldn't turn your recording into text"))
+  }
+  return typeof body === 'string' ? body : body?.text || ''
+}
+
 export async function apiGeneratePost({
   prompt,
   platforms,

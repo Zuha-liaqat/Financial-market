@@ -1,4 +1,6 @@
 import { useState, useRef, useEffect, useCallback, useMemo } from "react";
+import VoiceInputButton from "../../components/VoiceInputButton";
+import { appendSpokenText } from "../../lib/useSpeechToText";
 import { ErrorToast } from "../../components/Toast";
 import { BloggerIcon, MediumIcon, WixIcon, WordPressIcon } from "../../components/BlogIcons";
 import { CalendarDays, Upload } from "lucide-react";
@@ -380,6 +382,11 @@ function GenerateView({
                   >
                     <Upload className="h-5 w-5 text-brand-500" strokeWidth={2} />
                   </button>
+
+                  {/* Speak the prompt */}
+                  <VoiceInputButton
+                    onText={(text) => setPrompt((prev) => appendSpokenText(prev, text))}
+                  />
                   {/* Reference URL */}
                   <div
                     className={

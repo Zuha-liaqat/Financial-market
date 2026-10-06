@@ -1,4 +1,5 @@
 import { useEffect, useState } from "react";
+import { useSearchParams } from "react-router-dom";
 import { FileText, Plus, Upload, X } from "lucide-react";
 import {
   Select,
@@ -10,6 +11,7 @@ import {
 import { addNotification } from "../../data/notifications";
 import { ErrorToast, SuccessToast } from "../../components/Toast";
 import ConfirmDialog from "../../components/ConfirmDialog";
+import LibraryPage from "./LibraryPage";
 import {
   apiDeleteBrandReferenceFile,
   apiGetBrandProfile,
@@ -229,7 +231,64 @@ function ThemeSkeleton() {
   );
 }
 
+const THEME_TABS = [
+  { key: "brand", label: "Brand" },
+  { key: "library", label: "Library" },
+];
+
+// Themes holds the brand settings and the media Library as two tabs. The tab lives in
+// the URL (?tab=library), so the old /library link can land straight on it.
 export default function ThemesPage() {
+  const [searchParams, setSearchParams] = useSearchParams();
+  const tab = searchParams.get("tab") === "library" ? "library" : "brand";
+  // The Library loads the first time it is opened, then stays mounted like the Brand
+  // tab, so switching back and forth keeps unsaved brand edits and library filters.
+  const [libraryOpened, setLibraryOpened] = useState(tab === "library");
+
+  useEffect(() => {
+    if (tab === "library") setLibraryOpened(true);
+  }, [tab]);
+
+  function selectTab(key) {
+    const next = new URLSearchParams(searchParams);
+    if (key === "library") next.set("tab", "library");
+    else next.delete("tab");
+    setSearchParams(next, { replace: true });
+  }
+
+  return (
+    <div className="space-y-4">
+      <div className="inline-flex gap-1 rounded-lg bg-neutral-100 p-1">
+        {THEME_TABS.map((t) => (
+          <button
+            key={t.key}
+            type="button"
+            onClick={() => selectTab(t.key)}
+            data-track-label={`Themes - ${t.label} Tab`}
+            className={`rounded-md px-4 py-1.5 text-sm font-medium transition-all ${
+              tab === t.key
+                ? "bg-brand-500 text-white shadow-sm"
+                : "text-neutral-500 hover:bg-white hover:text-neutral-800"
+            }`}
+          >
+            {t.label}
+          </button>
+        ))}
+      </div>
+
+      <div className={tab === "brand" ? "" : "hidden"}>
+        <BrandSettings />
+      </div>
+      {libraryOpened && (
+        <div className={tab === "library" ? "" : "hidden"}>
+          <LibraryPage />
+        </div>
+      )}
+    </div>
+  );
+}
+
+function BrandSettings() {
   const [status, setStatus] = useState("loading");
   const [loadError, setLoadError] = useState("");
   const [toneOptions, setToneOptions] = useState([]);

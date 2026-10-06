@@ -8,7 +8,6 @@ import {
   CreditCard,
   FileText,
   Gift,
-  Images,
   LayoutDashboard,
   ListChecks,
   LogOut,
@@ -29,7 +28,6 @@ import { socialChannels } from './channelIcons'
 
 const navItems = [
   { to: '/dashboard', label: 'Dashboard', icon: LayoutDashboard, color: '#3a5f87' },
-  { to: '/library', label: 'Library', icon: Images, color: '#d97706', hideForSuperAdmin: true },
   { to: '/approval-queue', label: 'Approval Queue', icon: ListChecks, color: '#16a34a', hideForSuperAdmin: true },
   { to: '/calendar', label: 'Calendar', icon: CalendarDays, color: '#e11d48', hideForSuperAdmin: true },
   { to: '/planner', label: 'Planner', icon: NotebookPen, color: '#7c3aed', hideForSuperAdmin: true },

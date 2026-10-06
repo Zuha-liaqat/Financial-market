@@ -12,7 +12,6 @@ import DashboardPage from './pages/User/DashboardPage'
 import CreatePostPage from './pages/User/CreatePostPage'
 import CreateBlogPage from './pages/User/CreateBlogPage'
 import ThemesPage from './pages/User/Theme'
-import LibraryPage from './pages/User/LibraryPage'
 import ApprovalQueuePage from './pages/User/ApprovalQueuePage'
 import EditContentPage from './pages/User/EditContentPage'
 import EditBlogPage from './pages/User/EditBlogPage'
@@ -83,7 +82,8 @@ function App() {
           <Route path="/create-post" element={<CreatePostPage />} />
           <Route path="/create-blog" element={<CreateBlogPage />} />
           <Route path="/themes" element={<ThemesPage />} />
-          <Route path="/library" element={<LibraryPage />} />
+          {/* The Library now lives on the Themes page as a tab. */}
+          <Route path="/library" element={<Navigate to="/themes?tab=library" replace />} />
           <Route path="/approval-queue" element={<ApprovalQueuePage />} />
           <Route path="/approval-queue/:id/edit" element={<EditContentPage />} />
           <Route path="/approval-queue/:id/edit-blog" element={<EditBlogPage />} />

@@ -82,8 +82,8 @@ function App() {
           <Route path="/create-post" element={<CreatePostPage />} />
           <Route path="/create-blog" element={<CreateBlogPage />} />
           <Route path="/themes" element={<ThemesPage />} />
-          {/* The Library now lives on the Themes page as a tab. */}
-          <Route path="/library" element={<Navigate to="/themes?tab=library" replace />} />
+          {/* The Library now lives on the Themes page, under Visual/Branding. */}
+          <Route path="/library" element={<Navigate to="/themes#library" replace />} />
           <Route path="/approval-queue" element={<ApprovalQueuePage />} />
           <Route path="/approval-queue/:id/edit" element={<EditContentPage />} />
           <Route path="/approval-queue/:id/edit-blog" element={<EditBlogPage />} />

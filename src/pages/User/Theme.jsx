@@ -242,6 +242,9 @@ export default function ThemesPage() {
   const [logoUrl, setLogoUrl] = useState(null);
   const [logoUploading, setLogoUploading] = useState(false);
   const [website, setWebsite] = useState("");
+  // The website as last saved. Saving it makes the API re-read the whole site into the
+  // knowledge base, so it is only sent when it has actually changed.
+  const [savedWebsite, setSavedWebsite] = useState("");
   const [contactPhone, setContactPhone] = useState("");
   const [brandTone, setBrandTone] = useState("");
   const [targetAudience, setTargetAudience] = useState("");
@@ -274,6 +277,7 @@ export default function ThemesPage() {
         setReferenceFiles(profile?.reference_files || []);
         setThemeMode(profileThemeMode(profile, colors));
         setWebsite(profile?.company_website || "");
+        setSavedWebsite((profile?.company_website || "").trim());
         setContactPhone(profile?.contact_mobile || "");
         setBrandTone(profile?.brand_tone || options?.brand_tones?.[0] || "");
         setTargetAudience(profile?.target_audience || "");
@@ -398,7 +402,7 @@ export default function ThemesPage() {
         // Free-text fields are always sent, so clearing one on the page clears it on the server.
         company_name: companyName.trim(),
         company_description: companyDescription.trim(),
-        company_website: website.trim(),
+        company_website: website.trim() !== savedWebsite ? website.trim() : undefined,
         contact_mobile: contactPhone.trim(),
         target_audience: targetAudience.trim(),
         // These are checked by the API, so they're only sent when they have a value.
@@ -414,6 +418,7 @@ export default function ThemesPage() {
         status: complete ? "complete" : "draft",
       });
       if (profile?.logo_url) setLogoUrl(profile.logo_url);
+      if (profile) setSavedWebsite((profile.company_website || "").trim());
       if (profile) {
         // Show what was saved rather than what was sent, and the option generation
         // will use (the same one a reload would show).

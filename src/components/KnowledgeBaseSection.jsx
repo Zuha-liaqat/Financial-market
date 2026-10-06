@@ -145,13 +145,17 @@ export default function KnowledgeBaseSection() {
         setItems((prev) => [item, ...prev.filter((existing) => existing.id !== item.id)])
         added += 1
       } catch (err) {
-        problems.push(err.message || `Failed to upload ${file.name}`)
+        // fetch rejects with a TypeError when the server can't be reached or fails without a reply.
+        const reason =
+          err instanceof TypeError ? "the server couldn't be reached or failed while saving it." : err.message || 'upload failed.'
+        problems.push(`${file.name}: ${reason}`)
       }
     }
     setProgress(null)
 
-    if (added > 0) setNotice(added === 1 ? 'File added to the knowledge base.' : `${added} files added to the knowledge base.`)
-    if (problems.length > 0) setError(problems.join(' '))
+    const addedText = added === 1 ? '1 file added to the knowledge base.' : `${added} files added to the knowledge base.`
+    if (problems.length > 0) setError(`${added > 0 ? `${addedText} ` : ''}${problems.join(' ')}`)
+    else if (added > 0) setNotice(addedText)
   }
 
   async function confirmDelete() {
@@ -182,7 +186,7 @@ export default function KnowledgeBaseSection() {
       <div className="flex flex-wrap items-center justify-between gap-3">
         <p className="max-w-xl text-xs text-neutral-500">
           Upload documents about your business, like product details, FAQs or price lists. The AI reads them when it
-          writes your posts and blogs.
+          writes your posts.
         </p>
         <button
           type="button"
@@ -260,7 +264,7 @@ export default function KnowledgeBaseSection() {
                           <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-md bg-sky-50 text-sky-600">
                             <FileText className="h-4 w-4" strokeWidth={1.75} />
                           </span>
-                          <span className="truncate font-medium text-neutral-800" title={name}>
+                          <span className="block max-w-[14rem] truncate font-medium text-neutral-800 sm:max-w-xs" title={name}>
                             {name}
                           </span>
                         </div>

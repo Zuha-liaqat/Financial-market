@@ -1120,3 +1120,39 @@ export async function apiDeleteBrandReferenceFile(url, companyId) {
   }
   return body
 }
+
+// Knowledge base (Inaam's /api/knowledge-base): files the AI reads about the company.
+export async function apiListKnowledgeBase() {
+  const res = await authorizedRequest('/api/knowledge-base')
+  const body = await res.json().catch(() => null)
+  if (!res.ok) {
+    throw new Error(extractErrorMessage(body, 'Failed to load the knowledge base'))
+  }
+  return Array.isArray(body) ? body : []
+}
+
+// One file per request: the API reads its text for the AI and stores the file itself.
+export async function apiUploadKnowledgeBaseFile(file) {
+  const formData = new FormData()
+  formData.append('file', file)
+  const res = await authorizedRequest('/api/knowledge-base/upload', {
+    method: 'POST',
+    body: formData,
+  })
+  const body = await res.json().catch(() => null)
+  if (!res.ok) {
+    throw new Error(extractErrorMessage(body, `Failed to upload ${file.name}`))
+  }
+  return body
+}
+
+export async function apiDeleteKnowledgeBaseItem(id) {
+  const res = await authorizedRequest(`/api/knowledge-base/${id}`, { method: 'DELETE' })
+  const body = await res.json().catch(() => null)
+  if (!res.ok) {
+    const error = new Error(extractErrorMessage(body, 'Failed to delete the file'))
+    error.status = res.status
+    throw error
+  }
+  return body
+}

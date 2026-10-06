@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { FileText, Images, Plus, Upload, X } from "lucide-react";
+import { BookOpen, FileText, Images, Plus, Upload, X } from "lucide-react";
 import {
   Select,
   SelectContent,
@@ -11,6 +11,7 @@ import { addNotification } from "../../data/notifications";
 import { ErrorToast, SuccessToast } from "../../components/Toast";
 import ConfirmDialog from "../../components/ConfirmDialog";
 import LibraryPage from "./LibraryPage";
+import KnowledgeBaseSection from "../../components/KnowledgeBaseSection";
 import {
   apiDeleteBrandReferenceFile,
   apiGetBrandProfile,
@@ -918,6 +919,14 @@ export default function ThemesPage() {
           <LibraryPage />
         </SectionCard>
       </div>
+
+      <SectionCard
+        icon={<BookOpen className="h-4 w-4 text-sky-600" strokeWidth={1.75} />}
+        chip="bg-sky-100"
+        title="KNOWLEDGE BASE"
+      >
+        <KnowledgeBaseSection />
+      </SectionCard>
 
       <div className="flex items-center justify-end gap-2 border-t border-neutral-200 pt-4">
         <button

@@ -186,7 +186,7 @@ export default function KnowledgeBaseSection() {
       <div className="flex flex-wrap items-center justify-between gap-3">
         <p className="max-w-xl text-xs text-neutral-500">
           Upload documents about your business, like product details, FAQs or price lists. The AI reads them when it
-          writes your posts.
+          writes your posts and blogs.
         </p>
         <button
           type="button"

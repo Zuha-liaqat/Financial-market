@@ -31,6 +31,7 @@ export default function SignupPage() {
   const [form, setForm] = useState({
     name: "",
     email: "",
+    website: "",
     password: "",
     confirmPassword: "",
   });
@@ -55,6 +56,12 @@ export default function SignupPage() {
       setError("Passwords do not match.");
       return;
     }
+    // Optional, but if given it should at least look like an address (the API adds https:// itself).
+    const website = form.website.trim();
+    if (website && (/\s/.test(website) || !website.includes("."))) {
+      setError("Please enter a valid website, like yourcompany.com.");
+      return;
+    }
 
     setSubmitting(true);
     try {
@@ -63,6 +70,7 @@ export default function SignupPage() {
         email: form.email.trim(),
         password: form.password,
         confirm_password: form.confirmPassword,
+        website: website || undefined,
         referrer_id: referrerId,
       });
       setSuperAdminStatus(false);
@@ -203,6 +211,45 @@ export default function SignupPage() {
                   className="w-full bg-transparent text-sm outline-none placeholder:text-neutral-400"
                 />
               </div>
+            </div>
+
+            <div>
+              <label
+                htmlFor="website"
+                className="mb-1 block text-xs font-semibold tracking-wide text-neutral-500"
+              >
+                WEBSITE <span className="font-normal normal-case tracking-normal text-neutral-400">(optional)</span>
+              </label>
+              <div className="flex items-center gap-2 rounded-lg border border-neutral-200 bg-neutral-50 px-3 py-2.5 transition focus-within:border-black focus-within:bg-white focus-within:ring-2 focus-within:ring-black/10">
+                <svg
+                  className="h-4 w-4 shrink-0 text-neutral-400"
+                  fill="none"
+                  viewBox="0 0 24 24"
+                  stroke="currentColor"
+                >
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    strokeWidth={1.75}
+                    d="M12 21a9.004 9.004 0 008.716-6.747M12 21a9.004 9.004 0 01-8.716-6.747M12 21c2.485 0 4.5-4.03 4.5-9S14.485 3 12 3m0 18c-2.485 0-4.5-4.03-4.5-9S9.515 3 12 3m0 0a8.997 8.997 0 017.843 4.582M12 3a8.997 8.997 0 00-7.843 4.582m15.686 0A11.953 11.953 0 0112 10.5c-2.998 0-5.74-1.1-7.843-2.918m15.686 0A8.959 8.959 0 0121 12c0 .778-.099 1.533-.284 2.253m0 0A17.919 17.919 0 0112 16.5c-3.162 0-6.133-.815-8.716-2.247m0 0A9.015 9.015 0 013 12c0-1.605.42-3.113 1.157-4.418"
+                  />
+                </svg>
+                <input
+                  id="website"
+                  name="website"
+                  type="text"
+                  inputMode="url"
+                  autoComplete="url"
+                  placeholder="yourcompany.com"
+                  maxLength={500}
+                  value={form.website}
+                  onChange={handleChange}
+                  className="w-full bg-transparent text-sm outline-none placeholder:text-neutral-400"
+                />
+              </div>
+              <p className="mt-1 text-[11px] text-neutral-400">
+                We read your website so the AI can write about your business.
+              </p>
             </div>
 
             <div>

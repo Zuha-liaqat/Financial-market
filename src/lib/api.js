@@ -59,7 +59,7 @@ export async function apiLogin(email, password) {
   return token
 }
 
-export async function apiSignup({ full_name, email, password, confirm_password, referrer_id }) {
+export async function apiSignup({ full_name, email, password, confirm_password, website, referrer_id }) {
   const res = await fetch(`${API_BASE_URL}/api/auth/signup`, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
@@ -68,6 +68,8 @@ export async function apiSignup({ full_name, email, password, confirm_password, 
       email,
       password,
       confirm_password,
+      // Optional: the API reads the site into the knowledge base after signup.
+      ...(website ? { website } : {}),
       ...(referrer_id ? { referrer_id } : {}),
     }),
   })

@@ -13,6 +13,38 @@ function clearToken() {
   localStorage.removeItem(TOKEN_KEY)
 }
 
+// Fired when the saved login stops working (expired or gone), so the dashboard can send the user
+// to the sign-in page instead of leaving every page quietly empty.
+export const AUTH_EXPIRED_EVENT = 'auth-expired'
+
+function signalAuthExpired() {
+  // On the next tick: a page's first requests run before the layout around it has started listening.
+  setTimeout(() => window.dispatchEvent(new Event(AUTH_EXPIRED_EVENT)), 0)
+}
+
+// When the login token runs out (its JWT "exp", in ms), or null if it can't be read.
+function tokenExpiresAt(token) {
+  try {
+    const payload = JSON.parse(atob(token.split('.')[1].replace(/-/g, '+').replace(/_/g, '/')))
+    return typeof payload.exp === 'number' ? payload.exp * 1000 : null
+  } catch {
+    return null
+  }
+}
+
+// True while there is a saved login that hasn't run out. A token that can't be read is left to the server.
+export function hasValidSession() {
+  const token = getToken()
+  if (!token) return false
+  const expiresAt = tokenExpiresAt(token)
+  return expiresAt === null || expiresAt > Date.now()
+}
+
+// Forgets the login token (Log out, or a login that has run out).
+export function apiSignOut() {
+  clearToken()
+}
+
 // fieldLabels is optional. When given, each 422 message is prefixed with the field it is
 // about, so the user knows which input to fix; without it the messages stay as they were.
 function extractErrorMessage(body, fallback, fieldLabels) {
@@ -92,6 +124,7 @@ export async function apiSignup({ full_name, email, password, confirm_password, 
 async function ensureAuthToken() {
   const token = getToken()
   if (!token) {
+    signalAuthExpired()
     throw new Error('You are signed out. Please sign in again.')
   }
   return token

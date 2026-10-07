@@ -22,7 +22,7 @@ import {
 } from 'lucide-react'
 import Logo from './Logo'
 import { isSuperAdmin, logout as clearSuperAdmin } from '../data/auth'
-import { apiAdminGetOpenSupportCount } from '../lib/api'
+import { apiAdminGetOpenSupportCount, apiSignOut } from '../lib/api'
 import { apiListPlatformCredentials, CONNECTIONS_CHANGED_EVENT } from '../lib/api'
 import { socialChannels } from './channelIcons'
 
@@ -215,6 +215,8 @@ export default function Sidebar({ open = false, onClose = () => { } }) {
   }
 
   function handleLogout() {
+    // The login token too, or the "logged out" user could still open the dashboard.
+    apiSignOut()
     clearSuperAdmin()
     navigate('/', { replace: true })
   }

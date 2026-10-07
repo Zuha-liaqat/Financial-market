@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { useNavigate, Link } from "react-router-dom";
+import { useNavigate, useSearchParams, Link } from "react-router-dom";
 import Logo from "../../components/Logo";
 import { setCurrentUserEmail, setSuperAdminStatus } from "../../data/auth";
 import { apiGetCurrentUser, apiLogin } from "../../lib/api";
@@ -8,6 +8,15 @@ import { ErrorToast, SuccessToast } from "../../components/Toast";
 
 export default function LoginPage() {
   const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
+  // Set by the dashboard when a login has run out (?expired=1), with the page to return to.
+  const sessionExpired = searchParams.get("expired") === "1";
+  const nextParam = searchParams.get("next") || "";
+  // Only a path inside this app, never another site ("//evil.com" or "https://...").
+  const returnTo =
+    nextParam.startsWith("/") && !nextParam.startsWith("//") && !nextParam.startsWith("/login")
+      ? nextParam
+      : "/dashboard";
   const [showPassword, setShowPassword] = useState(false);
   const [remember, setRemember] = useState(false);
   const [form, setForm] = useState({ email: "", password: "" });
@@ -38,7 +47,7 @@ export default function LoginPage() {
       trackEvent("login", { method: "password" });
       setSuccess("Logged in successfully!");
       await new Promise((resolve) => setTimeout(resolve, 900));
-      navigate("/dashboard");
+      navigate(returnTo, { replace: true });
     } catch (err) {
       setError(err.message || "Invalid email or password.");
       setSubmitting(false);
@@ -75,6 +84,12 @@ export default function LoginPage() {
           {error && <ErrorToast message={error} onClose={() => setError("")} />}
           {success && (
             <SuccessToast message={success} onClose={() => setSuccess("")} />
+          )}
+
+          {sessionExpired && !success && (
+            <p className="mb-4 rounded-lg border border-amber-200 bg-amber-50 px-3 py-2.5 text-center text-sm text-amber-800">
+              Your session has ended. Please sign in again to continue.
+            </p>
           )}
 
           <form onSubmit={handleSubmit} className="space-y-4">

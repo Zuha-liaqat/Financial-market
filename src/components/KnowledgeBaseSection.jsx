@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from 'react'
-import { ExternalLink, FileText, Trash2, Upload } from 'lucide-react'
+import { ExternalLink, FileText, Globe, Trash2, Upload } from 'lucide-react'
 import { apiDeleteKnowledgeBaseItem, apiListKnowledgeBase, apiUploadKnowledgeBaseFile } from '../lib/api'
 import ConfirmDialog from './ConfirmDialog'
 import { ErrorToast, SuccessToast } from './Toast'
@@ -77,8 +77,8 @@ export default function KnowledgeBaseSection() {
     apiListKnowledgeBase()
       .then((all) => {
         if (cancelled) return
-        // Only the files people upload here; pages read from the company website are kept by the API too.
-        setItems(all.filter((item) => item.source_type === 'upload'))
+        // Uploaded files and the pages the API read from the company website (at signup or on a Themes save).
+        setItems(all)
         setStatus('ready')
       })
       .catch((err) => {
@@ -245,24 +245,35 @@ export default function KnowledgeBaseSection() {
                 <tr>
                   <td colSpan={5} className="px-4 py-10 text-center">
                     <p className="text-sm font-medium text-neutral-700">No files yet</p>
-                    <p className="mt-1 text-xs text-neutral-400">Files you upload will show up here.</p>
+                    <p className="mt-1 text-xs text-neutral-400">
+                      Files you upload, and pages read from your website, show up here.
+                    </p>
                   </td>
                 </tr>
               )}
 
               {status === 'ready' &&
                 items.map((item) => {
-                  const name = item.file_name || item.title || 'Untitled file'
+                  // Website rows are named by their title; their file is just the saved page text (.txt).
+                  const fromWebsite = item.source_type === 'website'
+                  const name = fromWebsite
+                    ? item.title || 'Company website'
+                    : item.file_name || item.title || 'Untitled file'
                   const url = fileUrl(item)
-                  const extension = extensionOf(name).replace('.', '').toUpperCase()
+                  const extension = fromWebsite ? 'WEBSITE' : extensionOf(name).replace('.', '').toUpperCase()
+                  const Icon = fromWebsite ? Globe : FileText
                   const size = item.file_size ?? sizes[item.id]
                   const sizeKnown = item.file_size != null || item.id in sizes
                   return (
                     <tr key={item.id} className="border-b border-neutral-100 last:border-0 hover:bg-neutral-50/60">
                       <td className="px-4 py-3">
                         <div className="flex min-w-0 items-center gap-2.5">
-                          <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-md bg-sky-50 text-sky-600">
-                            <FileText className="h-4 w-4" strokeWidth={1.75} />
+                          <span
+                            className={`flex h-8 w-8 shrink-0 items-center justify-center rounded-md ${
+                              fromWebsite ? 'bg-emerald-50 text-emerald-600' : 'bg-sky-50 text-sky-600'
+                            }`}
+                          >
+                            <Icon className="h-4 w-4" strokeWidth={1.75} />
                           </span>
                           <span className="block max-w-[14rem] truncate font-medium text-neutral-800 sm:max-w-xs" title={name}>
                             {name}
@@ -313,7 +324,11 @@ export default function KnowledgeBaseSection() {
       {toDelete && (
         <ConfirmDialog
           title="Delete this file?"
-          message={`"${toDelete.file_name || toDelete.title || 'This file'}" will be removed from the knowledge base, and the AI will stop using it.`}
+          message={`"${
+            toDelete.source_type === 'website'
+              ? toDelete.title || 'Company website'
+              : toDelete.file_name || toDelete.title || 'This file'
+          }" will be removed from the knowledge base, and the AI will stop using it.`}
           confirmLabel="Delete"
           confirming={deleting}
           error={deleteError}
